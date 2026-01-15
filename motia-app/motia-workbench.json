@@ -48,5 +48,18 @@
         "y": -17
       }
     }
+  },
+  {
+    "id": "simFiles",
+    "config": {
+      "steps/simFiles/02-checkInputFiles.step.ts": {
+        "x": 0,
+        "y": 0
+      },
+      "steps/simFiles/01-uploadInputFiles.step.ts": {
+        "x": 20,
+        "y": 224
+      }
+    }
   }
 ]

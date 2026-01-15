@@ -13,7 +13,7 @@ declare module 'motia' {
 
   interface Handlers {
     'CheckInputFiles': ApiRouteHandler<{ userId: string; simId: string }, unknown, never>
-    'UploadInputFiles': ApiRouteHandler<{ userId: string; simId: string; files: Array<{ filename: string; contentType: string; data: string }> }, unknown, never>
+    'UploadInputFiles': ApiRouteHandler<{ userId: string; simId: string; files: Array<{ fileName: string; contentType: string; data: string }> }, unknown, never>
   }
     
 }

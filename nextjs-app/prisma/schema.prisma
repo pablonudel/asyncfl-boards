@@ -3,6 +3,12 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
+generator kysely {
+  provider = "prisma-kysely"
+  output   = "../types"
+  fileName = "db.d.ts"
+}
+
 datasource db {
   provider = "postgresql"
 }
@@ -44,7 +50,7 @@ model SimulationJob {
 }
 
 model inFile {
-  id        String   @id @default(uuid())
+  id        String   @id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

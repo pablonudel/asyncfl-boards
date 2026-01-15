@@ -15,8 +15,8 @@ export const config: ApiRouteConfig = {
 	path: "/simulations/check-files",
 	method: "POST",
 	bodySchema: CheckFilesSchema,
-	flows: ["filesCheck"],
 	emits: ["CheckSimulationFiles"],
+	flows: ["simFiles"],
 }
 
 // 5 GB max file size (adjust as needed)
