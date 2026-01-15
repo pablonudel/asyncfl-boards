@@ -1,0 +1,52 @@
+[
+  {
+    "id": "hello-world-flow",
+    "config": {
+      "src/hello/log-greeting.step.js": {
+        "x": 409,
+        "y": 44
+      },
+      "src/hello/hello-api.step.ts": {
+        "x": -437,
+        "y": 0,
+        "sourceHandlePosition": "right"
+      },
+      "src/hello/process_greeting_step.py": {
+        "x": 0,
+        "y": 34,
+        "sourceHandlePosition": "right"
+      }
+    }
+  },
+  {
+    "id": "createSimulationFlow",
+    "config": {
+      "steps/createSim/01-createsim.step.ts": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  },
+  {
+    "id": "simulationCreation",
+    "config": {
+      "steps/inputFilesCheck/02-checkInputFiles.step.ts": {
+        "x": -41,
+        "y": -9
+      }
+    }
+  },
+  {
+    "id": "filesCheck",
+    "config": {
+      "steps/inputFilesCheck/01-uploadInputFiles.step.ts": {
+        "x": -170,
+        "y": -1
+      },
+      "steps/inputFilesCheck/02-checkInputFiles.step.ts": {
+        "x": 246,
+        "y": -17
+      }
+    }
+  }
+]
