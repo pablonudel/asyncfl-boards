@@ -13,55 +13,75 @@ datasource db {
   provider = "postgresql"
 }
 
-model Simulation {
+model User {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  name             String
+  firstName        String
+  lastName         String
+  email            String          @unique
+  emailVerified    Boolean         @default(false)
+  image            String?
+  projects         Project[]
+  pfcCredentialsId pfcCredentials?
+
+  sessions     Session[]
+  accounts     Account[]
+  jobs         Job[]
+  runs         Run[]
+  environments Environment[]
+}
+
+model Environment {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name            String
-  description     String?
-  status          String?
-  inputValidation Boolean  @default(false)
-  inputFiles      inFile[]
-  entryFileName   String?
-  outputFiles     File[]
+  hashedReqs String
+  venvPath   String
+  status     String @default("PENDING")
 
-  userId   String
-  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jobs     SimulationJob[]
-  outFiles outFile[]
-
-  @@map("simulations")
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs   Run[]
 }
 
-model SimulationJob {
-  id          String    @id @default(uuid())
-  jobId       String    @unique
-  status      String    @default("queued") // queued|running|succeeded|failed|canceled
-  lastError   String?
-  createdAt   DateTime  @default(now())
-  startedAt   DateTime?
-  completedAt DateTime?
-
-  simulationId String
-  simulation   Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
-
-  @@map("simulation_jobs")
-}
-
-model inFile {
-  id        String   @id
+model Job {
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  fileName String
-  fileSize Float
-  fileType String
+  name        String  @unique
+  description String?
+  status      String  @default("PENDING")
 
-  simulationId String
-  simulation   Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs   Run[]
+}
 
-  @@map("in_files")
+model Run {
+  id         String    @id @default(uuid())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  runName      String @unique
+  entryFile    String
+  paramsConfig Json
+  sbatchConfig Json
+  status       String @default("NOT STARTED")
+  slurmJobId   Int?
+  jobId        String
+  job          Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  environmentId String
+  environment   Environment @relation(fields: [environmentId], references: [id])
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Project {
@@ -77,22 +97,6 @@ model Project {
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("projects")
-}
-
-model outFile {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  fileName     String
-  fileSize     Float
-  fileShape    Int[]
-  simulationId String
-  simulation   Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
-
-  @@map("out_files")
 }
 
 model File {
@@ -105,11 +109,7 @@ model File {
   fileSize      Float
   fileShape     Int[]
   projectId     String
-  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  simulation    Simulation? @relation(fields: [simulationId], references: [id])
-  simulationId  String?
-
-  @@map("files")
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Widget {
@@ -121,29 +121,21 @@ model Widget {
   config    Json
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@map("widgets")
 }
 
-model User {
+model pfcCredentials {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  updatedAt DateTime @updatedAt
 
-  name          String
-  firstName     String
-  lastName      String
-  email         String  @unique
-  emailVerified Boolean @default(false)
-  image         String?
+  username String?
+  password String?
 
-  sessions    Session[]
-  accounts    Account[]
-  projects    Project[]
-  simulations Simulation[]
-
-  @@map("users")
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+// Auth sessions and accounts
 
 model Session {
   id        String   @id @default(uuid())
@@ -157,8 +149,6 @@ model Session {
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
 }
 
 model Account {
@@ -178,8 +168,6 @@ model Account {
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("accounts")
 }
 
 model Verification {
@@ -190,6 +178,4 @@ model Verification {
   identifier String
   value      String
   expiresAt  DateTime
-
-  @@map("verifications")
 }
