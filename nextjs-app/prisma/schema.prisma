@@ -39,9 +39,10 @@ model Environment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  hashedReqs String
-  venvPath   String
-  status     String @default("PENDING")
+  hashedReqs          String
+  requirementsContent String
+  venvPath            String
+  status              String @default("PENDING")
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "simulation_jobs" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ALTER COLUMN "status" SET DEFAULT 'queued';
