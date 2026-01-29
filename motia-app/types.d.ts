@@ -12,8 +12,9 @@ declare module 'motia' {
   }
 
   interface Handlers {
-    'CheckInputFiles': ApiRouteHandler<{ userId: string; simId: string }, unknown, never>
-    'UploadInputFiles': ApiRouteHandler<{ userId: string; simId: string; files: Array<{ fileName: string; contentType: string; data: string }> }, unknown, never>
+    'Update Job': ApiRouteHandler<{ userId: string; jobId: string; name: string; description?: string }, unknown, never>
+    'Delete Job Files': ApiRouteHandler<{ userId: string; userName: string; userPassword: string; fileName: string; folderId: string; fileType: 'sourceFiles' | 'datasetsFiles' | 'reqFile' }, unknown, never>
+    'Create Job': ApiRouteHandler<{ userId: string; userName: string; userPassword: string; name: string; description?: string }, unknown, never>
   }
     
 }

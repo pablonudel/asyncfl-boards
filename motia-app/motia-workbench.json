@@ -61,5 +61,14 @@
         "y": 224
       }
     }
+  },
+  {
+    "id": "Jobs Management",
+    "config": {
+      "steps/jobsRuns/createJob.step.ts": {
+        "x": 0,
+        "y": 0
+      }
+    }
   }
 ]

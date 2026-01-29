@@ -19,6 +19,16 @@ export type Account = {
     password: string | null;
     userId: string;
 };
+export type Environment = {
+    id: string;
+    createdAt: Generated<Timestamp>;
+    updatedAt: Timestamp;
+    hashedReqs: string;
+    requirementsContent: string;
+    venvPath: string;
+    status: Generated<string>;
+    userId: string;
+};
 export type File = {
     id: string;
     createdAt: Generated<Timestamp>;
@@ -28,25 +38,27 @@ export type File = {
     fileSize: number;
     fileShape: number[];
     projectId: string;
-    simulationId: string | null;
 };
-export type inFile = {
+export type Job = {
     id: string;
     createdAt: Generated<Timestamp>;
     updatedAt: Timestamp;
-    fileName: string;
-    fileSize: number;
-    fileType: string;
-    simulationId: string;
+    folderId: string;
+    name: string;
+    description: string | null;
+    status: Generated<string>;
+    sourceFiles: string[];
+    reqFile: string | null;
+    datasetsFiles: string[];
+    userId: string;
 };
-export type outFile = {
+export type pfcCredentials = {
     id: string;
     createdAt: Generated<Timestamp>;
     updatedAt: Timestamp;
-    fileName: string;
-    fileSize: number;
-    fileShape: number[];
-    simulationId: string;
+    username: string | null;
+    password: string | null;
+    userId: string;
 };
 export type Project = {
     id: string;
@@ -55,6 +67,22 @@ export type Project = {
     name: string;
     description: string | null;
     widgetsOrder: Generated<string[]>;
+    userId: string;
+};
+export type Run = {
+    id: string;
+    createdAt: Generated<Timestamp>;
+    updatedAt: Timestamp;
+    startedAt: Timestamp | null;
+    finishedAt: Timestamp | null;
+    runName: string;
+    entryFile: string;
+    paramsConfig: unknown;
+    sbatchConfig: unknown;
+    status: Generated<string>;
+    slurmJobId: number | null;
+    jobId: string;
+    environmentId: string;
     userId: string;
 };
 export type Session = {
@@ -66,27 +94,6 @@ export type Session = {
     ipAddress: string | null;
     userAgent: string | null;
     userId: string;
-};
-export type Simulation = {
-    id: string;
-    createdAt: Generated<Timestamp>;
-    updatedAt: Timestamp;
-    name: string;
-    description: string | null;
-    status: string | null;
-    inputValidation: Generated<boolean>;
-    entryFileName: string | null;
-    userId: string;
-};
-export type SimulationJob = {
-    id: string;
-    jobId: string;
-    status: Generated<string>;
-    lastError: string | null;
-    createdAt: Generated<Timestamp>;
-    startedAt: Timestamp | null;
-    completedAt: Timestamp | null;
-    simulationId: string;
 };
 export type User = {
     id: string;
@@ -116,15 +123,15 @@ export type Widget = {
     projectId: string;
 };
 export type DB = {
-    accounts: Account;
-    files: File;
-    in_files: inFile;
-    out_files: outFile;
-    projects: Project;
-    sessions: Session;
-    simulation_jobs: SimulationJob;
-    simulations: Simulation;
-    users: User;
-    verifications: Verification;
-    widgets: Widget;
+    Account: Account;
+    Environment: Environment;
+    File: File;
+    Job: Job;
+    pfcCredentials: pfcCredentials;
+    Project: Project;
+    Run: Run;
+    Session: Session;
+    User: User;
+    Verification: Verification;
+    Widget: Widget;
 };

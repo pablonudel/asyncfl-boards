@@ -1,5 +1,10 @@
 import { ApiRouteConfig, Handlers } from "motia"
+import { nanoid } from "nanoid"
+import { mkdir } from "node:fs/promises"
+import { join } from "node:path"
 import { z } from "zod"
+import { db } from "../../src/lib/db"
+import { sshManager } from "../../src/lib/sshManager"
 
 const CreateJobInputSchema = z.object({
 	userId: z.uuid(),
@@ -15,6 +20,8 @@ export const config: ApiRouteConfig = {
 	path: "/api/create-job",
 	bodySchema: CreateJobInputSchema,
 	method: "POST",
+	emits: [],
+	flows: ["Jobs Management"],
 }
 
 export const handler: Handlers["Create Job"] = async (
@@ -22,7 +29,70 @@ export const handler: Handlers["Create Job"] = async (
 	{ logger }: any,
 ) => {
 	const { userId, userName, userPassword, name, description } = req.body
-	// si no existen, crear las carpetas en pfcalcul
-	// crear el job en la base de datos
-	// retornar el job creado
+	const TARGET_PATH_BASE = process.env.TARGET_PATH_BASE
+	const STORAGE_PATH_BASE = process.env.STORAGE_PATH_BASE
+
+	if (!TARGET_PATH_BASE || !STORAGE_PATH_BASE) {
+		return {
+			status: 500,
+			body: {
+				success: false,
+				message: "env configuration is missing",
+			},
+		}
+	}
+
+	try {
+		const { client }: any = await sshManager.getSession(
+			userId,
+			userName,
+			userPassword,
+		)
+
+		const newJob = await db
+			.insertInto("Job")
+			.values({
+				id: crypto.randomUUID(),
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				folderId: nanoid(7),
+				name: name,
+				description: description || null,
+				userId: userId,
+				sourceFiles: [],
+				datasetsFiles: [],
+				reqFile: null,
+			})
+			.returning(["id", "name", "folderId"])
+			.executeTakeFirst()
+
+		const jobPath = `${TARGET_PATH_BASE}/${userName}/jobs/${newJob?.folderId}`
+		await sshManager.runCommand(client, `mkdir -p ${jobPath}`)
+
+		const storagePath = join(
+			STORAGE_PATH_BASE,
+			userId,
+			"jobs",
+			newJob!.folderId,
+		)
+		await mkdir(storagePath, { recursive: true })
+
+		return {
+			status: 200,
+			body: { success: true, message: "Job created successfully", job: newJob },
+		}
+	} catch (error: any) {
+		// Loguea el error completo para debugging
+		logger.error("Error:", error)
+		console.error("Complete error:", error)
+
+		return {
+			status: 500,
+			body: {
+				success: false,
+				message: "Auth or connection error",
+				error: error instanceof Error ? error.message : String(error),
+			},
+		}
+	}
 }
