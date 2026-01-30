@@ -1,32 +1,14 @@
+import crypto from "crypto"
 import { ApiRouteConfig, Handlers } from "motia"
 import { nanoid } from "nanoid"
-import { mkdir } from "node:fs/promises"
+import { mkdir, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { z } from "zod"
-import { sshManager } from "../../src/lib/sshManager"
-
-const JsonStringSchema = z.string().refine(
-	(val) => {
-		try {
-			JSON.parse(val)
-			return true
-		} catch (e) {
-			return false
-		}
-	},
-	{ message: "Invalid JSON string" },
-)
+import { db } from "../../src/lib/db"
 
 const CreateRunInputSchema = z.object({
 	userId: z.uuid(),
-	userName: z.string().min(1),
-	userPassword: z.string().min(8),
 	jobId: z.uuid(),
-	folderId: z.string().min(1),
-	runName: z.string().min(1),
-	entryFile: z.string().min(1),
-	paramsConfig: JsonStringSchema.optional(),
-	sbatchConfig: JsonStringSchema.optional(),
 })
 
 export const config: ApiRouteConfig = {
@@ -43,54 +25,82 @@ export const handler: Handlers["Create Run"] = async (
 	req: any,
 	{ logger }: any,
 ) => {
-	const {
-		userId,
-		userName,
-		userPassword,
-		jobId,
-		folderId,
-		runName,
-		entryFile,
-		paramsConfig,
-		sbatchConfig,
-	} = req.body
+	const { userId, jobId } = req.body
 
-	const runFolderId = `${runName.replace(/\s+/g, "_")}-${nanoid(7)}`
-	const TARGET_PATH_BASE = process.env.TARGET_PATH_BASE
+	const job = await db
+		.selectFrom("Job")
+		.where("id", "=", jobId)
+		.selectAll()
+		.executeTakeFirst()
+
+	if (!job) {
+		return { status: 404, body: { success: false, message: "Job not found" } }
+	}
+
 	const STORAGE_PATH_BASE = process.env.STORAGE_PATH_BASE
-
-	if (!TARGET_PATH_BASE || !STORAGE_PATH_BASE) {
+	if (!STORAGE_PATH_BASE) {
+		logger.error("Missing STORAGE_PATH_BASE")
 		return {
 			status: 500,
-			body: {
-				success: false,
-				message: "env configuration is missing",
-			},
+			body: { success: false, message: "Server configuration error" },
 		}
 	}
 
+	const runName = job.name
+	const runFolderId = nanoid(7)
+	const runFolder = `${runName.replace(/\s+/g, "_").toLowerCase()}-${runFolderId}`
+
+	// Construimos la ruta
+	const runStoragePath = join(
+		STORAGE_PATH_BASE,
+		userId,
+		"jobs",
+		job.folderId,
+		"runs",
+		runFolder,
+	)
+
+	let folderCreated = false
+
 	try {
-		const { client }: any = await sshManager.getSession(
-			userId,
-			userName,
-			userPassword,
-		)
-
-		// Create run directory in storage
-		const runStoragePath = join(
-			STORAGE_PATH_BASE,
-			userId,
-			"jobs",
-			folderId,
-			"runs",
-			runFolderId,
-		)
+		// 1. Crear carpeta física
 		await mkdir(runStoragePath, { recursive: true })
+		folderCreated = true
 
-		// Create run directory on target via SSH
-		const runTargetPath = `${TARGET_PATH_BASE}/${userName}/jobs/${folderId}/runs/${runFolderId}`
-		await sshManager.runCommand(client, `mkdir -p ${runTargetPath}`)
+		// 2. Insertar en DB
+		try {
+			await db
+				.insertInto("Run")
+				.values({
+					id: crypto.randomUUID(),
+					createdAt: new Date(),
+					updatedAt: new Date(),
+					runName: runName,
+					runFolderId: runFolderId,
+					jobId: jobId,
+					userId: userId,
+				})
+				.execute()
+		} catch (dbError) {
+			// ROLLBACK: Si la DB falla, borramos la carpeta recién creada
+			if (folderCreated) {
+				logger.warn("DB insertion failed, removing created directory", {
+					runStoragePath,
+				})
+				await rm(runStoragePath, { recursive: true, force: true })
+			}
+			throw dbError // Re-lanzamos para el catch principal
+		}
 
-		// Insert new run record in the database
-	} catch (error) {}
+		return {
+			status: 201, // 201 es más correcto para "Created"
+			body: { success: true, message: "Run created successfully", runFolderId },
+		}
+	} catch (error: any) {
+		logger.error("Error creating run:", error)
+		return {
+			status: 500,
+			body: { success: false, message: "Internal server error" },
+		}
+	}
 }

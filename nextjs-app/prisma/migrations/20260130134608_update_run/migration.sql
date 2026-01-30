@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Run" ALTER COLUMN "entryFile" DROP NOT NULL,
+ALTER COLUMN "paramsConfig" DROP NOT NULL,
+ALTER COLUMN "sbatchConfig" DROP NOT NULL;

@@ -19,6 +19,15 @@ export type Account = {
     password: string | null;
     userId: string;
 };
+export type Dataset = {
+    id: string;
+    createdAt: Generated<Timestamp>;
+    updatedAt: Timestamp;
+    fileName: string;
+    readmeContent: string | null;
+    folderId: string;
+    userId: string;
+};
 export type Environment = {
     id: string;
     createdAt: Generated<Timestamp>;
@@ -48,8 +57,13 @@ export type Job = {
     status: Generated<string>;
     sourceFiles: string[];
     reqFile: string | null;
-    datasetsFiles: string[];
     userId: string;
+};
+export type JobDataset = {
+    createdAt: Generated<Timestamp>;
+    updatedAt: Timestamp;
+    jobId: string;
+    datasetId: string;
 };
 export type pfcCredentials = {
     id: string;
@@ -76,13 +90,13 @@ export type Run = {
     finishedAt: Timestamp | null;
     runName: string;
     runFolderId: string;
-    entryFile: string;
-    paramsConfig: unknown;
-    sbatchConfig: unknown;
+    entryFile: string | null;
+    paramsConfig: unknown | null;
+    sbatchConfig: unknown | null;
     status: Generated<string>;
     slurmJobId: number | null;
+    environmentId: string | null;
     jobId: string;
-    environmentId: string;
     userId: string;
 };
 export type Session = {
@@ -124,9 +138,11 @@ export type Widget = {
 };
 export type DB = {
     Account: Account;
+    Dataset: Dataset;
     Environment: Environment;
     File: File;
     Job: Job;
+    JobDataset: JobDataset;
     pfcCredentials: pfcCredentials;
     Project: Project;
     Run: Run;

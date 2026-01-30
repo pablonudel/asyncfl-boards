@@ -19,7 +19,7 @@ export const config: ApiRouteConfig = {
 	flows: ["Jobs Management"],
 }
 
-export const handler: Handlers["Create Job"] = async (
+export const handler: Handlers["Update Job"] = async (
 	req: any,
 	{ logger }: any,
 ) => {
@@ -35,7 +35,7 @@ export const handler: Handlers["Create Job"] = async (
 			})
 			.where("id", "=", jobId)
 			.where("userId", "=", userId)
-			.returning(["id", "name", "description"])
+			.returning(["id", "name", "description", "folderId"])
 			.executeTakeFirst()
 
 		if (!updatedJob) {
