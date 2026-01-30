@@ -41,8 +41,7 @@ model Environment {
 
   hashedReqs          String
   requirementsContent String
-  venvPath            String
-  status              String @default("PENDING")
+  status              String @default("PENDING") // PENDING, BUILDING, READY, FAILED
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -57,7 +56,7 @@ model Job {
   folderId      String   @unique
   name          String
   description   String?
-  status        String   @default("CREATED")
+  status        String   @default("CREATED") // CREATED, READY, SYNCING
   sourceFiles   String[]
   reqFile       String?
   datasetsFiles String[]
@@ -74,11 +73,12 @@ model Run {
   startedAt  DateTime?
   finishedAt DateTime?
 
-  runName      String @unique
+  runName      String
+  runFolderId  String @unique
   entryFile    String
   paramsConfig Json
   sbatchConfig Json
-  status       String @default("NOT STARTED")
+  status       String @default("NOT STARTED") // NOT STARTED, PREPARING, QUEUED, RUNNING, COMPLETED, FAILED
   slurmJobId   Int?
   jobId        String
   job          Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)

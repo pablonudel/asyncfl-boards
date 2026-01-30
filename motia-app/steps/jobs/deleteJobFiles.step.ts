@@ -3,12 +3,9 @@ import { unlink } from "node:fs/promises"
 import { join } from "node:path"
 import { z } from "zod"
 import { db } from "../../src/lib/db"
-import { sshManager } from "../../src/lib/sshManager"
 
 const DeleteJobFilesSchema = z.object({
 	userId: z.uuid(),
-	userName: z.string().min(1),
-	userPassword: z.string().min(1),
 	fileName: z.string().min(1),
 	folderId: z.string().min(1),
 	fileType: z.enum(["sourceFiles", "datasetsFiles", "reqFile"]),
@@ -33,10 +30,10 @@ export const handler: Handlers["Delete Job Files"] = async (
 		req.body
 
 	// Validate environment variables
-	const TARGET_PATH_BASE = process.env.TARGET_PATH_BASE
+	// const TARGET_PATH_BASE = process.env.TARGET_PATH_BASE
 	const STORAGE_PATH_BASE = process.env.STORAGE_PATH_BASE
 
-	if (!TARGET_PATH_BASE || !STORAGE_PATH_BASE) {
+	if (!STORAGE_PATH_BASE) {
 		return {
 			status: 500,
 			body: {
@@ -48,15 +45,15 @@ export const handler: Handlers["Delete Job Files"] = async (
 
 	try {
 		// Get SSH session
-		const { client }: any = await sshManager.getSession(
-			userId,
-			userName,
-			userPassword,
-		)
+		// const { client }: any = await sshManager.getSession(
+		// 	userId,
+		// 	userName,
+		// 	userPassword,
+		// )
 
 		// Determine paths
 		let storagePath: string = ""
-		let targetPath: string = ""
+		// let targetPath: string = ""
 		if (fileType === "sourceFiles") {
 			storagePath = join(
 				STORAGE_PATH_BASE,
@@ -66,27 +63,56 @@ export const handler: Handlers["Delete Job Files"] = async (
 				"source",
 				fileName,
 			)
-			targetPath = `${TARGET_PATH_BASE}/${userName}/jobs/${folderId}/source/${fileName}`
+			// targetPath = `${TARGET_PATH_BASE}/${userName}/jobs/${folderId}/source/${fileName}`
 		} else if (fileType === "datasetsFiles") {
 			storagePath = join(STORAGE_PATH_BASE, userId, "datasets", fileName)
-			targetPath = `/datasets/${userName}/${fileName}`
+			// targetPath = `/datasets/${userName}/${fileName}`
 		} else {
 			storagePath = join(STORAGE_PATH_BASE, userId, "jobs", folderId, fileName)
-			targetPath = `${TARGET_PATH_BASE}/${userName}/jobs/${folderId}/${fileName}`
+			// targetPath = `${TARGET_PATH_BASE}/${userName}/jobs/${folderId}/${fileName}`
+		}
+
+		const job = await db
+			.selectFrom("Job")
+			.where("folderId", "=", folderId)
+			.select([fileType, "status", "id"])
+			.executeTakeFirst()
+
+		if (!job) {
+			return {
+				status: 404,
+				body: {
+					success: false,
+					message: "Job not found",
+				},
+			}
+		}
+
+		// search if any run is using this job is active
+		const activeRuns = await db
+			.selectFrom("Run")
+			.where("jobId", "=", job.id)
+			.where("status", "in", ["PREPARING", "QUEUED", "RUNNING"])
+			.select(["id"])
+			.execute()
+
+		if (activeRuns.length > 0) {
+			return {
+				status: 400,
+				body: {
+					success: false,
+					message:
+						"Cannot delete file while there are active runs using this job",
+				},
+			}
 		}
 
 		// Delete file from remote server
-		await sshManager.runCommand(client, `rm -f ${targetPath}`)
+		// await sshManager.runCommand(client, `rm -f ${targetPath}`)
 		// Delete file from local storage
 		await unlink(storagePath)
 
 		// Update database record
-		const job = await db
-			.selectFrom("Job")
-			.where("folderId", "=", folderId)
-			.select([fileType])
-			.executeTakeFirst()
-
 		if (job) {
 			if (fileType === "reqFile") {
 				await db
@@ -105,6 +131,20 @@ export const handler: Handlers["Delete Job Files"] = async (
 					.where("folderId", "=", folderId)
 					.executeTakeFirst()
 			}
+		}
+
+		const updatedJob = await db
+			.selectFrom("Job")
+			.where("folderId", "=", folderId)
+			.select(["sourceFiles", "reqFile"])
+			.executeTakeFirst()
+
+		if (!updatedJob?.reqFile || updatedJob.sourceFiles.length === 0) {
+			await db
+				.updateTable("Job")
+				.set({ status: "CREATED" })
+				.where("folderId", "=", folderId)
+				.executeTakeFirst()
 		}
 
 		return {

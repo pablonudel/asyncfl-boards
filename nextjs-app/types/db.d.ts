@@ -25,7 +25,6 @@ export type Environment = {
     updatedAt: Timestamp;
     hashedReqs: string;
     requirementsContent: string;
-    venvPath: string;
     status: Generated<string>;
     userId: string;
 };
@@ -76,6 +75,7 @@ export type Run = {
     startedAt: Timestamp | null;
     finishedAt: Timestamp | null;
     runName: string;
+    runFolderId: string;
     entryFile: string;
     paramsConfig: unknown;
     sbatchConfig: unknown;
