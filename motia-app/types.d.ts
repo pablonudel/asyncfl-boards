@@ -15,8 +15,8 @@ declare module 'motia' {
     'Update Run': ApiRouteHandler<{ userId: string; runId: string; runName: string; entryFile?: string; paramsConfig?: Record<string, unknown>; sbatchConfig?: Record<string, unknown> }, unknown, never>
     'Create Run': ApiRouteHandler<{ userId: string; jobId: string }, unknown, never>
     'Update Job': ApiRouteHandler<{ userId: string; jobId: string; name: string; description?: string }, unknown, never>
-    'Delete Job Files': ApiRouteHandler<{ userId: string; fileName: string; folderId: string; fileType: 'sourceFiles' | 'datasetsFiles' | 'reqFile' }, unknown, never>
-    'Create Job': ApiRouteHandler<{ userId: string; userName: string; userPassword: string; name: string; description?: string }, unknown, never>
+    'Delete Job Files': ApiRouteHandler<{ userId: string; fileName: string; folderId: string; fileType: 'sourceFiles' | 'reqFile' }, unknown, never>
+    'Create Job': ApiRouteHandler<{ userId: string; name: string; description?: string }, unknown, never>
   }
     
 }

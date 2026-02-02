@@ -65,7 +65,6 @@ export const handler: Handlers["Create Job"] = async (
 					description: description || null,
 					userId: userId,
 					sourceFiles: [],
-					reqFile: null,
 					status: "CREATED",
 				})
 				.returning(["id", "name", "folderId"])

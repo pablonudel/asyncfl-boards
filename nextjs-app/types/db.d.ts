@@ -56,7 +56,7 @@ export type Job = {
     description: string | null;
     status: Generated<string>;
     sourceFiles: string[];
-    reqFile: string | null;
+    environmentId: string | null;
     userId: string;
 };
 export type JobDataset = {

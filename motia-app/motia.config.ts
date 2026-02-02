@@ -115,7 +115,7 @@ export default defineConfig({
 			try {
 				const job = await db
 					.selectFrom("Job")
-					.select(["id", "sourceFiles", "reqFile"])
+					.select(["id", "sourceFiles", "environmentId"])
 					.where("folderId", "=", folderId)
 					.executeTakeFirst()
 
@@ -164,11 +164,6 @@ export default defineConfig({
 						.execute()
 				} else {
 					const reqFileName = uploadedFileNames[0]
-					await db
-						.updateTable("Job")
-						.set({ reqFile: reqFileName })
-						.where("id", "=", job.id)
-						.execute()
 
 					// Lógica de Hash de Requirements
 					const rawContent = files[0].buffer.toString("utf-8")
@@ -188,17 +183,25 @@ export default defineConfig({
 						.where("hashedReqs", "=", hash)
 						.select("id")
 						.executeTakeFirst()
+
+					const environmentId = envExists ? envExists.id : crypto.randomUUID()
 					if (!envExists) {
 						await db
 							.insertInto("Environment")
 							.values({
-								id: crypto.randomUUID(),
+								id: environmentId,
 								createdAt: new Date(),
 								updatedAt: new Date(),
 								requirementsContent: rawContent,
 								hashedReqs: hash,
 								userId: userId,
 							})
+							.execute()
+
+						await db
+							.updateTable("Job")
+							.set({ environmentId: environmentId })
+							.where("id", "=", job.id)
 							.execute()
 					}
 				}
@@ -207,10 +210,10 @@ export default defineConfig({
 				const finalJob = await db
 					.selectFrom("Job")
 					.where("id", "=", job.id)
-					.select(["sourceFiles", "reqFile"])
+					.select(["sourceFiles", "environmentId"])
 					.executeTakeFirst()
 				if (
-					finalJob?.reqFile &&
+					finalJob?.environmentId &&
 					(finalJob.sourceFiles as string[]).length > 0
 				) {
 					await db

@@ -47,6 +47,7 @@ model Environment {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   runs   Run[]
+  jobs   Job[]
 }
 
 model Job {
@@ -54,12 +55,13 @@ model Job {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  folderId    String   @unique
-  name        String
-  description String?
-  status      String   @default("CREATED") // CREATED, READY, SYNCING
-  sourceFiles String[]
-  reqFile     String?
+  folderId      String       @unique
+  name          String
+  description   String?
+  status        String       @default("CREATED") // CREATED, READY, SYNCING
+  sourceFiles   String[]
+  environmentId String?
+  environment   Environment? @relation(fields: [environmentId], references: [id])
 
   userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
