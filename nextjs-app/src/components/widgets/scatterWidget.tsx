@@ -51,12 +51,8 @@ export default function ScatterWidget({
 
 	// Function to read data from source file
 	async function getDataFromSource(userId: string, source: string) {
-		const cacheBust = Date.now()
-		return await readNpyFile(
-			userId!,
-			widget.projectId!,
-			`${source}?cb=${cacheBust}`
-		)
+		// const cacheBust = Date.now()
+		return await readNpyFile(userId!, widget.projectId!, source)
 	}
 
 	useEffect(() => {
@@ -70,15 +66,16 @@ export default function ScatterWidget({
 				try {
 					const source = await getDataFromSource(
 						session.user.id,
-						plotConfig.source
+						plotConfig.source,
 					)
+
 					const sourceData = source.array
 					const sourceShape = source.shape
 					const xData =
 						sourceShape.length > 2
 							? source.array[0].length
 							: await getDataFromSource(session.user.id, plotConfig.x).then(
-									(res) => res.array[0].length
+									(res) => res.array[0].length,
 								)
 
 					return {
@@ -89,7 +86,7 @@ export default function ScatterWidget({
 							sourceData,
 							plotConfig.y,
 							plotConfig.normalizeMode,
-							xData
+							xData,
 						),
 						type: "scatter",
 						mode: plotConfig.mode,
