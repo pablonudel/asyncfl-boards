@@ -10,6 +10,7 @@ import { nanoid } from "nanoid"
 import fs from "node:fs/promises"
 import { basename, join } from "node:path"
 import { db } from "../motia-app/src/lib/db"
+import { readNpyFile } from "../motia-app/src/lib/readFiles"
 
 const STORAGE_PATH_BASE = process.env.STORAGE_PATH_BASE
 if (!STORAGE_PATH_BASE) throw new Error("STORAGE_PATH_BASE not set")
@@ -25,7 +26,7 @@ export default defineConfig({
 		bullmqPlugin,
 	],
 	app: (app) => {
-		app.post("/api/files-upload", upload.array("files"), async (req, res) => {
+		;(app.post("/api/files-upload", upload.array("files"), async (req, res) => {
 			const { userName, userId, fileType, jobId, readmeContent } = req.body
 			const files = req.files as Express.Multer.File[]
 
@@ -231,6 +232,84 @@ export default defineConfig({
 					.status(500)
 					.json({ status: "error", message: "File upload failed" })
 			}
-		})
+		}),
+			app.post(
+				"/api/project-files-upload",
+				upload.single("file"),
+				async (req, res) => {
+					try {
+						const { userId, projectId } = req.body
+						const file = req.file as Express.Multer.File
+
+						if (!file)
+							return res
+								.status(400)
+								.json({ status: "error", message: "No file provided" })
+						if (!userId)
+							return res
+								.status(400)
+								.json({ status: "error", message: "Missing userId" })
+
+						const targetDir = join(
+							STORAGE_PATH_BASE,
+							userId,
+							"projects",
+							projectId,
+							"project-files",
+						)
+						await fs.mkdir(targetDir, { recursive: true })
+
+						const safeName = basename(file.originalname)
+						const filePath = join(targetDir, safeName)
+
+						await fs.writeFile(filePath, file.buffer)
+
+						const { shape } = await readNpyFile(userId, projectId, safeName)
+
+						const existingFile = await db
+							.selectFrom("File")
+							.where("projectId", "=", projectId)
+							.where("fileName", "=", safeName)
+							.select(["id"])
+							.executeTakeFirst()
+
+						if (existingFile) {
+							await db
+								.updateTable("File")
+								.set({
+									updatedAt: new Date(),
+									fileSize: file.size,
+									fileShape: shape,
+								})
+								.where("id", "=", existingFile.id)
+								.execute()
+						} else {
+							await db
+								.insertInto("File")
+								.values({
+									id: crypto.randomUUID(),
+									createdAt: new Date(),
+									updatedAt: new Date(),
+									fileName: safeName,
+									referenceName: safeName,
+									projectId: projectId,
+									fileSize: file.size,
+									fileShape: shape,
+								})
+								.execute()
+						}
+
+						return res.status(200).json({
+							success: true,
+							message: `File ${safeName} uploaded successfully`,
+						})
+					} catch (error) {
+						console.error(error)
+						return res
+							.status(500)
+							.json({ status: "error", message: "Internal server error" })
+					}
+				},
+			))
 	},
 })

@@ -23,13 +23,13 @@ export default function FileUploader({ projectId }: { projectId: string }) {
 
 		toast.promise(
 			Promise.all(
-				acceptedFiles.map((file) => uploadProjectFile(projectId, file))
+				acceptedFiles.map((file) => uploadProjectFile(projectId, file)),
 			),
 			{
 				loading: `Uploading ${acceptedFiles.length} files...`,
-				success: "Files uploaded successfully!. Waiting for refresh...",
+				success: "Files uploaded successfully!",
 				error: "Error uploading files.",
-			}
+			},
 		)
 	}, [])
 
@@ -37,13 +37,13 @@ export default function FileUploader({ projectId }: { projectId: string }) {
 		// Do something with the files
 		if (fileRejections.length > 0) {
 			const tooManyFiles = fileRejections.find(
-				(fileRejection) => fileRejection.errors[0].code === "too-many-files"
+				(fileRejection) => fileRejection.errors[0].code === "too-many-files",
 			)
 			const fileTooLarge = fileRejections.find(
-				(fileRejection) => fileRejection.errors[0].code === "file-too-large"
+				(fileRejection) => fileRejection.errors[0].code === "file-too-large",
 			)
 			const invalidFileType = fileRejections.find(
-				(fileRejection) => fileRejection.errors[0].code === "file-invalid-type"
+				(fileRejection) => fileRejection.errors[0].code === "file-invalid-type",
 			)
 
 			if (tooManyFiles) {
@@ -73,7 +73,7 @@ export default function FileUploader({ projectId }: { projectId: string }) {
 			<Card
 				className={cn(
 					"rounded-md border-dashed border-2 border-foreground/10 p-4 shadow-none h-28",
-					isDragActive && "border-solid bg-foreground/5"
+					isDragActive && "border-solid bg-foreground/5",
 				)}
 				{...getRootProps()}>
 				<CardContent className='flex items-center justify-center h-full w-full'>

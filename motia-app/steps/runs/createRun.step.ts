@@ -45,7 +45,7 @@ export const handler: Handlers["Create Run"] = async (
 			body: { success: false, message: "Server configuration error" },
 		}
 	}
-
+	const jobFolder = `${job.name.replace(/\s+/g, "_").toLowerCase()}-${job.folderId}`
 	const runName = job.name
 	const runFolderId = nanoid(7)
 	const runFolder = `${runName.replace(/\s+/g, "_").toLowerCase()}-${runFolderId}`
@@ -55,7 +55,7 @@ export const handler: Handlers["Create Run"] = async (
 		STORAGE_PATH_BASE,
 		userId,
 		"jobs",
-		job.folderId,
+		jobFolder,
 		"runs",
 		runFolder,
 	)

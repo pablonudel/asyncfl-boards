@@ -89,6 +89,7 @@ export const handler: Handlers["Execute Run"] = async (
 		datasetsFiles: run.datasetsFiles,
 	}
 
+	const jobFolder = `${job.name.replace(/\s+/g, "_").toLowerCase()}-${job.folderId}`
 	const runFolder = `${run.runName.replace(/\s+/g, "_").toLowerCase()}-${run.runFolderId}`
 	const runPath = `${TARGET_PATH_BASE}/${userName}/jobs/${job.folderId}/runs/${runFolder}`
 	const outputPath = `${runPath}/output_files`
@@ -139,8 +140,8 @@ export const handler: Handlers["Execute Run"] = async (
 			// 2. IDs de Referencia
 			runId,
 			jobId: job.id, // Útil para logs en el worker
-			folderId: job.folderId, // ID de la carpeta del Job (source)
-			runFolderId: run.runFolderId, // ID de la carpeta del Run
+			jobFolder, // ID de la carpeta del Job
+			runFolder, // ID de la carpeta del Run
 
 			// 3. Configuraciones Finales (Ya fusionadas con output_dir, etc.)
 			paramsConfig: finalParamsConfig,

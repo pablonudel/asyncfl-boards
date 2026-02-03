@@ -53,7 +53,7 @@ export const handler: Handlers["Update Run"] = async (
 	const job = await db
 		.selectFrom("Job")
 		.where("id", "=", run.jobId)
-		.select(["folderId", "environmentId"])
+		.select(["name", "folderId", "environmentId"])
 		.executeTakeFirst()
 
 	if (!job) {
@@ -69,6 +69,7 @@ export const handler: Handlers["Update Run"] = async (
 		}
 	}
 
+	const jobFolder = `${job.name.replace(/\s+/g, "_").toLowerCase()}-${job.folderId}`
 	// Helper para consistencia de nombres
 	const formatFolderName = (name: string, id: string) =>
 		`${name.replace(/\s+/g, "_").toLowerCase()}-${id}`
@@ -77,7 +78,7 @@ export const handler: Handlers["Update Run"] = async (
 		STORAGE_PATH_BASE,
 		userId,
 		"jobs",
-		job.folderId,
+		jobFolder,
 		"runs",
 		formatFolderName(run.runName, run.runFolderId),
 	)
@@ -85,7 +86,7 @@ export const handler: Handlers["Update Run"] = async (
 		STORAGE_PATH_BASE,
 		userId,
 		"jobs",
-		job.folderId,
+		jobFolder,
 		"runs",
 		formatFolderName(runName, run.runFolderId),
 	)

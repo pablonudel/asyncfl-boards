@@ -1,6 +1,6 @@
 "use client"
 
-import { updateProjectFile } from "@/actions/projects/crudFiles.actions"
+import { updateFileReferenceName } from "@/actions/projects/crudFiles.actions"
 import type { File } from "@/generated/prisma/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Ban, Save, SquarePen } from "lucide-react"
@@ -40,10 +40,11 @@ export default function FileReferenceForm({
 
 	async function onSubmit(data: z.infer<typeof formSchema>) {
 		try {
-			const res = await updateProjectFile(projectId, {
-				...file,
-				referenceName: data.referenceName,
-			})
+			const res = await updateFileReferenceName(
+				projectId,
+				file.id,
+				data.referenceName,
+			)
 			if (res.success) {
 				router.refresh()
 				toast.success(res.message)

@@ -32,10 +32,6 @@ export default function FileItem({
 			<ItemContent>
 				<ItemTitle>
 					<FileReferenceForm projectId={projectId} file={file} />
-					{/* {file.referenceName}
-					<Button variant='ghost' size='icon'>
-						<SquarePen className='text-primary' />
-					</Button> */}
 				</ItemTitle>
 				<div className='space-y-1 text-muted-foreground'>
 					<p className='text-xs'>

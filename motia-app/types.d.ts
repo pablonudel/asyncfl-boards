@@ -13,7 +13,8 @@ declare module 'motia' {
 
   interface Handlers {
     'Update Run': ApiRouteHandler<{ userId: string; runId: string; runName: string; entryFile?: string; paramsConfig?: Record<string, unknown>; sbatchConfig?: Record<string, unknown>; pythonVersion?: number; datasetsFiles?: Array<string> }, unknown, never>
-    'Execute Run': ApiRouteHandler<{ userId: string; runId: string; userName: string; userPassword: string }, unknown, never>
+    'Syncing Run': EventHandler<never, never>
+    'Execute Run': ApiRouteHandler<{ userId: string; runId: string; userName: string; userPassword: string }, unknown, { topic: 'Run Config Checked'; data: never }>
     'Create Run': ApiRouteHandler<{ userId: string; jobId: string }, unknown, never>
     'Update Job': ApiRouteHandler<{ userId: string; jobId: string; name: string; description?: string }, unknown, never>
     'Delete Job Files': ApiRouteHandler<{ userId: string; fileName: string; folderId: string; fileType: 'sourceFiles' | 'reqFile' }, unknown, never>
