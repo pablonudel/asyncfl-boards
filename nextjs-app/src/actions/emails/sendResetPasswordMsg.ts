@@ -12,12 +12,12 @@ export async function sendReserPasswordMsg({
 	const emailHtml = await render(ResetPassword({ user, url }))
 	try {
 		await transporter.sendMail({
-			from: '"Sara.IO" <no-reply@laas.fr>',
+			from: '"AsyncFL-Boards" <no-reply@laas.fr>',
 			to: user.email,
 			subject: "Reset Password",
 			text: `Hello ${
 				user.name || "User"
-			},\n\nPlease reset your password by clicking the link below:\n\n${url}\n\nIf you did not request this reset, please ignore this email.\n\nThank you,\nSara Team`,
+			},\n\nPlease reset your password by clicking the link below:\n\n${url}\n\nIf you did not request this reset, please ignore this email.\n\nThank you,\nAsyncFL-Boards`,
 			html: emailHtml,
 		})
 	} catch (error) {

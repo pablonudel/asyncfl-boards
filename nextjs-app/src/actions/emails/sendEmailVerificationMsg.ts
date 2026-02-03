@@ -12,12 +12,12 @@ export async function sendEmailVerificationMsg({
 	const emailHtml = await render(EmailVerification({ user, url }))
 	try {
 		await transporter.sendMail({
-			from: '"Sara.IO" <no-reply@laas.fr>',
+			from: '"AsyncFL-Boards" <no-reply@laas.fr>',
 			to: user.email,
 			subject: "Email Verification",
 			text: `Hello ${
 				user.name || "User"
-			},\n\nPlease verify your email address by clicking the link below:\n\n${url}\n\nIf you did not request this verification, please ignore this email.\n\nThank you,\nSara Team`,
+			},\n\nPlease verify your email address by clicking the link below:\n\n${url}\n\nIf you did not request this verification, please ignore this email.\n\nThank you,\nAsyncFL-Boards`,
 			html: emailHtml,
 		})
 	} catch (error) {

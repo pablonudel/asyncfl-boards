@@ -37,7 +37,7 @@ export default function EmailVerification({
 					<Text>
 						Thank you,
 						<br />
-						Sara Team
+						AsyncFL-Boards
 					</Text>
 				</Container>
 			</Tailwind>

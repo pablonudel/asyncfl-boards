@@ -39,7 +39,7 @@ export default function ResetPassword({
 					<Text>
 						Thank you,
 						<br />
-						Sara Team
+						AsyncFL-Boards
 					</Text>
 				</Container>
 			</Tailwind>
