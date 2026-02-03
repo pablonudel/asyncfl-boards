@@ -43,7 +43,8 @@ export const handler: Handlers["Create Job"] = async (
 	// 1. Preparar identificadores antes de tocar nada
 	const jobId = crypto.randomUUID()
 	const folderId = nanoid(7)
-	const storagePath = join(STORAGE_PATH_BASE, userId, "jobs", folderId)
+	const folderName = `${name.replace(/\s+/g, "_").toLowerCase()}-${folderId}`
+	const storagePath = join(STORAGE_PATH_BASE, userId, "jobs", folderName)
 
 	let folderCreated = false
 

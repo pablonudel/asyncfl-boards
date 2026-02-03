@@ -63,10 +63,9 @@ model Job {
   environmentId String?
   environment   Environment? @relation(fields: [environmentId], references: [id])
 
-  userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  runs        Run[]
-  jobDatasets JobDataset[]
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs   Run[]
 }
 
 model Dataset {
@@ -78,21 +77,8 @@ model Dataset {
   readmeContent String?
   folderId      String  @unique
 
-  userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jobDatasets JobDataset[]
-}
-
-model JobDataset {
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  jobId     String
-  job       Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  datasetId String
-  dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-
-  @@id([jobId, datasetId])
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Run {
@@ -102,13 +88,16 @@ model Run {
   startedAt  DateTime?
   finishedAt DateTime?
 
-  runName      String
-  runFolderId  String  @unique
-  entryFile    String?
-  paramsConfig Json?
-  sbatchConfig Json?
-  status       String  @default("NOT STARTED") // NOT STARTED, PREPARING, QUEUED, RUNNING, COMPLETED, FAILED
-  slurmJobId   Int?
+  runName       String
+  runFolderId   String   @unique
+  entryFile     String?
+  pythonVersion String?
+  paramsConfig  Json?
+  sbatchConfig  Json?
+  status        String   @default("NOT STARTED") // NOT STARTED, PREPARING, QUEUED, RUNNING, COMPLETED, FAILED
+  slurmJobId    Int?
+  datasetsFiles String[] @default([])
+  runSnapshot   Json?
 
   environmentId String?
   environment   Environment? @relation(fields: [environmentId], references: [id])

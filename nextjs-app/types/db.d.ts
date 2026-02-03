@@ -59,12 +59,6 @@ export type Job = {
     environmentId: string | null;
     userId: string;
 };
-export type JobDataset = {
-    createdAt: Generated<Timestamp>;
-    updatedAt: Timestamp;
-    jobId: string;
-    datasetId: string;
-};
 export type pfcCredentials = {
     id: string;
     createdAt: Generated<Timestamp>;
@@ -91,10 +85,13 @@ export type Run = {
     runName: string;
     runFolderId: string;
     entryFile: string | null;
+    pythonVersion: string | null;
     paramsConfig: unknown | null;
     sbatchConfig: unknown | null;
     status: Generated<string>;
     slurmJobId: number | null;
+    datasetsFiles: Generated<string[]>;
+    runSnapshot: unknown | null;
     environmentId: string | null;
     jobId: string;
     userId: string;
@@ -142,7 +139,6 @@ export type DB = {
     Environment: Environment;
     File: File;
     Job: Job;
-    JobDataset: JobDataset;
     pfcCredentials: pfcCredentials;
     Project: Project;
     Run: Run;

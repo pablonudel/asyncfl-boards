@@ -63,15 +63,6 @@
     }
   },
   {
-    "id": "Runs Management",
-    "config": {
-      "steps/runs/createRun.step.ts": {
-        "x": 0,
-        "y": 0
-      }
-    }
-  },
-  {
     "id": "Jobs Management",
     "config": {
       "steps/jobs/updateJob.step.ts": {
@@ -84,6 +75,23 @@
       },
       "steps/jobs/createJob.step.ts": {
         "x": 25,
+        "y": 304
+      }
+    }
+  },
+  {
+    "id": "Runs Management",
+    "config": {
+      "steps/runs/updateRun.step.ts": {
+        "x": 4,
+        "y": 0
+      },
+      "steps/runs/executeRun.step.ts": {
+        "x": 0,
+        "y": 152
+      },
+      "steps/runs/createRun.step.ts": {
+        "x": 4,
         "y": 304
       }
     }

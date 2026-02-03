@@ -26,14 +26,14 @@ export default defineConfig({
 	],
 	app: (app) => {
 		app.post("/api/files-upload", upload.array("files"), async (req, res) => {
-			const { userName, userId, fileType, folderId, readmeContent } = req.body
+			const { userName, userId, fileType, jobId, readmeContent } = req.body
 			const files = req.files as Express.Multer.File[]
 
 			if (!files?.length)
 				return res
 					.status(400)
 					.json({ status: "error", message: "No files provided" })
-			if (!userId || !folderId || !fileType)
+			if (!userId || !jobId || !fileType)
 				return res
 					.status(400)
 					.json({ status: "error", message: "Missing required fields" })
@@ -115,8 +115,8 @@ export default defineConfig({
 			try {
 				const job = await db
 					.selectFrom("Job")
-					.select(["id", "sourceFiles", "environmentId"])
-					.where("folderId", "=", folderId)
+					.select(["id", "sourceFiles", "environmentId", "folderId", "name"])
+					.where("id", "=", jobId)
 					.executeTakeFirst()
 
 				if (!job)
@@ -139,10 +139,11 @@ export default defineConfig({
 					})
 				}
 
+				const folderName = `${job.name.replace(/\s+/g, "_").toLowerCase()}-${job.folderId}`
 				const isSource = fileType === "sourceFiles"
 				const targetDir = isSource
-					? join(STORAGE_PATH_BASE, userId, "jobs", folderId, "source")
-					: join(STORAGE_PATH_BASE, userId, "jobs", folderId)
+					? join(STORAGE_PATH_BASE, userId, "jobs", folderName, "source")
+					: join(STORAGE_PATH_BASE, userId, "jobs", folderName)
 
 				await fs.mkdir(targetDir, { recursive: true })
 
@@ -163,8 +164,6 @@ export default defineConfig({
 						.where("id", "=", job.id)
 						.execute()
 				} else {
-					const reqFileName = uploadedFileNames[0]
-
 					// Lógica de Hash de Requirements
 					const rawContent = files[0].buffer.toString("utf-8")
 					const normalized = rawContent

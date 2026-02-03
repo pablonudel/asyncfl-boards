@@ -11,6 +11,8 @@ const UpdateRunInputSchema = z.object({
 	entryFile: z.string().min(1).optional(),
 	paramsConfig: z.record(z.string(), z.any()).optional(),
 	sbatchConfig: z.record(z.string(), z.any()).optional(),
+	pythonVersion: z.number().optional(),
+	datasetsFiles: z.array(z.string()).optional(),
 })
 
 export const config: ApiRouteConfig = {
@@ -27,8 +29,16 @@ export const handler: Handlers["Update Run"] = async (
 	req: any,
 	{ logger }: any,
 ) => {
-	const { userId, runId, runName, entryFile, paramsConfig, sbatchConfig } =
-		req.body
+	const {
+		userId,
+		runId,
+		runName,
+		entryFile,
+		paramsConfig,
+		sbatchConfig,
+		pythonVersion,
+		datasetsFiles,
+	} = req.body
 
 	const run = await db
 		.selectFrom("Run")
@@ -43,7 +53,7 @@ export const handler: Handlers["Update Run"] = async (
 	const job = await db
 		.selectFrom("Job")
 		.where("id", "=", run.jobId)
-		.select(["folderId"])
+		.select(["folderId", "environmentId"])
 		.executeTakeFirst()
 
 	if (!job) {
@@ -112,6 +122,9 @@ export const handler: Handlers["Update Run"] = async (
 					entryFile: entryFile ?? run.entryFile,
 					paramsConfig: paramsConfig ?? run.paramsConfig,
 					sbatchConfig: sbatchConfig ?? run.sbatchConfig,
+					pythonVersion: pythonVersion ?? run.pythonVersion,
+					datasetsFiles: datasetsFiles ?? run.datasetsFiles,
+					environmentId: job.environmentId,
 				})
 				.where("id", "=", runId)
 				.execute()
