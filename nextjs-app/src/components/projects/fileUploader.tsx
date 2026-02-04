@@ -1,6 +1,6 @@
 "use client"
 
-import { uploadProjectFile } from "@/actions/projects/crudFiles.actions"
+import { uploadFile } from "@/actions/files/crudFiles.actions"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useCallback, useState } from "react"
@@ -8,7 +8,7 @@ import { FileRejection, useDropzone } from "react-dropzone"
 import { toast } from "sonner"
 import { Card, CardContent } from "../ui/card"
 
-export default function FileUploader({ projectId }: { projectId: string }) {
+export default function FileUploader() {
 	const router = useRouter()
 	const [files, setFiles] = useState<
 		Array<{
@@ -21,16 +21,11 @@ export default function FileUploader({ projectId }: { projectId: string }) {
 		if (acceptedFiles.length > 0)
 			setFiles(acceptedFiles.map((file) => ({ file })))
 
-		toast.promise(
-			Promise.all(
-				acceptedFiles.map((file) => uploadProjectFile(projectId, file)),
-			),
-			{
-				loading: `Uploading ${acceptedFiles.length} files...`,
-				success: "Files uploaded successfully!",
-				error: "Error uploading files.",
-			},
-		)
+		toast.promise(Promise.all(acceptedFiles.map((file) => uploadFile(file))), {
+			loading: `Uploading ${acceptedFiles.length} files...`,
+			success: "Files uploaded successfully!",
+			error: "Error uploading files.",
+		})
 	}, [])
 
 	const onDropRejected = useCallback((fileRejections: FileRejection[]) => {

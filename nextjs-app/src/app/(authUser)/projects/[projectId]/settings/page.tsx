@@ -1,7 +1,6 @@
 import { getUserSession } from "@/actions/auth/auth.actions"
 import DeleteProjectButton from "@/components/projects/deleteProjectButton"
 import EditProjectForm from "@/components/projects/editProjectForm"
-import FileItem from "@/components/projects/fileItem"
 import FileUploader from "@/components/projects/fileUploader"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { getUserProjectById } from "@/data/projectsData"
@@ -34,7 +33,7 @@ export default async function Page({
 								<span className=' text-muted-foreground font-light'>/</span>
 								<h1 className='text-2xl font-bold'>Settings</h1>
 							</div>
-							<DeleteProjectButton projectId={project.id} />
+							<DeleteProjectButton projectId={project?.id} />
 						</div>
 						<div className='flex flex-col xl:flex-row gap-4'>
 							<div className='w-full xl:w-1/2 space-y-4'>
@@ -47,7 +46,7 @@ export default async function Page({
 									</CardContent>
 								</Card>
 							</div>
-							<div className='flex flex-col w-full xl:w-1/2 space-y-4'>
+							{/* <div className='flex flex-col w-full xl:w-1/2 space-y-4'>
 								<Card>
 									<CardHeader>
 										<h2 className='text-lg font-semibold'>Project Files</h2>
@@ -60,7 +59,7 @@ export default async function Page({
 														<li key={file.id}>
 															<FileItem file={file} projectId={project.id} />
 														</li>
-													)
+													),
 												)}
 											</ul>
 										) : (
@@ -69,7 +68,8 @@ export default async function Page({
 										<FileUploader projectId={project.id} />
 									</CardContent>
 								</Card>
-							</div>
+							</div> */}
+							<FileUploader />
 						</div>
 					</div>
 				)}

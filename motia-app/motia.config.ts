@@ -240,7 +240,7 @@ export default defineConfig({
 			},
 			app.post("/api/upload", upload.single("file"), async (req, res) => {
 				try {
-					const { userId, projectId, fileType } = req.body
+					const { userId, fileType } = req.body
 					const file = req.file as Express.Multer.File
 
 					if (!fileType)
@@ -250,18 +250,12 @@ export default defineConfig({
 
 					// for results files
 					if (fileType === "resultsFile") {
-						if (!file || !userId || !projectId)
+						if (!file || !userId)
 							return res
 								.status(400)
 								.json({ success: false, message: "Missing required fields" })
 
-						const targetDir = join(
-							STORAGE_PATH_BASE,
-							userId,
-							"projects",
-							projectId,
-							"project-files",
-						)
+						const targetDir = join(STORAGE_PATH_BASE, userId, "files")
 						await fs.mkdir(targetDir, { recursive: true })
 
 						const safeName = basename(file.originalname)
@@ -278,7 +272,7 @@ export default defineConfig({
 
 						let shape = null
 						try {
-							shape = (await readNpyFile(userId, projectId, safeName)).shape
+							shape = (await readNpyFile(userId, safeName)).shape
 						} catch (error) {
 							console.error("Error reading file shape:", error)
 							return res

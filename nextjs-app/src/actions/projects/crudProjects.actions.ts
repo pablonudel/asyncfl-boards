@@ -5,11 +5,11 @@ import { createProjectSchema } from "@/lib/schemas/projectSchema"
 import { GetSession } from "@/lib/session"
 import { revalidatePath, revalidateTag } from "next/cache"
 import * as z from "zod"
-import { removeAllProjectFiles } from "./crudFiles.actions"
+// import { removeAllProjectFiles } from "./crudFiles.actions"
 
 export async function createProject(
 	userId: string,
-	data: z.infer<typeof createProjectSchema>
+	data: z.infer<typeof createProjectSchema>,
 ) {
 	try {
 		const session = await GetSession()
@@ -51,7 +51,7 @@ export async function getProjectsNames(userId: string) {
 
 export async function updateProject(
 	projectId: string,
-	data: z.infer<typeof createProjectSchema>
+	data: z.infer<typeof createProjectSchema>,
 ) {
 	try {
 		const session = await GetSession()
@@ -88,7 +88,7 @@ export async function updateProject(
 
 export async function updateProjectWidgetsOrder(
 	projectId: string,
-	widgetsOrder: string[]
+	widgetsOrder: string[],
 ) {
 	try {
 		const session = await GetSession()
@@ -129,23 +129,23 @@ export async function deleteProject(projectId: string) {
 		if (!own) return { success: false, message: "Project not found" }
 
 		// Delete files first (best-effort if tienes helper externo)
-		const resFilesDeleting = await removeAllProjectFiles(
-			session.user.id,
-			projectId
-		)
-		if (!resFilesDeleting.success) {
-			return { success: false, message: resFilesDeleting.message }
-		}
+		// const resFilesDeleting = await removeAllProjectFiles(
+		// 	session.user.id,
+		// 	projectId
+		// )
+		// if (!resFilesDeleting.success) {
+		// 	return { success: false, message: resFilesDeleting.message }
+		// }
 
-		const files = await prisma.file.findMany({
-			where: { projectId },
-			select: { id: true, fileName: true },
-		})
-		for (const f of files) {
-			try {
-				await prisma.file.delete({ where: { id: f.id } })
-			} catch {}
-		}
+		// const files = await prisma.file.findMany({
+		// 	where: { projectId },
+		// 	select: { id: true, fileName: true },
+		// })
+		// for (const f of files) {
+		// 	try {
+		// 		await prisma.file.delete({ where: { id: f.id } })
+		// 	} catch {}
+		// }
 
 		await prisma.project.delete({ where: { id: projectId } })
 

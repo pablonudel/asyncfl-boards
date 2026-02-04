@@ -1,6 +1,6 @@
 "use client"
 
-import { removeProjectFile } from "@/actions/projects/crudFiles.actions"
+import { removeProjectFile } from "@/actions/files/crudFiles.actions"
 import type { File } from "@/generated/prisma/client"
 import { Trash } from "lucide-react"
 import { useRouter } from "next/navigation"

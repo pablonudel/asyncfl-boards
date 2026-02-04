@@ -1,6 +1,6 @@
 "use client"
 
-import { updateFileReferenceName } from "@/actions/projects/crudFiles.actions"
+import { updateFileReferenceName } from "@/actions/files/crudFiles.actions"
 import type { File } from "@/generated/prisma/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Ban, Save, SquarePen } from "lucide-react"

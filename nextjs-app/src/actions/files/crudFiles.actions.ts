@@ -1,16 +1,14 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
-import { S3 } from "@/lib/s3Client"
 import { GetSession } from "@/lib/session"
-import { DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { revalidatePath, revalidateTag } from "next/cache"
 import { unlink } from "node:fs/promises"
 
-export async function getProjectFile(projectId: string, file: string) {
+export async function getFile(userId: string, file: string) {
 	try {
 		const projectFile = await prisma.file.findFirst({
-			where: { fileName: file, project: { id: projectId } },
+			where: { fileName: file, userId: userId },
 		})
 		if (!projectFile) return null
 		return projectFile
@@ -37,7 +35,7 @@ export async function updateFileReferenceName(
 		if (!own) return { success: false, message: "Project not found" }
 
 		const updatedFile = await prisma.file.update({
-			where: { id: fileId, project: { id: projectId } },
+			where: { id: fileId, userId: session.user.id },
 			data: {
 				referenceName: referenceName,
 			},
@@ -100,17 +98,11 @@ export async function updateFileReferenceName(
 // 	}
 // }
 
-export async function uploadProjectFile(projectId: string, file: File) {
+export async function uploadFile(file: File) {
 	try {
 		const session = await GetSession()
 		if (!session || !session.user)
 			return { success: false, message: "Unauthorized" }
-
-		const own = await prisma.project.findFirst({
-			where: { id: projectId, userId: session.user.id },
-			select: { id: true },
-		})
-		if (!own) return { success: false, message: "Project not found" }
 
 		const fileNameOk = /^[a-zA-Z0-9._-]+$/.test(file.name)
 		if (!fileNameOk) return { success: false, message: "Invalid file name." }
@@ -120,7 +112,6 @@ export async function uploadProjectFile(projectId: string, file: File) {
 			body: (() => {
 				const formData = new FormData()
 				formData.append("userId", session.user.id)
-				formData.append("projectId", projectId)
 				formData.append("fileType", "resultsFile")
 				formData.append("file", file)
 				return formData
@@ -132,11 +123,11 @@ export async function uploadProjectFile(projectId: string, file: File) {
 			return { success: false, message: uploadResult.message }
 		}
 
-		const fileExists = await getProjectFile(projectId, file.name)
+		const fileExists = await getFile(session.user.id, file.name)
 		if (fileExists) {
 			try {
 				await prisma.file.update({
-					where: { id: fileExists.id, project: { id: projectId } },
+					where: { id: fileExists.id, userId: session.user.id },
 					data: {
 						fileSize: uploadResult.file.fileSize,
 						fileShape: uploadResult.file.fileShape,
@@ -157,7 +148,7 @@ export async function uploadProjectFile(projectId: string, file: File) {
 						referenceName: file.name,
 						fileSize: uploadResult.file.fileSize,
 						fileShape: uploadResult.file.fileShape,
-						projectId: projectId,
+						userId: session.user.id,
 					},
 				})
 			} catch (error) {
@@ -170,9 +161,9 @@ export async function uploadProjectFile(projectId: string, file: File) {
 		}
 
 		revalidateTag(`projects:${session.user.id}`, "max")
-		revalidateTag(`project:${projectId}`, "max")
-		revalidatePath(`/projects/${projectId}/settings`)
-		revalidatePath(`/projects/${projectId}`)
+		// revalidateTag(`project:${projectId}`, "max")
+		// revalidatePath(`/projects/${projectId}/settings`)
+		// revalidatePath(`/projects/${projectId}`)
 		revalidatePath("/projects")
 		return { success: true, message: uploadResult.message }
 	} catch (error) {
@@ -324,7 +315,7 @@ export async function uploadProjectFile(projectId: string, file: File) {
 // 	}
 // }
 
-export async function removeProjectFile(
+export async function removeFile(
 	projectId: string,
 	fileId: string,
 	fileName: string,
@@ -334,7 +325,7 @@ export async function removeProjectFile(
 		if (!session || !session.user)
 			return { success: false, message: "Unauthorized" }
 
-		const filePath = `${process.env.STORAGE_PATH_BASE}/${session.user.id}/projects/${projectId}/project-files/${fileName}`
+		const filePath = `${process.env.STORAGE_PATH_BASE}/${session.user.id}/files/${fileName}`
 
 		try {
 			await unlink(filePath)
@@ -344,7 +335,7 @@ export async function removeProjectFile(
 		}
 
 		const result = await prisma.file.delete({
-			where: { id: fileId, project: { id: projectId } },
+			where: { id: fileId, userId: session.user.id },
 		})
 		if (!result)
 			return { success: false, message: "Failed to delete file record" }
@@ -361,49 +352,49 @@ export async function removeProjectFile(
 	}
 }
 
-export async function removeAllProjectFiles(userId: string, projectId: string) {
-	try {
-		const project = await prisma.project.findFirst({
-			where: { id: projectId, userId: userId },
-			select: { files: { select: { id: true, fileName: true } } },
-		})
-		if (!project) return { success: false, message: "Project not found" }
+// export async function removeAllProjectFiles(userId: string, projectId: string) {
+// 	try {
+// 		const project = await prisma.project.findFirst({
+// 			where: { id: projectId, userId: userId },
+// 			select: { files: { select: { id: true, fileName: true } } },
+// 		})
+// 		if (!project) return { success: false, message: "Project not found" }
 
-		let count = 0
-		async function recursiveDelete(
-			userId: string,
-			token: string | undefined = undefined,
-		) {
-			//get the files
-			const listCommand = new ListObjectsV2Command({
-				Bucket: `${process.env.S3_BUCKET_NAME}`,
-				Prefix: `${userId}/${projectId}/`,
-				ContinuationToken: token,
-			})
-			let list = await S3.send(listCommand)
-			if (list.KeyCount) {
-				const deleteCommand = new DeleteObjectsCommand({
-					Bucket: `${process.env.S3_BUCKET_NAME}`,
-					Delete: {
-						Objects: list.Contents?.map((item) => ({ Key: item.Key })),
-						Quiet: false,
-					},
-				})
-				let deleted = await S3.send(deleteCommand)
-				if (deleted.Errors)
-					return { success: false, message: "Error deleting some files" }
-				if (deleted.Deleted) count += deleted.Deleted.length
-			}
-			// repeat if more files to delete
-			if (list.NextContinuationToken) {
-				recursiveDelete(list.NextContinuationToken)
-			}
-			// return total deleted count when finished
-			return { success: true, message: `Deleted ${count} files.` }
-		}
-		return recursiveDelete(userId)
-	} catch (error) {
-		console.error("Error removing all project files:", error)
-		return { success: false, message: "Failed to remove project files" }
-	}
-}
+// 		let count = 0
+// 		async function recursiveDelete(
+// 			userId: string,
+// 			token: string | undefined = undefined,
+// 		) {
+// 			//get the files
+// 			const listCommand = new ListObjectsV2Command({
+// 				Bucket: `${process.env.S3_BUCKET_NAME}`,
+// 				Prefix: `${userId}/${projectId}/`,
+// 				ContinuationToken: token,
+// 			})
+// 			let list = await S3.send(listCommand)
+// 			if (list.KeyCount) {
+// 				const deleteCommand = new DeleteObjectsCommand({
+// 					Bucket: `${process.env.S3_BUCKET_NAME}`,
+// 					Delete: {
+// 						Objects: list.Contents?.map((item) => ({ Key: item.Key })),
+// 						Quiet: false,
+// 					},
+// 				})
+// 				let deleted = await S3.send(deleteCommand)
+// 				if (deleted.Errors)
+// 					return { success: false, message: "Error deleting some files" }
+// 				if (deleted.Deleted) count += deleted.Deleted.length
+// 			}
+// 			// repeat if more files to delete
+// 			if (list.NextContinuationToken) {
+// 				recursiveDelete(list.NextContinuationToken)
+// 			}
+// 			// return total deleted count when finished
+// 			return { success: true, message: `Deleted ${count} files.` }
+// 		}
+// 		return recursiveDelete(userId)
+// 	} catch (error) {
+// 		console.error("Error removing all project files:", error)
+// 		return { success: false, message: "Failed to remove project files" }
+// 	}
+// }

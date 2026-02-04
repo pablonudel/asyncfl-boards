@@ -45,7 +45,7 @@ export type File = {
     referenceName: string;
     fileSize: number;
     fileShape: number[];
-    projectId: string;
+    userId: string;
 };
 export type Job = {
     id: string;

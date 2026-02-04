@@ -3,17 +3,11 @@ import { join } from "node:path"
 import { load } from "npyjs"
 import { reshape } from "npyjs/reshape"
 
-export async function readNpyFile(
-	userId: string,
-	projectId: string,
-	fileName: string,
-) {
+export async function readNpyFile(userId: string, fileName: string) {
 	const absolutePath = join(
 		process.env.STORAGE_PATH_BASE!,
 		userId,
-		"projects",
-		projectId,
-		"project-files",
+		"files",
 		fileName,
 	)
 

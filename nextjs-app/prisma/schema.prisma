@@ -33,6 +33,7 @@ model User {
   runs         Run[]
   environments Environment[]
   datasets     Dataset[]
+  files        File[]
 }
 
 model Environment {
@@ -114,7 +115,6 @@ model Project {
 
   name         String
   description  String?
-  files        File[]
   widgets      Widget[]
   widgetsOrder String[] @default([])
 
@@ -128,11 +128,12 @@ model File {
   updatedAt DateTime @updatedAt
 
   fileName      String
-  referenceName String
+  referenceName String @unique
   fileSize      Float
   fileShape     Int[]
-  projectId     String
-  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Widget {

@@ -34,7 +34,6 @@ export async function getUserProjectById(projectId: string, userId: string) {
 	try {
 		const project = await prisma.project.findFirst({
 			where: { id: projectId, userId: userId },
-			include: { files: true },
 		})
 		if (!project) {
 			return { success: false, message: "Project not found" }
@@ -45,11 +44,6 @@ export async function getUserProjectById(projectId: string, userId: string) {
 			...project,
 			createdAt: new Date(project.createdAt),
 			updatedAt: new Date(project.updatedAt),
-			files: project.files.map((file) => ({
-				...file,
-				createdAt: new Date(file.createdAt),
-				updatedAt: new Date(file.updatedAt),
-			})),
 		}
 
 		return { success: true, project: projectWithDates }

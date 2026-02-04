@@ -1,6 +1,6 @@
 "use client"
 
-import { uploadProjectFile } from "@/actions/projects/crudFiles.actions"
+import { uploadFile } from "@/actions/files/crudFiles.actions"
 import { Upload } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useRef } from "react"
@@ -15,9 +15,9 @@ export default function FileUploaderButton({
 	const router = useRouter()
 	const inputRef = useRef<HTMLInputElement>(null)
 
-	async function uploadFile(file: File) {
+	async function HandleUploadFile(file: File) {
 		try {
-			const res = await uploadProjectFile(projectId, file)
+			const res = await uploadFile(file)
 			if (!res.success) {
 				toast.error(res.message)
 				return
@@ -53,7 +53,7 @@ export default function FileUploaderButton({
 
 		if (files.length > 0) {
 			toast.info(`Uploading ${files.length} file(s)...`)
-			files.forEach(uploadFile)
+			files.forEach(HandleUploadFile)
 		}
 
 		// Reset input

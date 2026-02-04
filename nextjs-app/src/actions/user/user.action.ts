@@ -6,7 +6,7 @@ import { GetSession } from "@/lib/session"
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { revalidatePath } from "next/cache"
-import { removeAllProjectFiles } from "../projects/crudFiles.actions"
+// import { removeAllProjectFiles } from "../projects/crudFiles.actions"
 
 export async function GetUserById(userId: string) {
 	try {
@@ -34,7 +34,7 @@ export async function uploadAvatarFile(file: File) {
 		if (session.user.image) {
 			const deleteResponse = await deleteUserAvatarFile(
 				session.user.id,
-				session.user.image
+				session.user.image,
 			)
 			if (!deleteResponse.success) {
 				return {
@@ -128,24 +128,24 @@ export async function deleteUserAvatarFile(userId: string, imageKey: string) {
 	}
 }
 
-export async function DeleteAllUserFiles(userId: string) {
-	try {
-		const user = await prisma.user.findUnique({
-			where: { id: userId },
-			include: { projects: true },
-		})
-		if (!user) return { success: false, message: "User not found" }
+// export async function DeleteAllUserFiles(userId: string) {
+// 	try {
+// 		const user = await prisma.user.findUnique({
+// 			where: { id: userId },
+// 			include: { projects: true },
+// 		})
+// 		if (!user) return { success: false, message: "User not found" }
 
-		if (user.image) {
-			await deleteUserAvatarFile(userId, user.image)
-		}
-		if (user.projects && user.projects.length > 0) {
-			for (const project of user.projects) {
-				await removeAllProjectFiles(userId, project.id)
-			}
-		}
-	} catch (error) {
-		console.error("Error deleting user files:", error)
-		return { success: false, message: "Failed to delete user files" }
-	}
-}
+// 		if (user.image) {
+// 			await deleteUserAvatarFile(userId, user.image)
+// 		}
+// 		if (user.projects && user.projects.length > 0) {
+// 			for (const project of user.projects) {
+// 				await removeAllProjectFiles(userId, project.id)
+// 			}
+// 		}
+// 	} catch (error) {
+// 		console.error("Error deleting user files:", error)
+// 		return { success: false, message: "Failed to delete user files" }
+// 	}
+// }
