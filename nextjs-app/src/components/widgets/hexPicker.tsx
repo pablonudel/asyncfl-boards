@@ -21,7 +21,7 @@ import {
 import { useState } from "react"
 import { parseColor } from "react-aria-components"
 import { Controller, UseFormReturn } from "react-hook-form"
-import { Field, FieldLabel } from "../ui/field"
+import { Field } from "../ui/field"
 
 export default function HexPicker({
 	index,
@@ -33,10 +33,10 @@ export default function HexPicker({
 	dataItem: string
 }) {
 	const [color, setColor] = useState(
-		parseColor(formData.getValues(`dataConfig.${index}.${dataItem}.color`))
+		parseColor(formData.getValues(`dataConfig.${index}.${dataItem}.color`)),
 	)
 	const [inputValue, setInputValue] = useState(
-		formData.getValues(`dataConfig.${index}.${dataItem}.color`)
+		formData.getValues(`dataConfig.${index}.${dataItem}.color`),
 	)
 
 	const path = `dataConfig.${index}.${dataItem}.color`
@@ -73,18 +73,18 @@ export default function HexPicker({
 			name={`dataConfig.${index}.line.color`}
 			control={formData.control}
 			render={({ field, fieldState }) => (
-				<Field className='mb-4' data-invalid={fieldState.invalid}>
-					<div className='flex items-center gap-2'>
-						<FieldLabel
+				<Field data-invalid={fieldState.invalid}>
+					<div className='space-y-3'>
+						{/* <FieldLabel
 							className='block text-sm font-medium'
 							aria-label='Hex Color'>
 							{dataItem.charAt(0).toUpperCase() + dataItem.slice(1)} Color
-						</FieldLabel>
+						</FieldLabel> */}
 						<ColorPicker value={color} onChange={handleColorChange}>
 							<Popover modal={true}>
 								<PopoverTrigger asChild>
 									<ColorSwatch
-										className='rounded-md border-2'
+										className='rounded-md border-2 h-9 w-9 cursor-pointer'
 										aria-label={`${dataItem} color swatch`}
 									/>
 								</PopoverTrigger>

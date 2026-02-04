@@ -58,7 +58,7 @@ export default function WidgetContainer({
 					!isFullColumn ? "lg:col-span-1" : ""
 				} ${isFullColumn ? "col-span-2" : ""} ${
 					isDragging ? "opacity-50" : "opacity-100"
-				}`
+				}`,
 			)}>
 			<WidgetCardMenu
 				projectId={projectId}
@@ -70,7 +70,7 @@ export default function WidgetContainer({
 			/>
 			<div className='py-8 px-2'>
 				<CardContent>
-					{widget.type!.startsWith("scatter") && (
+					{widget.type === "scatter.rounds" && (
 						<ScatterWidget widget={widget} isFullColumn={isFullColumn} />
 					)}
 					{/* Other widget types to be implemented... */}

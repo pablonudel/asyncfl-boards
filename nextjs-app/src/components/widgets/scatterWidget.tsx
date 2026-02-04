@@ -11,7 +11,67 @@ import { useEffect, useMemo, useRef, useState } from "react"
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false })
 
-export default function ScatterWidget({
+type MeanStd = { mean: number[]; std: number[] }
+type MinMax = { min: number[]; max: number[] }
+
+function meanStdPerRound(data: number[][][], metricIndex: 0 | 1): MeanStd {
+	const sims = data.length
+	const rounds = data[0]?.length ?? 0
+	const mean = new Array(rounds).fill(0)
+	const std = new Array(rounds).fill(0)
+
+	for (let r = 0; r < rounds; r++) {
+		let sum = 0
+		for (let s = 0; s < sims; s++) {
+			sum += data[s][r][metricIndex]
+		}
+		mean[r] = sum / sims
+	}
+
+	for (let r = 0; r < rounds; r++) {
+		let acc = 0
+		for (let s = 0; s < sims; s++) {
+			const diff = data[s][r][metricIndex] - mean[r]
+			acc += diff * diff
+		}
+		std[r] = Math.sqrt(acc / sims)
+	}
+
+	return { mean, std }
+}
+
+function getMinMaxPerRound(data: number[][][], metricIndex: 0 | 1): MinMax {
+	const rounds = data[0]?.length ?? 0
+	const min = new Array(rounds).fill(Infinity)
+	const max = new Array(rounds).fill(-Infinity)
+
+	for (let r = 0; r < rounds; r++) {
+		for (let s = 0; s < data.length; s++) {
+			const value = data[s][r][metricIndex]
+			if (value < min[r]) min[r] = value
+			if (value > max[r]) max[r] = value
+		}
+	}
+
+	return { min, max }
+}
+
+function hexToRgba(hex: string, alpha = 0.2) {
+	const cleaned = hex.replace("#", "")
+	const isShort = cleaned.length === 3
+	const full = isShort
+		? cleaned
+				.split("")
+				.map((c) => c + c)
+				.join("")
+		: cleaned
+	const r = parseInt(full.slice(0, 2), 16)
+	const g = parseInt(full.slice(2, 4), 16)
+	const b = parseInt(full.slice(4, 6), 16)
+	return `rgba(${r},${g},${b},${alpha})`
+}
+
+export default function ScatterDeviation({
 	widget,
 	isFullColumn,
 }: {
@@ -30,7 +90,7 @@ export default function ScatterWidget({
 			? widget.config
 			: {}
 
-	const widgetDataConfig = (config as Record<string, any>).dataConfig || {}
+	const widgetDataConfig = (config as Record<string, any>).dataConfig || []
 	const widgetLayoutConfig = (config as Record<string, any>).layoutConfig || {}
 
 	const configRevision = useMemo(() => {
@@ -44,14 +104,11 @@ export default function ScatterWidget({
 		}
 	}, [widgetDataConfig, widgetLayoutConfig, widget.id])
 
-	// Force re-render when isFullColumn changes
 	useEffect(() => {
 		setPlotKey((prev) => prev + 1)
 	}, [isFullColumn, configRevision])
 
-	// Function to read data from source file
 	async function getDataFromSource(userId: string, source: string) {
-		// const cacheBust = Date.now()
 		return await readNpyFile(userId!, widget.projectId!, source)
 	}
 
@@ -69,49 +126,122 @@ export default function ScatterWidget({
 						plotConfig.source,
 					)
 
-					const sourceData = source.array
+					const sourceData = source.array as number[][][]
 					const sourceShape = source.shape
-					const xData =
+					const rounds =
 						sourceShape.length > 2
 							? source.array[0].length
 							: await getDataFromSource(session.user.id, plotConfig.x).then(
 									(res) => res.array[0].length,
 								)
 
-					return {
-						x: Array.from({ length: xData }, (_, i) => i + 1),
-						y: shapeYData(
-							sourceShape,
-							plotConfig.aggregationMode,
-							sourceData,
-							plotConfig.y,
-							plotConfig.normalizeMode,
-							xData,
-						),
+					const metricIndex = (plotConfig.y ?? 0) as 0 | 1
+					const aggregationMode = plotConfig.aggregationMode ?? "average"
+					const showBand = plotConfig.showBand ?? "none"
+					const color = plotConfig.line?.color ?? "#3b82f6"
+					const bandFill = hexToRgba(color, 0.3)
+
+					const x = Array.from({ length: rounds }, (_, i) => i + 1)
+
+					// Calcular la línea principal según el modo de agregación
+					const mainLine = shapeYData(
+						sourceShape,
+						aggregationMode,
+						sourceData,
+						metricIndex,
+						plotConfig.normalizeMode ?? false,
+						rounds,
+					)
+
+					const traces: any[] = []
+
+					// Agregar banda si aggregationMode es average
+					if (aggregationMode === "average") {
+						if (showBand === "stddev") {
+							const { mean, std } = meanStdPerRound(sourceData, metricIndex)
+							const upper = mean.map((m, i) => m + std[i])
+							const lower = mean.map((m, i) => m - std[i])
+
+							traces.push(
+								{
+									x,
+									y: upper,
+									type: "scatter",
+									mode: "lines",
+									shape: "spline",
+									line: { color: "transparent", shape: "spline" },
+									showlegend: false,
+									name: `${plotConfig.name ?? "mean"} Std Dev`,
+								},
+								{
+									x,
+									y: lower,
+									type: "scatter",
+									mode: "lines",
+									fill: "tonexty",
+									fillcolor: bandFill,
+									line: { color: "transparent", shape: "spline" },
+									name: `${plotConfig.name ?? "mean"} Std Dev`,
+								},
+							)
+						} else if (showBand === "minmax") {
+							const { min, max } = getMinMaxPerRound(sourceData, metricIndex)
+
+							traces.push(
+								{
+									x,
+									y: max,
+									type: "scatter",
+									mode: "lines",
+									showlegend: false,
+									line: { color: "transparent", shape: "spline" },
+									name: `${plotConfig.name ?? "mean"} Min/Max`,
+								},
+								{
+									x,
+									y: min,
+									type: "scatter",
+									mode: "lines",
+									fill: "tonexty",
+									fillcolor: bandFill,
+									line: { color: "transparent", shape: "spline" },
+									name: `${plotConfig.name ?? "mean"} Min/Max`,
+								},
+							)
+						}
+					}
+
+					// Línea principal
+					traces.push({
+						x,
+						y: mainLine,
 						type: "scatter",
-						mode: plotConfig.mode,
-						name: plotConfig.name,
+						mode: plotConfig.mode ?? "lines",
+						name: plotConfig.name ?? "mean",
 						line: {
-							shape: plotConfig.line.shape,
-							dash: plotConfig.line.dash,
-							width: plotConfig.line.width,
-							color: plotConfig.line.color,
+							shape: plotConfig.line?.shape ?? "spline",
+							dash: plotConfig.line?.dash ?? "solid",
+							width: plotConfig.line?.width ?? 2,
+							color,
 						},
 						marker: {
-							symbol: plotConfig.marker.symbol,
-							size: plotConfig.marker.size,
-							color: plotConfig.marker.color,
+							color: plotConfig.marker?.color ?? color,
+							size: plotConfig.marker?.size ?? 6,
+							symbol: plotConfig.marker?.symbol ?? "circle",
 						},
-						hoverinfo: plotConfig.hoverinfo,
+						hoverinfo: plotConfig.hoverinfo ?? "all",
 						hovertemplate: plotConfig.hovertemplate,
-					}
-				} catch (error) {
+					})
+
+					return traces
+				} catch {
 					setErrorMsg("Error loading data from source")
 					setIsLoading(false)
+					return []
 				}
 			})
 
-			const resolvedData = await Promise.all(plotPromises)
+			const resolvedData = (await Promise.all(plotPromises)).flat()
 			setDataConfig(resolvedData)
 			setIsLoading(false)
 		}
@@ -126,32 +256,32 @@ export default function ScatterWidget({
 		height: widgetLayoutConfig.height,
 		scattermode: widgetLayoutConfig.scattermode,
 		xaxis: {
-			title: { text: widgetLayoutConfig.xaxis.title },
-			showgrid: widgetLayoutConfig.xaxis.showgrid,
-			griddash: widgetLayoutConfig.xaxis.griddash,
-			side: widgetLayoutConfig.xaxis.side,
-			tickangle: widgetLayoutConfig.xaxis.tickangle,
-			tickprefix: widgetLayoutConfig.xaxis.tickprefix,
-			ticksuffix: widgetLayoutConfig.xaxis.ticksuffix,
-			visible: widgetLayoutConfig.xaxis.visible,
+			title: { text: widgetLayoutConfig.xaxis?.title },
+			showgrid: widgetLayoutConfig.xaxis?.showgrid,
+			griddash: widgetLayoutConfig.xaxis?.griddash,
+			side: widgetLayoutConfig.xaxis?.side,
+			tickangle: widgetLayoutConfig.xaxis?.tickangle,
+			tickprefix: widgetLayoutConfig.xaxis?.tickprefix,
+			ticksuffix: widgetLayoutConfig.xaxis?.ticksuffix,
+			visible: widgetLayoutConfig.xaxis?.visible,
 			gridcolor: theme === "light" ? "#d4d4d4" : "#444444",
 		},
 		yaxis: {
-			title: { text: widgetLayoutConfig.yaxis.title },
-			showgrid: widgetLayoutConfig.yaxis.showgrid,
-			griddash: widgetLayoutConfig.yaxis.griddash,
-			side: widgetLayoutConfig.yaxis.side,
-			tickangle: widgetLayoutConfig.yaxis.tickangle,
-			tickprefix: widgetLayoutConfig.yaxis.tickprefix,
-			ticksuffix: widgetLayoutConfig.yaxis.ticksuffix,
-			visible: widgetLayoutConfig.yaxis.visible,
+			title: { text: widgetLayoutConfig.yaxis?.title },
+			showgrid: widgetLayoutConfig.yaxis?.showgrid,
+			griddash: widgetLayoutConfig.yaxis?.griddash,
+			side: widgetLayoutConfig.yaxis?.side,
+			tickangle: widgetLayoutConfig.yaxis?.tickangle,
+			tickprefix: widgetLayoutConfig.yaxis?.tickprefix,
+			ticksuffix: widgetLayoutConfig.yaxis?.ticksuffix,
+			visible: widgetLayoutConfig.yaxis?.visible,
 			gridcolor: theme === "light" ? "#d4d4d4" : "#444444",
 		},
 		legend: {
-			orientation: widgetLayoutConfig.legend.orientation,
-			x: widgetLayoutConfig.legend.x,
-			y: widgetLayoutConfig.legend.y,
-			visible: widgetLayoutConfig.legend.visible,
+			orientation: widgetLayoutConfig.legend?.orientation,
+			x: widgetLayoutConfig.legend?.x,
+			y: widgetLayoutConfig.legend?.y,
+			visible: widgetLayoutConfig.legend?.visible,
 			bgcolor: "transparent",
 			bordercolor: "transparent",
 		},
@@ -161,9 +291,7 @@ export default function ScatterWidget({
 		font: { color: theme === "light" ? "#0a0a0a" : "#ffffff" },
 	}
 
-	if (isLoading) {
-		return <div>Loading chart...</div>
-	}
+	if (isLoading) return <div>Loading chart...</div>
 
 	if (errorMsg) {
 		return (

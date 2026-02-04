@@ -79,6 +79,7 @@ export default function ScatterDialog({
 			dataConfig.push({
 				source: plot.source,
 				aggregationMode: plot.aggregationMode,
+				showBand: plot.showBand,
 				normalizeMode: plot.normalizeMode,
 				x: plot.x,
 				y: plot.y,
@@ -164,6 +165,7 @@ export default function ScatterDialog({
 							{
 								source: "",
 								aggregationMode: "average",
+								showBand: "none",
 								normalizeMode: false,
 								x: "",
 								y: 0,
@@ -171,7 +173,7 @@ export default function ScatterDialog({
 								mode: "lines",
 								name: "",
 								line: {
-									shape: "linear",
+									shape: "spline",
 									dash: "solid",
 									width: 2,
 									color: "#3333CC",
@@ -195,14 +197,14 @@ export default function ScatterDialog({
 				res = await updateScatterConfig(
 					widgetId,
 					data.dataConfig,
-					data.layoutConfig
+					data.layoutConfig,
 				)
 			} else {
 				res = await createScatterWidget(
 					projectId,
 					data.dataConfig,
 					data.layoutConfig,
-					type
+					type,
 				)
 			}
 			if (!res.success) {

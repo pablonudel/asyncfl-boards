@@ -18,6 +18,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { File } from "@/generated/prisma/client"
 import {
@@ -25,7 +26,7 @@ import {
 	plotDataSchema,
 } from "@/lib/schemas/scatterWidgetSchema"
 import { ChartSpline, Trash } from "lucide-react"
-import { Activity } from "react"
+import { Activity, useState } from "react"
 import { Controller, useFieldArray, UseFormReturn } from "react-hook-form"
 import { z } from "zod"
 import HexPicker from "../../hexPicker"
@@ -47,13 +48,15 @@ export default function DataTab({
 		control: formData.control,
 		name: "dataConfig",
 	})
+	const [openItem, setOpenItem] = useState<string | undefined>(undefined)
 
 	const allowedFiles = projectFiles.filter(
-		(file) => file.fileShape.length === 3
+		(file) => file.fileShape.length === 3,
 	)
 
 	function addPlot() {
 		append(defaultPlot)
+		setOpenItem(`plot-${fields.length}`)
 	}
 
 	function removePlot(index: number) {
@@ -112,7 +115,8 @@ export default function DataTab({
 				<Accordion
 					type='single'
 					collapsible
-					defaultValue={`plot-${fields.length - 1}`}>
+					value={openItem}
+					onValueChange={(value) => setOpenItem(value || undefined)}>
 					{/* Plot Item */}
 					{fields.map((field, index) => (
 						<AccordionItem key={field.id} value={`plot-${index}`}>
@@ -182,7 +186,7 @@ export default function DataTab({
 													)}
 												/>
 											</div>
-											<div className='flex items-start gap-4'>
+											<div className='flex items-start gap-2'>
 												{projectFiles.length > 0 ? (
 													<Select
 														onValueChange={(value) => {
@@ -227,39 +231,13 @@ export default function DataTab({
 											? "visible"
 											: "hidden"
 									}>
-									<div className='flex gap-2'>
-										<Controller
-											name={`dataConfig.${index}.aggregationMode`}
-											control={formData.control}
-											render={({ field, fieldState }) => (
-												<Field
-													className='mb-4 flex-1'
-													data-invalid={fieldState.invalid}>
-													<FieldLabel className='text-sm font-medium w-full'>
-														Sims Aggregation
-													</FieldLabel>
-													<Select
-														value={field.value}
-														onValueChange={field.onChange}>
-														<SelectTrigger className='w-full bg-background'>
-															<SelectValue defaultValue={field.value} />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value='average'>Average</SelectItem>
-															<SelectItem value='sum'>Sum</SelectItem>
-															<SelectItem value='min'>Min</SelectItem>
-															<SelectItem value='max'>Max</SelectItem>
-														</SelectContent>
-													</Select>
-												</Field>
-											)}
-										/>
+									<div className='flex flex-col md:flex-row gap-2 mb-4'>
 										<Controller
 											name={`dataConfig.${index}.y`}
 											control={formData.control}
 											render={({ field, fieldState }) => (
 												<Field
-													className='mb-4 flex-1'
+													className='flex-1'
 													data-invalid={fieldState.invalid}>
 													<FieldLabel className='block text-sm font-medium'>
 														Y Data (Results)
@@ -292,14 +270,75 @@ export default function DataTab({
 												</Field>
 											)}
 										/>
+										<Controller
+											name={`dataConfig.${index}.aggregationMode`}
+											control={formData.control}
+											render={({ field, fieldState }) => (
+												<Field
+													className='flex-1'
+													data-invalid={fieldState.invalid}>
+													<FieldLabel className='text-sm font-medium w-full'>
+														Sims Aggregation
+													</FieldLabel>
+													<Select
+														value={field.value}
+														onValueChange={field.onChange}>
+														<SelectTrigger className='w-full bg-background'>
+															<SelectValue defaultValue={field.value} />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value='average'>Average</SelectItem>
+															<SelectItem value='sum'>Sum</SelectItem>
+															<SelectItem value='min'>Min</SelectItem>
+															<SelectItem value='max'>Max</SelectItem>
+														</SelectContent>
+													</Select>
+												</Field>
+											)}
+										/>
+										<Controller
+											name={`dataConfig.${index}.showBand`}
+											control={formData.control}
+											render={({ field, fieldState }) => (
+												<Field
+													className='flex-1'
+													data-invalid={fieldState.invalid}>
+													<FieldLabel className='text-sm font-medium w-full'>
+														Show Band
+													</FieldLabel>
+													<Select
+														value={field.value}
+														onValueChange={field.onChange}
+														disabled={
+															formData.watch(
+																`dataConfig.${index}.aggregationMode`,
+															) !== "average"
+														}>
+														<SelectTrigger className='w-full bg-background'>
+															<SelectValue defaultValue={field.value} />
+														</SelectTrigger>
+														<SelectContent>
+															<SelectItem value='none'>None</SelectItem>
+															<SelectItem value='stddev'>
+																Standard Deviation
+															</SelectItem>
+															<SelectItem value='minmax'>Min/Max</SelectItem>
+														</SelectContent>
+													</Select>
+												</Field>
+											)}
+										/>
 									</div>
+
+									<Separator className='my-8' />
+
 									<Controller
 										name={`dataConfig.${index}.mode`}
 										control={formData.control}
 										render={({ field, fieldState }) => (
 											<Field className='mb-4' data-invalid={fieldState.invalid}>
 												<FieldLabel className='block text-sm font-medium'>
-													Plot Mode
+													Trace Mode
 												</FieldLabel>
 												<Select
 													onValueChange={field.onChange}
@@ -318,104 +357,76 @@ export default function DataTab({
 											</Field>
 										)}
 									/>
-									<div className='flex gap-2'>
+									<div className='flex flex-col lg:flex-row gap-2'>
 										{/* Lines Config */}
 										{formData
 											.watch(`dataConfig.${index}.mode`)
 											.match(/line/g) && (
 											<div className='border border-border rounded-md p-4 mb-4 w-full'>
 												<h4 className='font-medium mb-4'>Line Configuration</h4>
-												<Controller
-													name={`dataConfig.${index}.line.shape`}
-													control={formData.control}
-													render={({ field, fieldState }) => (
-														<Field
-															className='mb-4'
-															data-invalid={fieldState.invalid}>
-															<FieldLabel className='block text-sm font-medium'>
-																Line Shape
-															</FieldLabel>
-															<Select
-																onValueChange={field.onChange}
-																value={field.value}>
-																<SelectTrigger className='w-full bg-background'>
-																	<SelectValue placeholder='Select line shape' />
-																</SelectTrigger>
-																<SelectContent>
-																	<SelectItem value='linear'>Linear</SelectItem>
-																	<SelectItem value='spline'>Spline</SelectItem>
-																	<SelectItem value='hv'>HV</SelectItem>
-																	<SelectItem value='vh'>VH</SelectItem>
-																	<SelectItem value='hvh'>HVH</SelectItem>
-																	<SelectItem value='vhv'>VHV</SelectItem>
-																</SelectContent>
-															</Select>
-														</Field>
-													)}
-												/>
-												<Controller
-													name={`dataConfig.${index}.line.dash`}
-													control={formData.control}
-													render={({ field, fieldState }) => (
-														<Field
-															className='mb-4'
-															data-invalid={fieldState.invalid}>
-															<FieldLabel className='block text-sm font-medium'>
-																Line Style
-															</FieldLabel>
-															<Select
-																onValueChange={field.onChange}
-																value={field.value}>
-																<SelectTrigger className='w-full bg-background'>
-																	<SelectValue placeholder='Select line dash style' />
-																</SelectTrigger>
-																<SelectContent>
-																	<SelectItem value='solid'>Solid</SelectItem>
-																	<SelectItem value='dot'>Dot</SelectItem>
-																	<SelectItem value='dash'>Dash</SelectItem>
-																	<SelectItem value='longdash'>
-																		Long Dash
-																	</SelectItem>
-																	<SelectItem value='dashdot'>
-																		Dash Dot
-																	</SelectItem>
-																	<SelectItem value='longdashdot'>
-																		Long Dash Dot
-																	</SelectItem>
-																</SelectContent>
-															</Select>
-														</Field>
-													)}
-												/>
-												<Controller
-													name={`dataConfig.${index}.line.width`}
-													control={formData.control}
-													render={({ field, fieldState }) => (
-														<Field
-															className='mb-4'
-															data-invalid={fieldState.invalid}>
-															<FieldLabel className='block text-sm font-medium'>
-																Line Width
-															</FieldLabel>
-															<Input
-																{...field}
-																type='number'
-																min={1}
-																max={10}
-																placeholder='Enter line width'
-																className='bg-background'
-															/>
-															{fieldState.invalid && (
-																<FieldError errors={[fieldState.error]} />
-															)}
-														</Field>
-													)}
-												/>
-												<HexPicker
-													index={index}
-													formData={formData}
-													dataItem='line'
-												/>
+												<div className='flex gap-2 items-end'>
+													<Controller
+														name={`dataConfig.${index}.line.dash`}
+														control={formData.control}
+														render={({ field, fieldState }) => (
+															<Field data-invalid={fieldState.invalid}>
+																<FieldLabel className='block text-sm font-medium'>
+																	Style
+																</FieldLabel>
+																<Select
+																	onValueChange={field.onChange}
+																	value={field.value}>
+																	<SelectTrigger className='w-full bg-background'>
+																		<SelectValue placeholder='Select line dash style' />
+																	</SelectTrigger>
+																	<SelectContent>
+																		<SelectItem value='solid'>Solid</SelectItem>
+																		<SelectItem value='dot'>Dot</SelectItem>
+																		<SelectItem value='dash'>Dash</SelectItem>
+																		<SelectItem value='longdash'>
+																			Long Dash
+																		</SelectItem>
+																		<SelectItem value='dashdot'>
+																			Dash Dot
+																		</SelectItem>
+																		<SelectItem value='longdashdot'>
+																			Long Dash Dot
+																		</SelectItem>
+																	</SelectContent>
+																</Select>
+															</Field>
+														)}
+													/>
+													<Controller
+														name={`dataConfig.${index}.line.width`}
+														control={formData.control}
+														render={({ field, fieldState }) => (
+															<Field data-invalid={fieldState.invalid}>
+																<FieldLabel className='block text-sm font-medium'>
+																	Width
+																</FieldLabel>
+																<Input
+																	{...field}
+																	type='number'
+																	min={1}
+																	max={10}
+																	placeholder='Enter line width'
+																	className='bg-background'
+																/>
+																{fieldState.invalid && (
+																	<FieldError errors={[fieldState.error]} />
+																)}
+															</Field>
+														)}
+													/>
+													<div className='flex-none'>
+														<HexPicker
+															index={index}
+															formData={formData}
+															dataItem='line'
+														/>
+													</div>
+												</div>
 											</div>
 										)}
 
@@ -427,143 +438,149 @@ export default function DataTab({
 												<h4 className='font-medium mb-4'>
 													Marker Configuration
 												</h4>
-												<Controller
-													name={`dataConfig.${index}.marker.symbol`}
-													control={formData.control}
-													render={({ field, fieldState }) => (
-														<Field
-															className='mb-4'
-															data-invalid={fieldState.invalid}>
-															<FieldLabel className='block text-sm font-medium'>
-																Marker Symbol
-															</FieldLabel>
-															<Select
-																onValueChange={field.onChange}
-																value={field.value}>
-																<SelectTrigger className='w-full bg-background'>
-																	<SelectValue placeholder='Select marker symbol' />
-																</SelectTrigger>
-																<SelectContent>
-																	<SelectItem value='circle'>Circle</SelectItem>
-																	<SelectItem value='circle-open'>
-																		Circle Open
-																	</SelectItem>
-																	<SelectItem value='circle-dot'>
-																		Circle Dot
-																	</SelectItem>
-																	<SelectItem value='circle-open-dot'>
-																		Circle Open Dot
-																	</SelectItem>
-																	<SelectItem value='square'>Square</SelectItem>
-																	<SelectItem value='square-open'>
-																		Square Open
-																	</SelectItem>
-																	<SelectItem value='square-dot'>
-																		Square Dot
-																	</SelectItem>
-																	<SelectItem value='square-open-dot'>
-																		Square Open Dot
-																	</SelectItem>
-																	<SelectItem value='diamond'>
-																		Diamond
-																	</SelectItem>
-																	<SelectItem value='diamond-open'>
-																		Diamond Open
-																	</SelectItem>
-																	<SelectItem value='diamond-dot'>
-																		Diamond Dot
-																	</SelectItem>
-																	<SelectItem value='diamond-open-dot'>
-																		Diamond Open Dot
-																	</SelectItem>
-																	<SelectItem value='cross-open'>
-																		Cross Open
-																	</SelectItem>
-																	<SelectItem value='cross-dot'>
-																		Cross Dot
-																	</SelectItem>
-																	<SelectItem value='cross-open-dot'>
-																		Cross Open Dot
-																	</SelectItem>
-																	<SelectItem value='x'>X</SelectItem>
-																	<SelectItem value='x-open'>X Open</SelectItem>
-																	<SelectItem value='x-dot'>X Dot</SelectItem>
-																	<SelectItem value='x-open-dot'>
-																		X Open Dot
-																	</SelectItem>
-																	<SelectItem value='triangle-up'>
-																		Triangle Up
-																	</SelectItem>
-																	<SelectItem value='triangle-up-open'>
-																		Triangle Up Open
-																	</SelectItem>
-																	<SelectItem value='triangle-up-dot'>
-																		Triangle Up Dot
-																	</SelectItem>
-																	<SelectItem value='triangle-up-open-dot'>
-																		Triangle Up Open Dot
-																	</SelectItem>
-																	<SelectItem value='pentagon'>
-																		Pentagon
-																	</SelectItem>
-																	<SelectItem value='pentagon-open'>
-																		Pentagon Open
-																	</SelectItem>
-																	<SelectItem value='pentagon-dot'>
-																		Pentagon Dot
-																	</SelectItem>
-																	<SelectItem value='pentagon-open-dot'>
-																		Pentagon Open Dot
-																	</SelectItem>
-																	<SelectItem value='star'>Star</SelectItem>
-																	<SelectItem value='star-open'>
-																		Star Open
-																	</SelectItem>
-																	<SelectItem value='star-dot'>
-																		Star Dot
-																	</SelectItem>
-																	<SelectItem value='star-open-dot'>
-																		Star Open Dot
-																	</SelectItem>
-																	<SelectItem value='asterisk'>
-																		Asterisk
-																	</SelectItem>
-																	<SelectItem value='asterisk-open'>
-																		Asterisk Open
-																	</SelectItem>
-																</SelectContent>
-															</Select>
-														</Field>
-													)}
-												/>
-												<Controller
-													name={`dataConfig.${index}.marker.size`}
-													control={formData.control}
-													render={({ field, fieldState }) => (
-														<Field
-															className='mb-4'
-															data-invalid={fieldState.invalid}>
-															<FieldLabel className='block text-sm font-medium'>
-																Marker Size
-															</FieldLabel>
-															<Input
-																{...field}
-																type='number'
-																min={1}
-																placeholder='Enter marker size'
-																className='bg-background'
-															/>
-															{fieldState.invalid && (
-																<FieldError errors={[fieldState.error]} />
-															)}
-														</Field>
-													)}
-												/>
-												<HexPicker
-													index={index}
-													formData={formData}
-													dataItem='marker'
-												/>
+												<div className='flex gap-2 items-end'>
+													<Controller
+														name={`dataConfig.${index}.marker.symbol`}
+														control={formData.control}
+														render={({ field, fieldState }) => (
+															<Field data-invalid={fieldState.invalid}>
+																<FieldLabel className='block text-sm font-medium'>
+																	Symbol
+																</FieldLabel>
+																<Select
+																	onValueChange={field.onChange}
+																	value={field.value}>
+																	<SelectTrigger className='w-full bg-background'>
+																		<SelectValue placeholder='Select marker symbol' />
+																	</SelectTrigger>
+																	<SelectContent>
+																		<SelectItem value='circle'>
+																			Circle
+																		</SelectItem>
+																		<SelectItem value='circle-open'>
+																			Circle Open
+																		</SelectItem>
+																		<SelectItem value='circle-dot'>
+																			Circle Dot
+																		</SelectItem>
+																		<SelectItem value='circle-open-dot'>
+																			Circle Open Dot
+																		</SelectItem>
+																		<SelectItem value='square'>
+																			Square
+																		</SelectItem>
+																		<SelectItem value='square-open'>
+																			Square Open
+																		</SelectItem>
+																		<SelectItem value='square-dot'>
+																			Square Dot
+																		</SelectItem>
+																		<SelectItem value='square-open-dot'>
+																			Square Open Dot
+																		</SelectItem>
+																		<SelectItem value='diamond'>
+																			Diamond
+																		</SelectItem>
+																		<SelectItem value='diamond-open'>
+																			Diamond Open
+																		</SelectItem>
+																		<SelectItem value='diamond-dot'>
+																			Diamond Dot
+																		</SelectItem>
+																		<SelectItem value='diamond-open-dot'>
+																			Diamond Open Dot
+																		</SelectItem>
+																		<SelectItem value='cross-open'>
+																			Cross Open
+																		</SelectItem>
+																		<SelectItem value='cross-dot'>
+																			Cross Dot
+																		</SelectItem>
+																		<SelectItem value='cross-open-dot'>
+																			Cross Open Dot
+																		</SelectItem>
+																		<SelectItem value='x'>X</SelectItem>
+																		<SelectItem value='x-open'>
+																			X Open
+																		</SelectItem>
+																		<SelectItem value='x-dot'>X Dot</SelectItem>
+																		<SelectItem value='x-open-dot'>
+																			X Open Dot
+																		</SelectItem>
+																		<SelectItem value='triangle-up'>
+																			Triangle Up
+																		</SelectItem>
+																		<SelectItem value='triangle-up-open'>
+																			Triangle Up Open
+																		</SelectItem>
+																		<SelectItem value='triangle-up-dot'>
+																			Triangle Up Dot
+																		</SelectItem>
+																		<SelectItem value='triangle-up-open-dot'>
+																			Triangle Up Open Dot
+																		</SelectItem>
+																		<SelectItem value='pentagon'>
+																			Pentagon
+																		</SelectItem>
+																		<SelectItem value='pentagon-open'>
+																			Pentagon Open
+																		</SelectItem>
+																		<SelectItem value='pentagon-dot'>
+																			Pentagon Dot
+																		</SelectItem>
+																		<SelectItem value='pentagon-open-dot'>
+																			Pentagon Open Dot
+																		</SelectItem>
+																		<SelectItem value='star'>Star</SelectItem>
+																		<SelectItem value='star-open'>
+																			Star Open
+																		</SelectItem>
+																		<SelectItem value='star-dot'>
+																			Star Dot
+																		</SelectItem>
+																		<SelectItem value='star-open-dot'>
+																			Star Open Dot
+																		</SelectItem>
+																		<SelectItem value='asterisk'>
+																			Asterisk
+																		</SelectItem>
+																		<SelectItem value='asterisk-open'>
+																			Asterisk Open
+																		</SelectItem>
+																	</SelectContent>
+																</Select>
+															</Field>
+														)}
+													/>
+													<Controller
+														name={`dataConfig.${index}.marker.size`}
+														control={formData.control}
+														render={({ field, fieldState }) => (
+															<Field data-invalid={fieldState.invalid}>
+																<FieldLabel className='block text-sm font-medium'>
+																	Size
+																</FieldLabel>
+																<Input
+																	{...field}
+																	type='number'
+																	min={1}
+																	placeholder='Enter marker size'
+																	className='bg-background'
+																/>
+																{fieldState.invalid && (
+																	<FieldError errors={[fieldState.error]} />
+																)}
+															</Field>
+														)}
+													/>
+													<div className='flex-none'>
+														<HexPicker
+															index={index}
+															formData={formData}
+															dataItem='marker'
+														/>
+													</div>
+												</div>
 											</div>
 										)}
 									</div>
@@ -621,7 +638,7 @@ export default function DataTab({
 														className='bg-background'
 														disabled={
 															formData.watch(
-																`dataConfig.${index}.hoverinfo`
+																`dataConfig.${index}.hoverinfo`,
 															) !== "template"
 																? true
 																: false

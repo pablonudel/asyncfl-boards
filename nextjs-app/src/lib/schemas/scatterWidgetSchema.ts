@@ -56,6 +56,7 @@ export const layoutSchema = z.object({
 export const plotDataSchema = z.object({
 	source: z.string().min(1, "Data source must be selected"),
 	aggregationMode: z.enum(["sum", "average", "min", "max"]).default("average"),
+	showBand: z.enum(["none", "stddev", "minmax"]).default("none"),
 	normalizeMode: z.boolean().default(false),
 	x: z.string().min(1, "X data source must be selected"),
 	y: z.coerce.number().min(0, "Y data must be selected"),
@@ -139,6 +140,7 @@ export const defaultPlot: z.infer<typeof plotDataSchema> = {
 	source: "",
 	// selectedData: [],
 	aggregationMode: "average",
+	showBand: "none",
 	normalizeMode: false,
 	x: "",
 	y: 0,
@@ -146,7 +148,7 @@ export const defaultPlot: z.infer<typeof plotDataSchema> = {
 	mode: "lines" as const,
 	name: "",
 	line: {
-		shape: "linear" as const,
+		shape: "spline" as const,
 		dash: "solid" as const,
 		width: 2,
 		color: "#3333CC",
