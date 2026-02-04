@@ -1,12 +1,10 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
-import { S3 } from "@/lib/s3Client"
 import { GetSession } from "@/lib/session"
-import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3"
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { revalidatePath } from "next/cache"
-// import { removeAllProjectFiles } from "../projects/crudFiles.actions"
+import { unlink } from "node:fs/promises"
+import { join } from "path"
 
 export async function GetUserById(userId: string) {
 	try {
@@ -26,126 +24,78 @@ export async function uploadAvatarFile(file: File) {
 		if (!session || !session.user)
 			return { success: false, message: "Unauthorized" }
 
-		if (!/^[a-zA-Z0-9._-]+$/.test(file.name))
-			return { success: false, message: "Invalid file name." }
-		if (file.name.includes(".."))
+		if (
+			!/^[a-zA-Z0-9._-]+$/.test(file.name) ||
+			file.name.includes("..") ||
+			file.name.startsWith(".") ||
+			file.name.endsWith(".")
+		)
 			return { success: false, message: "Invalid file name." }
 
-		if (session.user.image) {
-			const deleteResponse = await deleteUserAvatarFile(
-				session.user.id,
-				session.user.image,
-			)
-			if (!deleteResponse.success) {
-				return {
-					success: false,
-					message: deleteResponse.message,
-				}
-			}
+		const uploadFile = await fetch(`${process.env.MOTIA_API_URL}/api/upload`, {
+			method: "POST",
+			body: (() => {
+				const formData = new FormData()
+				formData.append("userId", session.user.id)
+				formData.append("fileType", "avatarFile")
+				formData.append("file", file)
+				return formData
+			})(),
+		})
+		const uploadResult = await uploadFile.json()
+
+		if (!uploadResult.success) {
+			return { success: false, message: uploadResult.message }
 		}
 
-		const key = `${session.user.id}/${file.name}`
-
-		const command = new PutObjectCommand({
-			Bucket: process.env.S3_BUCKET_NAME,
-			Key: key,
-			ContentType: file.type,
-			ContentLength: file.size,
-		})
-
-		const presignedUrl = await getSignedUrl(S3 as any, command as any, {
-			expiresIn: 3600, // 1h
-		})
-
-		const uploadResponse = await fetch(presignedUrl, {
-			method: "PUT",
-			headers: {
-				"Content-Type": file.type,
+		await prisma.user.update({
+			where: { id: session.user.id },
+			data: {
+				image: uploadResult.file.filename,
 			},
-			body: file,
 		})
 
-		if (!uploadResponse.ok)
-			return { success: false, message: "Failed to upload file" }
-		await UpdateUserAvatar(session.user.id, file.name)
-		return { success: true, presignedUrl, key, message: "File uploaded" }
+		revalidatePath("/profile")
+		return { success: true, message: "File uploaded" }
 	} catch (error) {
 		console.error("Error uploading avatar file:", error)
 		return { success: false, message: "Failed to upload file" }
 	}
 }
 
-export async function UpdateUserAvatar(userId: string, imageKey: string) {
+export async function deleteAvatarFile() {
 	try {
+		const session = await GetSession()
+		if (!session || !session.user)
+			return { success: false, message: "Unauthorized" }
+
+		if (!session.user.image)
+			return { success: false, message: "No avatar to delete" }
+
+		const imagePath = join(
+			`${process.env.STORAGE_PATH_BASE}`,
+			session.user.id,
+			session.user.image,
+		)
+
+		try {
+			await unlink(imagePath)
+		} catch (error) {
+			console.error("Error deleting file from storage:", error)
+			return { success: false, message: "Failed to delete file from storage" }
+		}
+
 		await prisma.user.update({
-			where: { id: userId },
+			where: { id: session.user.id },
 			data: {
-				image: imageKey,
+				image: null,
 			},
 		})
 
 		revalidatePath("/profile")
-		return {
-			success: true,
-		}
-	} catch (error) {
-		console.error("Error updating user:", error)
-		return {
-			success: false,
-		}
-	}
-}
-
-export async function deleteUserAvatarFile(userId: string, imageKey: string) {
-	try {
-		const image = imageKey
-		const key = `${userId}/${imageKey}`
-		const resUserImage = await prisma.user.update({
-			where: { id: userId },
-			data: { image: null },
-		})
-		if (!resUserImage)
-			return { success: false, message: "Failed to remove avatar from user" }
-
-		const command = new DeleteObjectCommand({
-			Bucket: process.env.S3_BUCKET_NAME,
-			Key: key,
-		})
-
-		const result = await S3.send(command)
-		if (result.$metadata.httpStatusCode !== 204) {
-			prisma.user.update({
-				where: { id: userId },
-				data: { image: image },
-			})
-			return { success: false, message: "Failed to delete file from storage" }
-		}
-		revalidatePath("/profile")
-		return { success: true, message: "File deleted from storage" }
+		return { success: true, message: "File deleted successfully" }
 	} catch (error) {
 		console.error("Error deleting user avatar file:", error)
 		return { success: false, message: "Failed to delete file from storage" }
 	}
 }
-
-// export async function DeleteAllUserFiles(userId: string) {
-// 	try {
-// 		const user = await prisma.user.findUnique({
-// 			where: { id: userId },
-// 			include: { projects: true },
-// 		})
-// 		if (!user) return { success: false, message: "User not found" }
-
-// 		if (user.image) {
-// 			await deleteUserAvatarFile(userId, user.image)
-// 		}
-// 		if (user.projects && user.projects.length > 0) {
-// 			for (const project of user.projects) {
-// 				await removeAllProjectFiles(userId, project.id)
-// 			}
-// 		}
-// 	} catch (error) {
-// 		console.error("Error deleting user files:", error)
-// 		return { success: false, message: "Failed to delete user files" }
-// 	}
-// }

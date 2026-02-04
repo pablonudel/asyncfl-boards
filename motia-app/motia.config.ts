@@ -302,8 +302,13 @@ export default defineConfig({
 
 						await fs.mkdir(targetDir, { recursive: true })
 
-						const safeName = basename(file.originalname)
-						const filePath = join(targetDir, safeName)
+						const fileExtension = basename(file.originalname)
+							.split(".")
+							.pop()
+							?.toLowerCase()
+						file.originalname = `profileImage.${fileExtension}`
+
+						const filePath = join(targetDir, file.originalname)
 
 						try {
 							await fs.writeFile(filePath, file.buffer)
@@ -315,7 +320,8 @@ export default defineConfig({
 						}
 						return res.status(200).json({
 							success: true,
-							message: `Avatar file ${safeName} uploaded successfully`,
+							message: `Avatar file ${file.originalname} uploaded successfully`,
+							file: { filename: file.originalname },
 						})
 					}
 				} catch (error) {

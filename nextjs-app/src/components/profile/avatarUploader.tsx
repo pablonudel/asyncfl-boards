@@ -1,9 +1,6 @@
 "use client"
 
-import {
-	deleteUserAvatarFile,
-	uploadAvatarFile,
-} from "@/actions/user/user.action"
+import { deleteAvatarFile, uploadAvatarFile } from "@/actions/user/user.action"
 import { authClient } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 import { Trash, Upload } from "lucide-react"
@@ -21,8 +18,8 @@ export default function AvatarUploader() {
 		refetch()
 	}
 
-	async function deleteFile(userId: string, imageName: string) {
-		await deleteUserAvatarFile(userId, imageName)
+	async function deleteFile() {
+		await deleteAvatarFile()
 		refetch()
 	}
 
@@ -39,13 +36,13 @@ export default function AvatarUploader() {
 		// Do something with the files
 		if (fileRejections.length > 0) {
 			const tooManyFiles = fileRejections.find(
-				(fileRejection) => fileRejection.errors[0].code === "too-many-files"
+				(fileRejection) => fileRejection.errors[0].code === "too-many-files",
 			)
 			const fileTooLarge = fileRejections.find(
-				(fileRejection) => fileRejection.errors[0].code === "file-too-large"
+				(fileRejection) => fileRejection.errors[0].code === "file-too-large",
 			)
 			const invalidFileType = fileRejections.find(
-				(fileRejection) => fileRejection.errors[0].code === "file-invalid-type"
+				(fileRejection) => fileRejection.errors[0].code === "file-invalid-type",
 			)
 
 			if (tooManyFiles) {
@@ -74,7 +71,7 @@ export default function AvatarUploader() {
 		<div
 			className={cn(
 				"rounded-full border-dashed border-2 border-foreground/10 p-1 shadow-none h-28 w-28",
-				isDragActive && "border-solid bg-foreground/5"
+				isDragActive && "border-solid bg-foreground/5",
 			)}
 			{...getRootProps()}>
 			<input {...getInputProps()} />
@@ -87,7 +84,7 @@ export default function AvatarUploader() {
 						height={112}
 						className={cn(
 							"rounded-full h-full w-full object-cover",
-							isDragActive && "opacity-50"
+							isDragActive && "opacity-50",
 						)}
 					/>
 					<Button
@@ -96,7 +93,7 @@ export default function AvatarUploader() {
 						className='absolute bottom-0 right-0 rounded-full h-7 w-7 bg-red-700 hover:bg-red-500 text-white border-background border-2'
 						onClick={(e) => {
 							e.stopPropagation()
-							toast.promise(deleteFile(session.user.id, session.user.image!), {
+							toast.promise(deleteFile(), {
 								loading: "Deleting avatar...",
 								success: "Avatar deleted successfully!",
 								error: "Error deleting avatar.",

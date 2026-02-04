@@ -9,7 +9,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LayoutGrid, User } from "lucide-react"
+import { Files, LayoutGrid, User } from "lucide-react"
 import Link from "next/link"
 import { ModeToggle } from "../general/modeToggle"
 import SignOutItem from "./signOutItem"
@@ -19,7 +19,7 @@ export default async function UserMenu() {
 	if (!session.user) return null
 	const user = session.user
 
-	const avatarPath = `${process.env.NEXT_PUBLIC_S3_BUCKET_URL}/${user.id}/${user.image}`
+	const avatarPath = `${process.env.STORAGE_PATH_BASE}/${user.id}/${user.image}`
 
 	return (
 		<div className='flex gap-2 items-center'>
@@ -51,6 +51,12 @@ export default async function UserMenu() {
 							<Link href='/projects'>
 								<LayoutGrid />
 								Projects
+							</Link>
+						</DropdownMenuItem>
+						<DropdownMenuItem asChild>
+							<Link href='/files'>
+								<Files />
+								Files
 							</Link>
 						</DropdownMenuItem>
 						<DropdownMenuItem asChild>

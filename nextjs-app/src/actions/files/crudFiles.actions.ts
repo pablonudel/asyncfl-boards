@@ -64,7 +64,7 @@ export async function uploadUserFile(file: File) {
 		const fileNameOk = /^[a-zA-Z0-9._-]+$/.test(file.name)
 		if (!fileNameOk) return { success: false, message: "Invalid file name." }
 
-		const uploadFiles = await fetch(`${process.env.MOTIA_API_URL}/api/upload`, {
+		const uploadFile = await fetch(`${process.env.MOTIA_API_URL}/api/upload`, {
 			method: "POST",
 			body: (() => {
 				const formData = new FormData()
@@ -74,7 +74,7 @@ export async function uploadUserFile(file: File) {
 				return formData
 			})(),
 		})
-		const uploadResult = await uploadFiles.json()
+		const uploadResult = await uploadFile.json()
 
 		if (!uploadResult.success) {
 			return { success: false, message: uploadResult.message }
@@ -173,11 +173,7 @@ export async function removeAllUserFiles() {
 		if (!session || !session.user)
 			return { success: false, message: "Unauthorized" }
 
-		const folderPath = join(
-			`${process.env.STORAGE_PATH_BASE}`,
-			session.user.id,
-			"files",
-		)
+		const folderPath = join(`${process.env.STORAGE_PATH_BASE}`, session.user.id)
 
 		await rm(folderPath, {
 			recursive: true,
