@@ -22,7 +22,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 export default function ScatterDialog({
-	projectFiles,
+	userFiles,
 	projectId,
 	widgetConfig,
 	widgetId,
@@ -30,7 +30,7 @@ export default function ScatterDialog({
 	type,
 	mode,
 }: {
-	projectFiles: File[]
+	userFiles: File[]
 	projectId: string
 	widgetConfig?: JsonValue
 	widgetId?: string
@@ -105,15 +105,15 @@ export default function ScatterDialog({
 	}
 
 	useEffect(() => {
-		if (projectFiles.length > 0) {
-			const names = projectFiles.map((file) => ({
+		if (userFiles.length > 0) {
+			const names = userFiles.map((file) => ({
 				fileName: file.fileName,
 				referenceName: file.referenceName,
 				shape: file.fileShape,
 			}))
 			setFiles(names)
 		}
-	}, [projectFiles])
+	}, [userFiles])
 
 	const formSchema = z.object({
 		layoutConfig: layoutSchema,
@@ -234,7 +234,7 @@ export default function ScatterDialog({
 							formData={formData}
 							defaultPlot={defaultPlot}
 							files={files}
-							projectFiles={projectFiles}
+							userFiles={userFiles}
 							projectId={projectId}
 						/>
 					</TabsContent>

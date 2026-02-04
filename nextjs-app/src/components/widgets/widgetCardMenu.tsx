@@ -12,14 +12,14 @@ import AddEditDialog from "./dialogs/addEditDialog"
 
 export default function WidgetCardMenu({
 	projectId,
-	projectFiles,
+	userFiles,
 	widget,
 	isFullColumn,
 	dragAttributes,
 	dragListeners,
 }: {
 	projectId: string
-	projectFiles: File[]
+	userFiles: File[]
 	widget: Widget
 	isFullColumn: boolean
 	dragAttributes?: DraggableAttributes
@@ -99,7 +99,7 @@ export default function WidgetCardMenu({
 				isDialogOpen={isDialogOpen}
 				setIsDialogOpen={setIsDialogOpen}
 				dialogType={dialogType}
-				projectFiles={projectFiles}
+				userFiles={userFiles}
 				projectId={projectId}
 				widgetConfig={widget.config}
 				widgetId={widget.id}

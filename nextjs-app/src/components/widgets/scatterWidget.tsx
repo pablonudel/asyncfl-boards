@@ -109,7 +109,7 @@ export default function ScatterDeviation({
 	}, [isFullColumn, configRevision])
 
 	async function getDataFromSource(userId: string, source: string) {
-		return await readNpyFile(userId!, widget.projectId!, source)
+		return await readNpyFile(userId!, source)
 	}
 
 	useEffect(() => {

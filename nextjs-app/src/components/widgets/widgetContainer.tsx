@@ -11,12 +11,12 @@ import ScatterWidget from "./scatterWidget"
 
 export default function WidgetContainer({
 	projectId,
-	projectFiles,
+	userFiles,
 	widget,
 	isFullColumn,
 }: {
 	projectId: string
-	projectFiles: File[]
+	userFiles: File[]
 	widget: Widget
 	isFullColumn: boolean
 }) {
@@ -62,7 +62,7 @@ export default function WidgetContainer({
 			)}>
 			<WidgetCardMenu
 				projectId={projectId}
-				projectFiles={projectFiles}
+				userFiles={userFiles}
 				widget={widget}
 				isFullColumn={isFullColumn}
 				dragAttributes={dragAttributes}

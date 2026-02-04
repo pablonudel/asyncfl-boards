@@ -12,10 +12,10 @@ import {
 import AddEditDialog from "../widgets/dialogs/addEditDialog"
 
 export default function AddWidgetDropdown({
-	projectFiles,
+	userFiles,
 	projectId,
 }: {
-	projectFiles: File[]
+	userFiles: File[]
 	projectId: string
 }) {
 	interface WidgetType {
@@ -73,7 +73,7 @@ export default function AddWidgetDropdown({
 				isDialogOpen={isDialogOpen}
 				setIsDialogOpen={setIsDialogOpen}
 				dialogType={dialogType}
-				projectFiles={projectFiles}
+				userFiles={userFiles}
 				projectId={projectId}
 				mode='create'
 			/>

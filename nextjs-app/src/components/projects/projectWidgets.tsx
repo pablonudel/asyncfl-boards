@@ -27,12 +27,12 @@ export default function ProjectWidgets({
 	projectWidgets,
 	widgetsOrder,
 	projectId,
-	projectFiles,
+	userFiles,
 }: {
 	projectWidgets: Widget[]
 	widgetsOrder: string[]
 	projectId: string
-	projectFiles: File[]
+	userFiles: File[]
 }) {
 	// Fetch de los widgets del proyecto via SWR
 
@@ -76,7 +76,7 @@ export default function ProjectWidgets({
 		}),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
-		})
+		}),
 	)
 
 	async function persistOrder(oldOrder: string[], newOrder: string[]) {
@@ -163,7 +163,7 @@ export default function ProjectWidgets({
 						return (
 							<WidgetContainer
 								projectId={projectId}
-								projectFiles={projectFiles}
+								userFiles={userFiles}
 								key={widget.id}
 								widget={widget}
 								isFullColumn={isFullColumn}
@@ -178,10 +178,10 @@ export default function ProjectWidgets({
 						<WidgetContainer
 							widget={projectWidgets.find((w) => w.id === activeId) as Widget}
 							isFullColumn={Boolean(
-								widgetConfigs[activeId]?.fullColumn ?? false
+								widgetConfigs[activeId]?.fullColumn ?? false,
 							)}
 							projectId={projectId}
-							projectFiles={projectFiles}
+							userFiles={userFiles}
 						/>
 					</div>
 				) : null}

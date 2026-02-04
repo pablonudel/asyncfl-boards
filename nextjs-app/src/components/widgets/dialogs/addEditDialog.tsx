@@ -15,7 +15,7 @@ export default function AddEditDialog({
 	isDialogOpen,
 	setIsDialogOpen,
 	dialogType,
-	projectFiles,
+	userFiles,
 	projectId,
 	widgetConfig,
 	widgetId,
@@ -24,7 +24,7 @@ export default function AddEditDialog({
 	isDialogOpen: boolean
 	setIsDialogOpen: (open: boolean) => void
 	dialogType: { title: string; type: string } | null
-	projectFiles: File[]
+	userFiles: File[]
 	projectId: string
 	widgetConfig?: JsonValue
 	widgetId?: string
@@ -44,7 +44,7 @@ export default function AddEditDialog({
 				<div className='overflow-y-auto flex-1 px-1'>
 					{dialogType?.type && scatterTypes.includes(dialogType.type) && (
 						<ScatterDialog
-							projectFiles={projectFiles}
+							userFiles={userFiles}
 							projectId={projectId}
 							widgetConfig={widgetConfig}
 							widgetId={widgetId}

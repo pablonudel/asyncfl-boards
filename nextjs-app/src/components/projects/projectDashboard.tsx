@@ -7,6 +7,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty"
+import { getUserFiles } from "@/data/filesData"
 import { getUserProjectById, getWidgetsByProjectId } from "@/data/projectsData"
 import { CircleX, Settings } from "lucide-react"
 import Link from "next/link"
@@ -26,6 +27,7 @@ export default async function ProjectDashboard({
 
 	const resProjects = await getUserProjectById(projectId, user.id)
 	const resWidgets = await getWidgetsByProjectId(projectId, user.id)
+	const resFiles = await getUserFiles(user.id)
 
 	if (!resProjects.success || !resProjects.project) {
 		return (
@@ -69,7 +71,7 @@ export default async function ProjectDashboard({
 						</Link>
 					</div>
 					<AddWidgetDropdown
-						projectFiles={project.files || []}
+						userFiles={resFiles.files || []}
 						projectId={project.id}
 					/>
 				</div>
@@ -77,7 +79,7 @@ export default async function ProjectDashboard({
 					projectWidgets={widgets}
 					widgetsOrder={project.widgetsOrder || []}
 					projectId={project.id}
-					projectFiles={project.files || []}
+					userFiles={resFiles.files || []}
 				/>
 			</div>
 		</>

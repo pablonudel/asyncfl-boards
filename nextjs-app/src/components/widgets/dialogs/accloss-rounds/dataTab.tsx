@@ -35,13 +35,13 @@ export default function DataTab({
 	formData,
 	defaultPlot,
 	files,
-	projectFiles,
+	userFiles,
 	projectId,
 }: {
 	formData: UseFormReturn<any>
 	defaultPlot: z.infer<typeof plotDataSchema>
 	files: FileNameMapping[]
-	projectFiles: File[]
+	userFiles: File[]
 	projectId: string
 }) {
 	const { fields, append, remove } = useFieldArray({
@@ -50,9 +50,7 @@ export default function DataTab({
 	})
 	const [openItem, setOpenItem] = useState<string | undefined>(undefined)
 
-	const allowedFiles = projectFiles.filter(
-		(file) => file.fileShape.length === 3,
-	)
+	const allowedFiles = userFiles.filter((file) => file.fileShape.length === 3)
 
 	function addPlot() {
 		append(defaultPlot)
@@ -187,7 +185,7 @@ export default function DataTab({
 												/>
 											</div>
 											<div className='flex items-start gap-2'>
-												{projectFiles.length > 0 ? (
+												{userFiles.length > 0 ? (
 													<Select
 														onValueChange={(value) => {
 															field.onChange(value)
