@@ -233,22 +233,22 @@ export default defineConfig({
 					.json({ status: "error", message: "File upload failed" })
 			}
 		}),
-			app.post(
-				"/api/project-files-upload",
-				upload.single("file"),
-				async (req, res) => {
-					try {
-						const { userId, projectId } = req.body
-						const file = req.file as Express.Multer.File
+			app.post("/api/upload", upload.single("file"), async (req, res) => {
+				try {
+					const { userId, projectId, fileType } = req.body
+					const file = req.file as Express.Multer.File
 
-						if (!file)
+					if (!fileType)
+						return res
+							.status(400)
+							.json({ success: false, message: "Missing fileType" })
+
+					// for results files
+					if (fileType === "resultsFile") {
+						if (!file || !userId || !projectId)
 							return res
 								.status(400)
-								.json({ status: "error", message: "No file provided" })
-						if (!userId)
-							return res
-								.status(400)
-								.json({ status: "error", message: "Missing userId" })
+								.json({ success: false, message: "Missing required fields" })
 
 						const targetDir = join(
 							STORAGE_PATH_BASE,
@@ -262,54 +262,69 @@ export default defineConfig({
 						const safeName = basename(file.originalname)
 						const filePath = join(targetDir, safeName)
 
-						await fs.writeFile(filePath, file.buffer)
-
-						const { shape } = await readNpyFile(userId, projectId, safeName)
-
-						const existingFile = await db
-							.selectFrom("File")
-							.where("projectId", "=", projectId)
-							.where("fileName", "=", safeName)
-							.select(["id"])
-							.executeTakeFirst()
-
-						if (existingFile) {
-							await db
-								.updateTable("File")
-								.set({
-									updatedAt: new Date(),
-									fileSize: file.size,
-									fileShape: shape,
-								})
-								.where("id", "=", existingFile.id)
-								.execute()
-						} else {
-							await db
-								.insertInto("File")
-								.values({
-									id: crypto.randomUUID(),
-									createdAt: new Date(),
-									updatedAt: new Date(),
-									fileName: safeName,
-									referenceName: safeName,
-									projectId: projectId,
-									fileSize: file.size,
-									fileShape: shape,
-								})
-								.execute()
+						try {
+							await fs.writeFile(filePath, file.buffer)
+						} catch (error) {
+							console.error("Error writing file:", error)
+							return res
+								.status(500)
+								.json({ success: false, message: "File write error" })
 						}
 
+						let shape = null
+						try {
+							shape = (await readNpyFile(userId, projectId, safeName)).shape
+						} catch (error) {
+							console.error("Error reading file shape:", error)
+							return res
+								.status(500)
+								.json({ success: false, message: "File read error" })
+						}
+						const savedFile = {
+							fileName: safeName,
+							fileSize: file.size,
+							fileShape: shape,
+						}
 						return res.status(200).json({
 							success: true,
-							message: `File ${safeName} uploaded successfully`,
+							message: `Results file ${safeName} uploaded successfully`,
+							file: savedFile,
 						})
-					} catch (error) {
-						console.error(error)
-						return res
-							.status(500)
-							.json({ status: "error", message: "Internal server error" })
 					}
-				},
-			))
+
+					// for avatar files
+					if (fileType === "avatarFile") {
+						if (!file || !userId)
+							return res
+								.status(400)
+								.json({ success: false, message: "Missing required fields" })
+
+						const targetDir = join(STORAGE_PATH_BASE, userId)
+
+						await fs.mkdir(targetDir, { recursive: true })
+
+						const safeName = basename(file.originalname)
+						const filePath = join(targetDir, safeName)
+
+						try {
+							await fs.writeFile(filePath, file.buffer)
+						} catch (error) {
+							console.error("Error writing file:", error)
+							return res
+								.status(500)
+								.json({ success: false, message: "File write error" })
+						}
+						return res.status(200).json({
+							success: true,
+							message: `Avatar file ${safeName} uploaded successfully`,
+						})
+					}
+				} catch (error) {
+					console.error(error)
+					return res
+						.status(500)
+						.json({ success: false, message: "Internal server error" })
+				}
+			}))
 	},
 })

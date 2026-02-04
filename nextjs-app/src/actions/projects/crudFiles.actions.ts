@@ -115,23 +115,58 @@ export async function uploadProjectFile(projectId: string, file: File) {
 		const fileNameOk = /^[a-zA-Z0-9._-]+$/.test(file.name)
 		if (!fileNameOk) return { success: false, message: "Invalid file name." }
 
-		const uploadFiles = await fetch(
-			`${process.env.MOTIA_API_URL}/api/project-files-upload`,
-			{
-				method: "POST",
-				body: (() => {
-					const formData = new FormData()
-					formData.append("userId", session.user.id)
-					formData.append("projectId", projectId)
-					formData.append("file", file)
-					return formData
-				})(),
-			},
-		)
+		const uploadFiles = await fetch(`${process.env.MOTIA_API_URL}/api/upload`, {
+			method: "POST",
+			body: (() => {
+				const formData = new FormData()
+				formData.append("userId", session.user.id)
+				formData.append("projectId", projectId)
+				formData.append("fileType", "resultsFile")
+				formData.append("file", file)
+				return formData
+			})(),
+		})
 		const uploadResult = await uploadFiles.json()
 
 		if (!uploadResult.success) {
 			return { success: false, message: uploadResult.message }
+		}
+
+		const fileExists = await getProjectFile(projectId, file.name)
+		if (fileExists) {
+			try {
+				await prisma.file.update({
+					where: { id: fileExists.id, project: { id: projectId } },
+					data: {
+						fileSize: uploadResult.file.fileSize,
+						fileShape: uploadResult.file.fileShape,
+					},
+				})
+			} catch (error) {
+				console.error("Error updating existing file record:", error)
+				return {
+					success: false,
+					message: "Failed to update existing file record",
+				}
+			}
+		} else {
+			try {
+				await prisma.file.create({
+					data: {
+						fileName: file.name,
+						referenceName: file.name,
+						fileSize: uploadResult.file.fileSize,
+						fileShape: uploadResult.file.fileShape,
+						projectId: projectId,
+					},
+				})
+			} catch (error) {
+				console.error("Error creating new file record:", error)
+				return {
+					success: false,
+					message: "Failed to create new file record",
+				}
+			}
 		}
 
 		revalidateTag(`projects:${session.user.id}`, "max")
