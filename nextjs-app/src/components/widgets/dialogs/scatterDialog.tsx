@@ -234,7 +234,6 @@ export default function ScatterDialog({
 							formData={formData}
 							defaultPlot={defaultPlot}
 							files={files}
-							userFiles={userFiles}
 							projectId={projectId}
 						/>
 					</TabsContent>

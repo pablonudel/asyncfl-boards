@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { File } from "@/generated/prisma/client"
 import {
 	FileNameMapping,
 	plotDataSchema,
@@ -35,13 +34,11 @@ export default function DataTab({
 	formData,
 	defaultPlot,
 	files,
-	userFiles,
 	projectId,
 }: {
 	formData: UseFormReturn<any>
 	defaultPlot: z.infer<typeof plotDataSchema>
 	files: FileNameMapping[]
-	userFiles: File[]
 	projectId: string
 }) {
 	const { fields, append, remove } = useFieldArray({
@@ -50,7 +47,13 @@ export default function DataTab({
 	})
 	const [openItem, setOpenItem] = useState<string | undefined>(undefined)
 
-	const allowedFiles = userFiles.filter((file) => file.fileShape.length === 3)
+	const allowedFiles = files.filter((file) => file.shape.length === 3)
+
+	useState(() => {
+		if (fields.length === 1) {
+			setOpenItem("plot-0")
+		}
+	})
 
 	function addPlot() {
 		append(defaultPlot)
@@ -185,7 +188,7 @@ export default function DataTab({
 												/>
 											</div>
 											<div className='flex items-start gap-2'>
-												{userFiles.length > 0 ? (
+												{files.length > 0 ? (
 													<Select
 														onValueChange={(value) => {
 															field.onChange(value)

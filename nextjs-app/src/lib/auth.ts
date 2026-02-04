@@ -1,5 +1,6 @@
 import { sendEmailVerificationMsg } from "@/actions/emails/sendEmailVerificationMsg"
 import { sendReserPasswordMsg } from "@/actions/emails/sendResetPasswordMsg"
+import { removeAllUserFiles } from "@/actions/files/crudFiles.actions"
 import { GetUserById } from "@/actions/user/user.action"
 import { prisma } from "@/lib/prisma"
 import { normalizeNames } from "@/lib/utils"
@@ -8,6 +9,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma"
 import { APIError, createAuthMiddleware } from "better-auth/api"
 import { nextCookies } from "better-auth/next-js"
 import { customSession } from "better-auth/plugins/custom-session"
+import { GetSession } from "./session"
 
 export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
@@ -96,20 +98,20 @@ export const auth = betterAuth({
 					})
 				}
 			}
-			// if (ctx.path === "/delete-user") {
-			// 	const session = await GetSession()
-			// 	if (!session || !session.user)
-			// 		return { success: false, message: "Unauthorized" }
-			// 	try {
-			// 		const res = await DeleteAllUserFiles(session.user.id)
-			// 		return { context: { ...ctx, body: res } }
-			// 	} catch (error) {
-			// 		console.error("Error deleting user account:", error)
-			// 		throw new APIError("INTERNAL_SERVER_ERROR", {
-			// 			message: "Failed to delete user account",
-			// 		})
-			// 	}
-			// }
+			if (ctx.path === "/delete-user") {
+				const session = await GetSession()
+				if (!session || !session.user)
+					return { success: false, message: "Unauthorized" }
+				try {
+					const res = await removeAllUserFiles()
+					return { context: { ...ctx, body: res } }
+				} catch (error) {
+					console.error("Error deleting user account:", error)
+					throw new APIError("INTERNAL_SERVER_ERROR", {
+						message: "Failed to delete user account",
+					})
+				}
+			}
 		}),
 	},
 	session: {
