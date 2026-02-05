@@ -187,7 +187,7 @@ export default function DataTab({
 													)}
 												/>
 											</div>
-											<div className='flex items-start gap-2'>
+											<div className='flex items-center gap-2'>
 												{files.length > 0 ? (
 													<Select
 														onValueChange={(value) => {
@@ -196,7 +196,7 @@ export default function DataTab({
 															setShape3XValue(index, value)
 														}}
 														value={field.value}>
-														<SelectTrigger className='w-full bg-background'>
+														<SelectTrigger className='bg-background grow max-w-[530px] truncate'>
 															<SelectValue placeholder='Select a source file' />
 														</SelectTrigger>
 														<SelectContent>
@@ -204,7 +204,9 @@ export default function DataTab({
 																<SelectItem
 																	key={file.fileName}
 																	value={file.fileName}>
-																	{file.referenceName}
+																	<span className='max-w-[320px] sm:max-w-[530px] truncate'>
+																		{file.referenceName}
+																	</span>
 																</SelectItem>
 															))}
 														</SelectContent>
@@ -215,7 +217,7 @@ export default function DataTab({
 														type='text'
 														disabled
 														value='No files available for this graph'
-														className='bg-background'
+														className='bg-background grow'
 													/>
 												)}
 												<FileUploaderButton projectId={projectId} />

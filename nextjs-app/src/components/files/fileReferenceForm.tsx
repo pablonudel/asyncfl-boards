@@ -28,8 +28,9 @@ export default function FileReferenceForm({ file }: { file: File }) {
 		},
 	})
 
-	function handleToggle() {
+	function handleToggle(cancel = false) {
 		toggle === "edit" ? setToggle("save") : setToggle("edit")
+		if (cancel) form.setValue("referenceName", file.referenceName)
 	}
 
 	async function onSubmit(data: z.infer<typeof formSchema>) {
@@ -49,15 +50,15 @@ export default function FileReferenceForm({ file }: { file: File }) {
 		<form
 			id='file-reference-form'
 			onSubmit={form.handleSubmit(onSubmit)}
-			className='flex items-center gap-4'>
+			className='flex items-center gap-4 w-full'>
 			{toggle === "edit" ? (
 				<>
-					<span className='text-md font-bold'>{file.referenceName}</span>
+					<p className='text-md font-bold'>{file.referenceName}</p>
 					<Button
 						variant='ghost'
 						size='icon'
 						className='rounded-full w-7 h-7'
-						onClick={handleToggle}>
+						onClick={() => handleToggle(false)}>
 						<SquarePen />
 					</Button>
 				</>
@@ -68,10 +69,7 @@ export default function FileReferenceForm({ file }: { file: File }) {
 						control={form.control}
 						render={({ field, fieldState }) => (
 							<Field>
-								<Input
-									{...field}
-									className='w-full text-md font-bold min-w-76'
-								/>
+								<Input {...field} className='text-md font-bold w-full' />
 							</Field>
 						)}
 					/>
@@ -86,7 +84,7 @@ export default function FileReferenceForm({ file }: { file: File }) {
 							variant='outline'
 							size='icon'
 							className='rounded-full w-7 h-7'
-							onClick={handleToggle}>
+							onClick={() => handleToggle(true)}>
 							<Ban />
 						</Button>
 					</div>

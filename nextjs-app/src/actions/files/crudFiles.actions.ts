@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { GetSession } from "@/lib/session"
 import { rm } from "fs/promises"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { unlink } from "node:fs/promises"
 import { join } from "path"
 
@@ -114,6 +114,7 @@ export async function uploadUserFile(file: File) {
 		// revalidateTag(`project:${projectId}`, "max")
 		// revalidatePath(`/projects/${projectId}/settings`)
 		// revalidatePath(`/projects/${projectId}`)
+		revalidateTag(`files:${session.user.id}`, "max")
 		revalidatePath("/files")
 		return { success: true, message: uploadResult.message }
 	} catch (error) {

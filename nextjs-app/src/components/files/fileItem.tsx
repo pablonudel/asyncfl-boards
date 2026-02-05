@@ -24,24 +24,24 @@ export default function FileItem({ file }: { file: File }) {
 				<p className='text-xs'>{formatFileSize(file.fileSize)}</p>
 			</ItemMedia>
 			<ItemContent>
-				<ItemTitle>
+				<ItemTitle className='w-full'>
 					<FileReferenceForm file={file} />
 				</ItemTitle>
 				<div className='space-y-1 text-muted-foreground'>
-					<p className='text-xs'>
+					<p className='text-xs truncate'>
 						<span className='font-bold'>File name:</span> {file.fileName}
 					</p>
-					<p className='text-xs block md:hidden'>
+					<p className='text-xs block md:hidden truncate'>
 						<span className='font-bold'>File Size:</span>{" "}
 						{formatFileSize(file.fileSize)}
 					</p>
 					{file.createdAt.getTime() !== file.updatedAt.getTime() ? (
-						<p className='text-xs'>
+						<p className='text-xs truncate'>
 							<span className='font-bold'>Updated at:</span>{" "}
 							{file.updatedAt.toLocaleString()}
 						</p>
 					) : (
-						<p className='text-xs'>
+						<p className='text-xs truncate'>
 							<span className='font-bold'>Created at:</span>{" "}
 							{file.createdAt.toLocaleString()}
 						</p>
