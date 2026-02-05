@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { GetSession } from "@/lib/session"
 import { rm } from "fs/promises"
-import { revalidatePath, revalidateTag } from "next/cache"
+import { revalidatePath } from "next/cache"
 import { unlink } from "node:fs/promises"
 import { join } from "path"
 
@@ -21,7 +21,6 @@ export async function getUserFile(userId: string, file: string) {
 }
 
 export async function updateUserFileReferenceName(
-	projectId: string,
 	fileId: string,
 	referenceName: string,
 ) {
@@ -30,12 +29,6 @@ export async function updateUserFileReferenceName(
 		if (!session || !session.user)
 			return { success: false, message: "Unauthorized" }
 
-		const own = await prisma.project.findFirst({
-			where: { id: projectId, userId: session.user.id },
-			select: { id: true },
-		})
-		if (!own) return { success: false, message: "Project not found" }
-
 		const updatedFile = await prisma.file.update({
 			where: { id: fileId, userId: session.user.id },
 			data: {
@@ -43,7 +36,7 @@ export async function updateUserFileReferenceName(
 			},
 		})
 
-		revalidatePath(`/projects/${projectId}/settings`)
+		revalidatePath(`/files`)
 
 		return {
 			success: true,
@@ -117,11 +110,11 @@ export async function uploadUserFile(file: File) {
 			}
 		}
 
-		revalidateTag(`projects:${session.user.id}`, "max")
+		// revalidateTag(`projects:${session.user.id}`, "max")
 		// revalidateTag(`project:${projectId}`, "max")
 		// revalidatePath(`/projects/${projectId}/settings`)
 		// revalidatePath(`/projects/${projectId}`)
-		revalidatePath("/projects")
+		revalidatePath("/files")
 		return { success: true, message: uploadResult.message }
 	} catch (error) {
 		console.error("Error uploading project file:", error)
@@ -159,6 +152,7 @@ export async function removeUserFile(fileId: string, fileName: string) {
 		// revalidateTag(`project-widgets:${projectId}`, "max")
 		// revalidatePath(`/projects/${projectId}/settings`)
 		// revalidatePath(`/projects/${projectId}`)
+		revalidatePath("/files")
 
 		return { success: true, message: "File removed successfully" }
 	} catch (error) {

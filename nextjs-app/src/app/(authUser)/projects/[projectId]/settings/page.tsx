@@ -1,7 +1,6 @@
 import { getUserSession } from "@/actions/auth/auth.actions"
 import DeleteProjectButton from "@/components/projects/deleteProjectButton"
 import EditProjectForm from "@/components/projects/editProjectForm"
-import FileUploader from "@/components/projects/fileUploader"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { getUserProjectById } from "@/data/projectsData"
 import Link from "next/link"
@@ -69,7 +68,6 @@ export default async function Page({
 									</CardContent>
 								</Card>
 							</div> */}
-							<FileUploader />
 						</div>
 					</div>
 				)}

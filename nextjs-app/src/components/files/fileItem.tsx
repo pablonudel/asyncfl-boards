@@ -10,13 +10,7 @@ import {
 import DeleteFileButton from "./deleteFileButton"
 import FileReferenceForm from "./fileReferenceForm"
 
-export default function FileItem({
-	file,
-	projectId,
-}: {
-	file: File
-	projectId: string
-}) {
+export default function FileItem({ file }: { file: File }) {
 	function formatFileSize(size: number) {
 		if (size < 1000) return `${size} B`
 		else if (size < 1_000_000) return `${Math.round(size / 1000)} KB`
@@ -31,7 +25,7 @@ export default function FileItem({
 			</ItemMedia>
 			<ItemContent>
 				<ItemTitle>
-					<FileReferenceForm projectId={projectId} file={file} />
+					<FileReferenceForm file={file} />
 				</ItemTitle>
 				<div className='space-y-1 text-muted-foreground'>
 					<p className='text-xs'>
@@ -55,7 +49,7 @@ export default function FileItem({
 				</div>
 			</ItemContent>
 			<ItemActions>
-				<DeleteFileButton projectId={projectId} file={file} />
+				<DeleteFileButton file={file} />
 			</ItemActions>
 		</Item>
 	)
