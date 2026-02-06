@@ -19,7 +19,7 @@ export default function WidgetCardMenu({
 	dragListeners,
 }: {
 	projectId: string
-	userFiles: File[]
+	userFiles?: File[]
 	widget: Widget
 	isFullColumn: boolean
 	dragAttributes?: DraggableAttributes
@@ -33,8 +33,9 @@ export default function WidgetCardMenu({
 	const [mounted, setMounted] = useState(false)
 	const [isDialogOpen, setIsDialogOpen] = useState(false)
 	const [dialogType, setDialogType] = useState<WidgetType | null>(null)
+
 	const widgetTitle =
-		JSON.parse(JSON.stringify(widget.config)).layoutConfig.title || "Widget"
+		JSON.parse(JSON.stringify(widget.config)).layoutConfig?.title ?? "Notes"
 
 	useEffect(() => {
 		setMounted(true)

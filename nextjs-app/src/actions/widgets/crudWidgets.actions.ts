@@ -9,7 +9,7 @@ export async function createScatterWidget(
 	projectId: string,
 	dataConfig: any,
 	layoutConfig: any,
-	widgetSubtype: string
+	widgetSubtype: string,
 ) {
 	try {
 		const session = await GetSession()
@@ -55,7 +55,7 @@ export async function createScatterWidget(
 export async function updateScatterConfig(
 	widgetId: string,
 	dataConfig: any,
-	layoutConfig: any
+	layoutConfig: any,
 ) {
 	try {
 		const session = await GetSession()
@@ -126,7 +126,7 @@ export async function swapWidgetsConfig(
 	widgetIdA: string,
 	widgetIdB: string,
 	newConfigA: any,
-	newConfigB: any
+	newConfigB: any,
 ) {
 	try {
 		const session = await GetSession()
@@ -225,5 +225,80 @@ export async function deleteWidget(widgetId: string) {
 	} catch (error) {
 		console.error("Error deleting widget:", error)
 		return { success: false, message: "Failed to delete widget" }
+	}
+}
+
+export async function createNotesWidget(projectId: string, content: string) {
+	try {
+		const session = await GetSession()
+		if (!session || !session.user)
+			return { success: false, message: "Unauthorized" }
+
+		const project = await prisma.project.findFirst({
+			where: { id: projectId, userId: session.user.id },
+			select: { widgetsOrder: true },
+		})
+		if (!project) return { success: false, message: "Project not found" }
+
+		const widget = await prisma.widget.create({
+			data: {
+				config: { fullColumn: true, content },
+				projectId,
+				type: "notes",
+			},
+		})
+
+		const order = [...project.widgetsOrder, widget.id]
+		await prisma.project.update({
+			where: { id: projectId },
+			data: { widgetsOrder: order },
+		})
+
+		revalidateTag(`projects:${session.user.id}`, "max")
+		revalidateTag(`project:${projectId}`, "max")
+		revalidateTag(`project-widget:${projectId}`, "max")
+		revalidatePath(`/projects/${projectId}`)
+
+		return {
+			success: true,
+			message: "Notes widget created successfully",
+			widgetId: widget.id,
+		}
+	} catch (error) {
+		console.error("Error creating notes widget:", error)
+		return { success: false, message: "Failed to create notes widget" }
+	}
+}
+
+export async function updateNotesWidget(
+	widgetId: string,
+	projectId: string,
+	content: string,
+) {
+	try {
+		const session = await GetSession()
+		if (!session || !session.user)
+			return { success: false, message: "Unauthorized" }
+
+		const widget = await prisma.widget.findFirst({
+			where: { id: widgetId, projectId },
+			select: { config: true },
+		})
+		if (!widget) return { success: false, message: "Widget not found" }
+
+		const prev = (widget.config as any) || {}
+		const newConfig = { ...prev, content }
+
+		await prisma.widget.update({
+			where: { id: widgetId },
+			data: { config: newConfig },
+		})
+
+		revalidatePath(`/projects/${projectId}`)
+
+		return { success: true, message: "Notes widget updated successfully" }
+	} catch (error) {
+		console.error("Error updating notes widget:", error)
+		return { success: false, message: "Failed to update notes widget" }
 	}
 }

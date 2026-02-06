@@ -7,6 +7,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog"
+import NotesDialog from "@/components/widgets/dialogs/notesDialog"
 import ScatterDialog from "@/components/widgets/dialogs/scatterDialog"
 import type { File } from "@/generated/prisma/client"
 import { JsonValue } from "@prisma/client/runtime/client"
@@ -24,13 +25,14 @@ export default function AddEditDialog({
 	isDialogOpen: boolean
 	setIsDialogOpen: (open: boolean) => void
 	dialogType: { title: string; type: string } | null
-	userFiles: File[]
+	userFiles?: File[]
 	projectId: string
 	widgetConfig?: JsonValue
 	widgetId?: string
 	mode: string
 }) {
 	const scatterTypes = ["rounds", "time"]
+
 	return (
 		<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 			<DialogContent className='md:min-w-2xl lg:min-w-3xl max-h-[85vh] flex flex-col'>
@@ -53,6 +55,15 @@ export default function AddEditDialog({
 							mode={mode}
 						/>
 					)}
+					{dialogType?.type === "notes" && (
+						<NotesDialog
+							projectId={projectId}
+							widgetConfig={widgetConfig}
+							widgetId={widgetId}
+							setIsDialogOpen={() => setIsDialogOpen(false)}
+							mode={mode}
+						/>
+					)}
 					{dialogType?.type === "table" && (
 						<div>Table Widget Form Goes Here</div>
 					)}
@@ -61,9 +72,15 @@ export default function AddEditDialog({
 
 				{/* Footer fijo (opcional) */}
 				<DialogFooter className='shrink-0'>
-					<Button form='scatter-form' type='submit'>
-						{mode === "edit" ? "Save Changes" : "Add Widget"}
-					</Button>
+					{dialogType?.type === "notes" ? (
+						<Button form='notes-form' type='submit'>
+							{mode === "edit" ? "Save Changes" : "Add Widget"}
+						</Button>
+					) : (
+						<Button form='scatter-form' type='submit'>
+							{mode === "edit" ? "Save Changes" : "Add Widget"}
+						</Button>
+					)}
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>

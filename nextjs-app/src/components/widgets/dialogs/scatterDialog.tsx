@@ -32,7 +32,7 @@ export default function ScatterDialog({
 	type,
 	mode,
 }: {
-	userFiles: File[]
+	userFiles?: File[]
 	projectId: string
 	widgetConfig?: JsonValue
 	widgetId?: string
@@ -107,7 +107,7 @@ export default function ScatterDialog({
 	}
 
 	useEffect(() => {
-		if (userFiles.length > 0) {
+		if (userFiles && userFiles.length > 0) {
 			const names = userFiles.map((file) => ({
 				fileName: file.fileName,
 				referenceName: file.referenceName,

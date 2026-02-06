@@ -7,6 +7,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "../ui/card"
 import WidgetCardMenu from "../widgets/widgetCardMenu"
+import NotesWidget from "./notesWidget"
 import ParetoFrontier from "./paretoFrontier"
 import ScatterWidget from "./scatterWidget"
 
@@ -59,7 +60,7 @@ export default function WidgetContainer({
 					!isFullColumn ? "lg:col-span-1" : ""
 				} ${isFullColumn ? "col-span-2" : ""} ${
 					isDragging ? "opacity-50" : "opacity-100"
-				}`,
+				} ${widget.type === "notes" ? "border-background shadow-none hover:border-foreground/10" : ""}`,
 			)}>
 			<WidgetCardMenu
 				projectId={projectId}
@@ -77,6 +78,7 @@ export default function WidgetContainer({
 					{widget.type === "scatter.pareto" && (
 						<ParetoFrontier widget={widget} isFullColumn={isFullColumn} />
 					)}
+					{widget.type === "notes" && <NotesWidget />}
 					{/* Other widget types to be implemented... */}
 				</CardContent>
 			</div>

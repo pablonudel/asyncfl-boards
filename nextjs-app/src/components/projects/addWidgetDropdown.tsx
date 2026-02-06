@@ -48,23 +48,17 @@ export default function AddWidgetDropdown({
 						}>
 						Acc/Loss vs Rounds
 					</DropdownMenuItem>
-					<DropdownMenuItem
+					{/* <DropdownMenuItem
 						onClick={() =>
 							handleAddWidget({ type: "time", title: "Add Acc/Loss vs Time" })
 						}>
 						Acc/Loss vs Time
-					</DropdownMenuItem>
+					</DropdownMenuItem> */}
 					<DropdownMenuItem
 						onClick={() =>
-							handleAddWidget({ type: "table", title: "Add Table" })
+							handleAddWidget({ type: "notes", title: "Add Note" })
 						}>
-						Table Widget
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						onClick={() =>
-							handleAddWidget({ type: "text", title: "Add Text" })
-						}>
-						Text Widget
+						Notes
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
