@@ -59,13 +59,14 @@ export default async function UserMenu() {
 								Files
 							</Link>
 						</DropdownMenuItem>
-						<DropdownMenuItem asChild>
-							<Link href='/profile'>
-								<User />
-								Profile
-							</Link>
-						</DropdownMenuItem>
 					</DropdownMenuGroup>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem asChild>
+						<Link href='/profile'>
+							<User />
+							Profile
+						</Link>
+					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<SignOutItem />
 				</DropdownMenuContent>

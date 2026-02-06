@@ -43,7 +43,7 @@ export function normalizeData(array: number[]) {
 // ===== 3D Functions (cálculo cruzado por columna) =====
 export function calculateAvg3D(
 	data: number[][][],
-	columnIndex: number
+	columnIndex: number,
 ): number[] {
 	const numRounds = data[0].length
 	const result: number[] = []
@@ -61,7 +61,7 @@ export function calculateAvg3D(
 
 export function calculateMax3D(
 	data: number[][][],
-	columnIndex: number
+	columnIndex: number,
 ): number[] {
 	const numRounds = data[0].length
 	const result: number[] = []
@@ -76,7 +76,7 @@ export function calculateMax3D(
 
 export function calculateMin3D(
 	data: number[][][],
-	columnIndex: number
+	columnIndex: number,
 ): number[] {
 	const numRounds = data[0].length
 	const result: number[] = []
@@ -91,7 +91,7 @@ export function calculateMin3D(
 
 export function calculateSum3D(
 	data: number[][][],
-	columnIndex: number
+	columnIndex: number,
 ): number[] {
 	const numRounds = data[0].length
 	const result: number[] = []
@@ -183,13 +183,13 @@ export function uniformData(array: number[], length: number): number[] {
 	return result
 }
 
-export function shapeYData(
+export function shapeData(
 	shape: number[],
 	agregation: string,
 	data: number[][][] | number[][],
 	columnIndex: number,
 	normalize: boolean,
-	numRounds: number
+	numRounds: number,
 ): number[] {
 	if (shape.length > 2) {
 		switch (agregation) {

@@ -3,7 +3,7 @@
 import { Widget } from "@/generated/prisma/client"
 import { authClient } from "@/lib/auth-client"
 import { readNpyFile } from "@/lib/readFiles"
-import { shapeYData } from "@/lib/utils"
+import { shapeData } from "@/lib/utils"
 import { FileX } from "lucide-react"
 import { useTheme } from "next-themes"
 import dynamic from "next/dynamic"
@@ -71,7 +71,7 @@ function hexToRgba(hex: string, alpha = 0.2) {
 	return `rgba(${r},${g},${b},${alpha})`
 }
 
-export default function ScatterDeviation({
+export default function ScatterWidget({
 	widget,
 	isFullColumn,
 }: {
@@ -144,7 +144,7 @@ export default function ScatterDeviation({
 					const x = Array.from({ length: rounds }, (_, i) => i + 1)
 
 					// Calcular la línea principal según el modo de agregación
-					const mainLine = shapeYData(
+					const mainLine = shapeData(
 						sourceShape,
 						aggregationMode,
 						sourceData,

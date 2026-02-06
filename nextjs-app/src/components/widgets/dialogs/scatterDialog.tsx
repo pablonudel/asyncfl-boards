@@ -8,10 +8,12 @@ import DataTab from "@/components/widgets/dialogs/accloss-rounds/dataTab"
 import LayoutTab from "@/components/widgets/dialogs/accloss-rounds/layoutTab"
 import type { File } from "@/generated/prisma/client"
 import {
-	dataSchema,
-	defaultPlot,
 	FileNameMapping,
 	layoutSchema,
+} from "@/lib/schemas/generalWidgetsSchemas"
+import {
+	defaultScatterPlot,
+	scatterDataSchema,
 } from "@/lib/schemas/scatterWidgetSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { JsonValue } from "@prisma/client/runtime/client"
@@ -117,7 +119,7 @@ export default function ScatterDialog({
 
 	const formSchema = z.object({
 		layoutConfig: layoutSchema,
-		dataConfig: dataSchema,
+		dataConfig: scatterDataSchema,
 	})
 
 	const formData = useForm<z.infer<typeof formSchema>>({
@@ -232,7 +234,7 @@ export default function ScatterDialog({
 					<TabsContent value='Data'>
 						<DataTab
 							formData={formData}
-							defaultPlot={defaultPlot}
+							defaultPlot={defaultScatterPlot}
 							files={files}
 							projectId={projectId}
 						/>

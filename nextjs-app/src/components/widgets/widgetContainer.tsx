@@ -7,6 +7,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "../ui/card"
 import WidgetCardMenu from "../widgets/widgetCardMenu"
+import ParetoFrontier from "./paretoFrontier"
 import ScatterWidget from "./scatterWidget"
 
 export default function WidgetContainer({
@@ -72,6 +73,9 @@ export default function WidgetContainer({
 				<CardContent>
 					{widget.type === "scatter.rounds" && (
 						<ScatterWidget widget={widget} isFullColumn={isFullColumn} />
+					)}
+					{widget.type === "scatter.pareto" && (
+						<ParetoFrontier widget={widget} isFullColumn={isFullColumn} />
 					)}
 					{/* Other widget types to be implemented... */}
 				</CardContent>

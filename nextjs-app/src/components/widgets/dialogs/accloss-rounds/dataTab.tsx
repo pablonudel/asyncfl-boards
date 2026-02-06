@@ -20,10 +20,8 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import {
-	FileNameMapping,
-	plotDataSchema,
-} from "@/lib/schemas/scatterWidgetSchema"
+import { FileNameMapping } from "@/lib/schemas/generalWidgetsSchemas"
+import { plotDataSchema } from "@/lib/schemas/scatterWidgetSchema"
 import { ChartSpline, Trash } from "lucide-react"
 import { Activity, useState } from "react"
 import { Controller, useFieldArray, UseFormReturn } from "react-hook-form"
