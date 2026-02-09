@@ -18,12 +18,7 @@ import { ListItem } from "@tiptap/extension-list"
 import { Paragraph } from "@tiptap/extension-paragraph"
 import { Text } from "@tiptap/extension-text"
 import { TextStyle } from "@tiptap/extension-text-style"
-import {
-	Dropcursor,
-	Gapcursor,
-	Placeholder,
-	TrailingNode,
-} from "@tiptap/extensions"
+import { Dropcursor, Gapcursor, TrailingNode } from "@tiptap/extensions"
 import {
 	History,
 	RichTextRedo,
@@ -33,12 +28,18 @@ import {
 // Extension
 import { Bold, RichTextBold } from "reactjs-tiptap-editor/bold"
 import { Callout, RichTextCallout } from "reactjs-tiptap-editor/callout"
+import { Color, RichTextColor } from "reactjs-tiptap-editor/color"
 import {
 	FontFamily,
 	RichTextFontFamily,
 } from "reactjs-tiptap-editor/fontfamily"
 import { FontSize, RichTextFontSize } from "reactjs-tiptap-editor/fontsize"
 import { Heading, RichTextHeading } from "reactjs-tiptap-editor/heading"
+import { Highlight, RichTextHighlight } from "reactjs-tiptap-editor/highlight"
+import {
+	HorizontalRule,
+	RichTextHorizontalRule,
+} from "reactjs-tiptap-editor/horizontalrule"
 import { Indent, RichTextIndent } from "reactjs-tiptap-editor/indent"
 import { Italic, RichTextItalic } from "reactjs-tiptap-editor/italic"
 import { Katex, RichTextKatex } from "reactjs-tiptap-editor/katex"
@@ -112,15 +113,20 @@ const extensions = [
 	Gapcursor,
 	TrailingNode,
 	Image,
+	Color,
+	HorizontalRule,
+	Highlight,
 
 	// Slash Command Extension
 	SlashCommand,
-	Placeholder.configure({
-		placeholder: "Press '/' for commands",
-	}),
+	// Placeholder.configure({
+	// 	placeholder: "Press '/' for commands",
+	// }),
 ]
 
 // Import CSS
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import "katex/dist/katex.min.css"
 import "reactjs-tiptap-editor/style.css"
 
@@ -133,9 +139,9 @@ function debounce(func: any, wait: number) {
 	}
 }
 
-const RichTextToolbar = () => {
+const RichTextToolbar = ({ status }: { status: "Saved" | "Unsaved" }) => {
 	return (
-		<div className='flex items-center !p-1 gap-2 flex-wrap !border-b !border-solid border-gray-300'>
+		<div className='flex items-center !p-1 gap-2 flex-wrap !border rounded-md !border-solid border-gray-300 sticky top-0 z-10 bg-white'>
 			<RichTextUndo />
 			<RichTextRedo />
 			<RichTextHeading />
@@ -144,6 +150,7 @@ const RichTextToolbar = () => {
 			<RichTextLineHeight />
 			<RichTextAlign />
 			<RichTextBold />
+			<RichTextColor />
 			<RichTextItalic />
 			<RichTextUnderline />
 			<RichTextStrike />
@@ -154,6 +161,16 @@ const RichTextToolbar = () => {
 			<RichTextKatex />
 			<RichTextIndent />
 			<RichTextTable />
+			<RichTextHorizontalRule />
+			<RichTextHighlight />
+			<Badge
+				variant='default'
+				className={cn(
+					status === "Saved" ? "bg-green-400" : "bg-red-400 text-white",
+					"ml-auto mr-2",
+				)}>
+				{status}
+			</Badge>
 		</div>
 	)
 }
@@ -170,6 +187,16 @@ const RichTextBubbleMenu = () => {
 			<SlashCommandList />
 		</div>
 	)
+}
+
+const checkContentStatus = (
+	configContent: string,
+	editorContent: string | null,
+) => {
+	if (configContent === editorContent) {
+		return "Saved"
+	}
+	return "Unsaved"
 }
 
 export default function NotesDialog({
@@ -190,12 +217,17 @@ export default function NotesDialog({
 	const widgetContent =
 		JSON.parse(JSON.stringify(widgetConfig || "{}")).content ?? null
 	const [content, setContent] = useState<string | null>(widgetContent)
+	const [contentStatus, setContentStatus] = useState<"Saved" | "Unsaved">(
+		"Saved",
+	)
 
 	const onValueChange = useCallback(
 		debounce((value: any) => {
 			setContent(value)
+			const status = checkContentStatus(widgetContent, content)
+			setContentStatus(status)
 		}, 300),
-		[],
+		[content, widgetContent],
 	)
 
 	const editor = useEditor({
@@ -249,15 +281,14 @@ export default function NotesDialog({
 	return (
 		<>
 			<RichTextProvider editor={editor}>
-				<div className='overflow-hidden rounded-md bg-background !border border-gray-300'>
-					{editable && <RichTextToolbar />}
+				{editable && <RichTextToolbar status={contentStatus} />}
+				<div className='z-0'>
 					<EditorContent editor={editor} />
-
-					{/* Bubble */}
-					{editable && <RichTextBubbleMenu />}
 				</div>
-			</RichTextProvider>
 
+				{/* Bubble */}
+				{editable && <RichTextBubbleMenu />}
+			</RichTextProvider>
 			<form id='notes-form' onSubmit={(e) => onSubmit(e, content || "")}>
 				<input type='hidden' name='content' value={content || ""} readOnly />
 			</form>

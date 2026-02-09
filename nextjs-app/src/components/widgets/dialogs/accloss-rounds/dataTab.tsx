@@ -20,8 +20,10 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { FileNameMapping } from "@/lib/schemas/generalWidgetsSchemas"
-import { plotDataSchema } from "@/lib/schemas/scatterWidgetSchema"
+import {
+	FileNameMapping,
+	plotDataSchema,
+} from "@/lib/schemas/generalWidgetsSchemas"
 import { ChartSpline, Trash } from "lucide-react"
 import { Activity, useState } from "react"
 import { Controller, useFieldArray, UseFormReturn } from "react-hook-form"
@@ -194,7 +196,7 @@ export default function DataTab({
 															setShape3XValue(index, value)
 														}}
 														value={field.value}>
-														<SelectTrigger className='bg-background grow max-w-[530px] truncate'>
+														<SelectTrigger className='bg-background grow max-w-132.5 truncate'>
 															<SelectValue placeholder='Select a source file' />
 														</SelectTrigger>
 														<SelectContent>
@@ -202,7 +204,7 @@ export default function DataTab({
 																<SelectItem
 																	key={file.fileName}
 																	value={file.fileName}>
-																	<span className='max-w-[320px] sm:max-w-[530px] truncate'>
+																	<span className='max-w-[320px] sm:max-w-132.5 truncate'>
 																		{file.referenceName}
 																	</span>
 																</SelectItem>
