@@ -18,17 +18,17 @@ import { ListItem } from "@tiptap/extension-list"
 import { Paragraph } from "@tiptap/extension-paragraph"
 import { Text } from "@tiptap/extension-text"
 import { TextStyle } from "@tiptap/extension-text-style"
-import { Dropcursor, Gapcursor, TrailingNode } from "@tiptap/extensions"
+import {
+	Dropcursor,
+	Gapcursor,
+	Placeholder,
+	TrailingNode,
+} from "@tiptap/extensions"
 import {
 	History,
 	RichTextRedo,
 	RichTextUndo,
 } from "reactjs-tiptap-editor/history"
-
-export interface IProviderRichTextProps {
-	editor: Editor | null
-	dark: boolean
-}
 
 // Extension
 import { Bold, RichTextBold } from "reactjs-tiptap-editor/bold"
@@ -59,14 +59,29 @@ import {
 	RichTextUnderline,
 	TextUnderline,
 } from "reactjs-tiptap-editor/textunderline"
+
 // Slash Command
 import {
 	SlashCommand,
 	SlashCommandList,
 } from "reactjs-tiptap-editor/slashcommand"
 
+// Bubble
+import {
+	RichTextBubbleCallout,
+	RichTextBubbleKatex,
+	RichTextBubbleLink,
+	RichTextBubbleMenuDragHandle,
+	RichTextBubbleTable,
+	RichTextBubbleText,
+} from "reactjs-tiptap-editor/bubble"
+
+export interface IProviderRichTextProps {
+	editor: Editor | null
+	dark: boolean
+}
+
 const extensions = [
-	// Base Extensions
 	Document,
 	Text,
 	Dropcursor,
@@ -93,13 +108,16 @@ const extensions = [
 	TextAlign,
 	TextUnderline,
 	Callout,
+	Dropcursor,
+	Gapcursor,
+	TrailingNode,
+	Image,
 
 	// Slash Command Extension
 	SlashCommand,
-	// Placeholder.configure({
-	// 	placeholder: "Press '/' for commands",
-	// }),
-	Image,
+	Placeholder.configure({
+		placeholder: "Press '/' for commands",
+	}),
 ]
 
 // Import CSS
@@ -140,18 +158,34 @@ const RichTextToolbar = () => {
 	)
 }
 
+const RichTextBubbleMenu = () => {
+	return (
+		<div>
+			<RichTextBubbleKatex />
+			<RichTextBubbleLink />
+			<RichTextBubbleTable />
+			<RichTextBubbleText />
+			<RichTextBubbleCallout />
+			<RichTextBubbleMenuDragHandle />
+			<SlashCommandList />
+		</div>
+	)
+}
+
 export default function NotesDialog({
 	projectId,
 	widgetConfig,
 	widgetId,
 	setIsDialogOpen,
 	mode,
+	editable = true,
 }: {
 	projectId: string
 	widgetConfig?: JsonValue
 	widgetId?: string
 	setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>
 	mode: string
+	editable?: boolean
 }) {
 	const widgetContent =
 		JSON.parse(JSON.stringify(widgetConfig || "{}")).content ?? null
@@ -179,6 +213,8 @@ export default function NotesDialog({
 		return null
 	}
 
+	editor.setEditable(editable)
+
 	async function onSubmit(e: React.FormEvent, content: string) {
 		e.preventDefault()
 		if (mode === "create") {
@@ -201,7 +237,7 @@ export default function NotesDialog({
 					toast.error(res.message)
 					return
 				}
-				setIsDialogOpen(false)
+				// setIsDialogOpen(false)
 				toast.success(res.message)
 			} catch (error) {
 				console.error("Error updating notes widget:", error)
@@ -214,9 +250,11 @@ export default function NotesDialog({
 		<>
 			<RichTextProvider editor={editor}>
 				<div className='overflow-hidden rounded-md bg-background !border border-gray-300'>
-					<RichTextToolbar />
+					{editable && <RichTextToolbar />}
 					<EditorContent editor={editor} />
-					<SlashCommandList />
+
+					{/* Bubble */}
+					{editable && <RichTextBubbleMenu />}
 				</div>
 			</RichTextProvider>
 
