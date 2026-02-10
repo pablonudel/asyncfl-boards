@@ -256,7 +256,7 @@ export async function createNotesWidget(projectId: string, content: string) {
 
 		revalidateTag(`projects:${session.user.id}`, "max")
 		revalidateTag(`project:${projectId}`, "max")
-		revalidateTag(`project-widget:${projectId}`, "max")
+		revalidateTag(`project-widgets:${projectId}`, "max")
 		revalidatePath(`/projects/${projectId}`)
 
 		return {
@@ -294,6 +294,9 @@ export async function updateNotesWidget(
 			data: { config: newConfig },
 		})
 
+		revalidateTag(`projects:${session.user.id}`, "max")
+		revalidateTag(`project:${projectId}`, "max")
+		revalidateTag(`project-widgets:${projectId}`, "max")
 		revalidatePath(`/projects/${projectId}`)
 
 		return { success: true, message: "Notes widget updated successfully" }

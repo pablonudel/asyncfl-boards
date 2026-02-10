@@ -60,7 +60,7 @@ export default function WidgetContainer({
 					!isFullColumn ? "lg:col-span-1" : ""
 				} ${isFullColumn ? "col-span-2" : ""} ${
 					isDragging ? "opacity-50" : "opacity-100"
-				} ${widget.type === "notes" ? "border-background shadow-none hover:border-foreground/10" : ""}`,
+				} ${widget.type === "notes" ? "border-background shadow-none hover:border-foreground/10 bg-transparent" : ""}`,
 			)}>
 			<WidgetCardMenu
 				projectId={projectId}
@@ -70,18 +70,18 @@ export default function WidgetContainer({
 				dragAttributes={dragAttributes}
 				dragListeners={dragListeners}
 			/>
-			<div className='py-8 px-2'>
-				<CardContent>
-					{widget.type === "scatter.rounds" && (
-						<ScatterWidget widget={widget} isFullColumn={isFullColumn} />
-					)}
-					{widget.type === "scatter.pareto" && (
-						<ParetoFrontier widget={widget} isFullColumn={isFullColumn} />
-					)}
-					{widget.type === "notes" && <NotesWidget />}
-					{/* Other widget types to be implemented... */}
-				</CardContent>
-			</div>
+			<CardContent className='px-0'>
+				{widget.type === "scatter.rounds" && (
+					<ScatterWidget widget={widget} isFullColumn={isFullColumn} />
+				)}
+				{widget.type === "scatter.pareto" && (
+					<ParetoFrontier widget={widget} isFullColumn={isFullColumn} />
+				)}
+				{widget.type === "notes" && (
+					<NotesWidget widgetConfig={widget.config} />
+				)}
+				{/* Other widget types to be implemented... */}
+			</CardContent>
 		</Card>
 	)
 }

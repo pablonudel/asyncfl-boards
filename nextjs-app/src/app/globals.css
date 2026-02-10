@@ -121,6 +121,10 @@
 	}
 }
 
+.reactjs-tiptap-editor .ProseMirror.ProseMirror.ProseMirror {
+	padding: 0px !important;
+}
+
 .ProseMirror-focused {
 	outline: none;
 	box-shadow: none;

@@ -6,7 +6,7 @@ import {
 } from "@/actions/widgets/crudWidgets.actions"
 import { JsonValue } from "@prisma/client/runtime/client"
 import { Editor, EditorContent, useEditor } from "@tiptap/react"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { RichTextProvider } from "reactjs-tiptap-editor"
 import { Image } from "reactjs-tiptap-editor/image"
 import { toast } from "sonner"
@@ -141,7 +141,7 @@ function debounce(func: any, wait: number) {
 
 const RichTextToolbar = ({ status }: { status: "Saved" | "Unsaved" }) => {
 	return (
-		<div className='flex items-center !p-1 gap-2 flex-wrap !border rounded-md !border-solid border-gray-300 sticky top-0 z-10 bg-white'>
+		<div className='flex items-center p-1! gap-2 flex-wrap border-b! border-solid! border-gray-300 sticky top-0 z-10 bg-white'>
 			<RichTextUndo />
 			<RichTextRedo />
 			<RichTextHeading />
@@ -205,47 +205,63 @@ export default function NotesDialog({
 	widgetId,
 	setIsDialogOpen,
 	mode,
-	editable = true,
 }: {
 	projectId: string
 	widgetConfig?: JsonValue
 	widgetId?: string
 	setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>
 	mode: string
-	editable?: boolean
 }) {
 	const widgetContent =
-		JSON.parse(JSON.stringify(widgetConfig || "{}")).content ?? null
-	const [content, setContent] = useState<string | null>(widgetContent)
+		JSON.parse(JSON.stringify(widgetConfig || "{}")).content ?? ""
+	const [content, setContent] = useState<string>(widgetContent)
 	const [contentStatus, setContentStatus] = useState<"Saved" | "Unsaved">(
 		"Saved",
 	)
 
+	useEffect(() => {
+		const status = checkContentStatus(widgetContent, content)
+		setContentStatus(status)
+	}, [widgetContent, content])
+
 	const onValueChange = useCallback(
-		debounce((value: any) => {
+		debounce((value: string) => {
 			setContent(value)
-			const status = checkContentStatus(widgetContent, content)
-			setContentStatus(status)
 		}, 300),
-		[content, widgetContent],
+		[],
 	)
 
 	const editor = useEditor({
-		textDirection: "auto", // global text direction
+		textDirection: "auto",
 		extensions,
 		immediatelyRender: false,
-		content,
+		content: widgetContent,
+		editable: true,
+		autofocus: "end",
 		onUpdate: ({ editor }) => {
 			const html = editor.getHTML()
 			onValueChange(html)
 		},
 	})
 
+	useEffect(() => {
+		if (!editor) return
+
+		const id = setTimeout(() => {
+			if (editor.isDestroyed) return
+			editor.setOptions({ editable: true })
+
+			if (editor.getHTML() === widgetContent) return
+			editor.commands.setContent(widgetContent)
+			setContent(widgetContent)
+		}, 0)
+
+		return () => clearTimeout(id)
+	}, [editor, widgetContent])
+
 	if (!editor) {
 		return null
 	}
-
-	editor.setEditable(editable)
 
 	async function onSubmit(e: React.FormEvent, content: string) {
 		e.preventDefault()
@@ -281,13 +297,13 @@ export default function NotesDialog({
 	return (
 		<>
 			<RichTextProvider editor={editor}>
-				{editable && <RichTextToolbar status={contentStatus} />}
-				<div className='z-0'>
+				<RichTextToolbar status={contentStatus} />
+				<div className='z-0 px-10'>
 					<EditorContent editor={editor} />
 				</div>
 
 				{/* Bubble */}
-				{editable && <RichTextBubbleMenu />}
+				<RichTextBubbleMenu />
 			</RichTextProvider>
 			<form id='notes-form' onSubmit={(e) => onSubmit(e, content || "")}>
 				<input type='hidden' name='content' value={content || ""} readOnly />
