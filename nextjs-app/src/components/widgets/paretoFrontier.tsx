@@ -6,7 +6,7 @@ import { readNpyFile } from "@/lib/readFiles"
 import { FileX } from "lucide-react"
 import { useTheme } from "next-themes"
 import dynamic from "next/dynamic"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { memo, useEffect, useMemo, useRef, useState } from "react"
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false })
 
@@ -104,13 +104,7 @@ export function getParetoFrontier(
 	return frontier.sort((a, b) => a.x - b.x)
 }
 
-export default function ParetoFrontier({
-	widget,
-	isFullColumn,
-}: {
-	widget: Widget
-	isFullColumn: boolean
-}) {
+function ParetoFrontier({ widget }: { widget: Widget }) {
 	const { theme } = useTheme()
 	const [rawData, setRawData] = useState<{
 		sourceAccLoss: any
@@ -131,19 +125,42 @@ export default function ParetoFrontier({
 			? widget.config
 			: {}
 
+	// Serialize config once for stable dependency
+	const configJSON = useMemo(
+		() => JSON.stringify(widget.config),
+		[widget.config],
+	)
+
+	// Direct access for component use
 	const widgetDataConfig = (config as Record<string, any>).dataConfig || []
 	const widgetLayoutConfig = (config as Record<string, any>).layoutConfig || {}
 
+	// Stable configRevision for useEffect dependency (data load trigger)
 	const configRevision = useMemo(() => {
 		try {
-			return JSON.stringify({
-				data: widgetDataConfig,
-				layout: widgetLayoutConfig,
-			})
+			const parsed = JSON.parse(configJSON)
+			const dataConfig = parsed.dataConfig || []
+			const layoutConfig = parsed.layoutConfig || {}
+			return `${JSON.stringify(dataConfig)}|${JSON.stringify(layoutConfig)}`
 		} catch {
-			return String(widget.id)
+			return ""
 		}
-	}, [widgetDataConfig, widgetLayoutConfig, widget.id])
+	}, [configJSON])
+
+	// Stable fullColumn for useEffect dependency (plot resize trigger)
+	const fullColumn = useMemo(() => {
+		try {
+			const parsed = JSON.parse(configJSON)
+			return Boolean(parsed.fullColumn ?? false)
+		} catch {
+			return false
+		}
+	}, [configJSON])
+
+	// Re-renderizar plot cuando cambia el ancho (pero NO recargar datos)
+	useEffect(() => {
+		setPlotKey((prev) => prev + 1)
+	}, [fullColumn])
 
 	// Cargar datos raw una sola vez
 	useEffect(() => {
@@ -248,11 +265,6 @@ export default function ParetoFrontier({
 			},
 		]
 	}, [currentMetrics])
-
-	// Actualizar plotKey cuando cambia isFullColumn o configRevision
-	useEffect(() => {
-		setPlotKey((prev) => prev + 1)
-	}, [isFullColumn, configRevision])
 
 	const layoutConfig = {
 		title: {
@@ -389,3 +401,11 @@ export default function ParetoFrontier({
 		</div>
 	)
 }
+
+// Memoize to prevent re-render when only parent changes, not actual config
+export default memo(ParetoFrontier, (prevProps, nextProps) => {
+	if (prevProps.widget.id !== nextProps.widget.id) return false
+	const prevConfig = JSON.stringify(prevProps.widget.config)
+	const nextConfig = JSON.stringify(nextProps.widget.config)
+	return prevConfig === nextConfig
+})

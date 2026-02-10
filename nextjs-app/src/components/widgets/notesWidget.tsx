@@ -77,8 +77,8 @@ const extensions = [
 	Highlight,
 ]
 
-// Import CSS
 import "katex/dist/katex.min.css"
+import { useMemo } from "react"
 import "reactjs-tiptap-editor/style.css"
 
 export default function NotesWidget({
@@ -86,8 +86,18 @@ export default function NotesWidget({
 }: {
 	widgetConfig?: JsonValue
 }) {
-	const widgetContent =
-		JSON.parse(JSON.stringify(widgetConfig || "{}")).content ?? null
+	// Hacer que el contenido sea estable - solo cambiar si realmente cambió
+	const configStr = useMemo(() => {
+		try {
+			return JSON.stringify(widgetConfig)
+		} catch {
+			return "{}"
+		}
+	}, [widgetConfig])
+
+	const widgetContent = useMemo(() => {
+		return JSON.parse(JSON.stringify(widgetConfig || "{}")).content ?? null
+	}, [configStr])
 
 	const editor = useEditor({
 		textDirection: "auto", // global text direction

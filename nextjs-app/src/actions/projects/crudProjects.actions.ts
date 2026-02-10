@@ -106,6 +106,7 @@ export async function updateProjectWidgetsOrder(
 			data: { widgetsOrder },
 		})
 
+		// Invalidate cache and re-execute server component to update widgetsOrder
 		revalidateTag(`project:${projectId}`, "max")
 		revalidatePath(`/projects/${projectId}`)
 

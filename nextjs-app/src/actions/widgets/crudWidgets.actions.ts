@@ -38,7 +38,7 @@ export async function createScatterWidget(
 
 		revalidateTag(`projects:${session.user.id}`, "max")
 		revalidateTag(`project:${projectId}`, "max")
-		revalidateTag(`project-widget:${projectId}`, "max")
+		revalidateTag(`project-widgets:${projectId}`, "max")
 		revalidatePath(`/projects/${projectId}`)
 
 		return {
@@ -66,22 +66,23 @@ export async function updateScatterConfig(
 		if (!res.success || !res.widget)
 			return { success: res.success, message: res.message }
 
-		const fullColumn = (res.widget.config as any).fullColumn || false
-
 		const own = await prisma.project.findFirst({
 			where: { id: res.widget.projectId, userId: session.user.id },
 			select: { id: true },
 		})
 		if (!own) return { success: false, message: "Project not found" }
 
+		const currentConfig = (res.widget?.config as Record<string, any>) || {}
+		const fullColumn = currentConfig.fullColumn ?? false
+
 		await prisma.widget.update({
 			where: { id: widgetId },
-			data: { config: { fullColumn: fullColumn, dataConfig, layoutConfig } },
+			data: { config: { fullColumn, dataConfig, layoutConfig } },
 		})
 
 		revalidateTag(`projects:${session.user.id}`, "max")
 		revalidateTag(`project:${res.widget.projectId}`, "max")
-		revalidateTag(`project-widget:${res.widget.projectId}`, "max")
+		revalidateTag(`project-widgets:${res.widget.projectId}`, "max")
 		revalidatePath(`/projects/${res.widget.projectId}`)
 
 		return { success: true, message: "Widget updated successfully" }
@@ -172,6 +173,12 @@ export async function switchWidgetColumnType(widgetId: string) {
 		if (!res.success || !res.widget)
 			return { success: res.success, message: res.message }
 
+		const own = await prisma.project.findFirst({
+			where: { id: res.widget.projectId, userId: session.user.id },
+			select: { id: true },
+		})
+		if (!own) return { success: false, message: "Project not found" }
+
 		const prev = (res.widget.config as any) || {}
 		const newConfig = { ...prev, fullColumn: !Boolean(prev.fullColumn) }
 
@@ -182,7 +189,7 @@ export async function switchWidgetColumnType(widgetId: string) {
 
 		revalidateTag(`projects:${session.user.id}`, "max")
 		revalidateTag(`project:${res.widget.projectId}`, "max")
-		revalidateTag(`project-widget:${res.widget.projectId}`, "max")
+		revalidateTag(`project-widgets:${res.widget.projectId}`, "max")
 		revalidatePath(`/projects/${res.widget.projectId}`)
 
 		return { success: true, message: "Widget column type switched", widgetId }

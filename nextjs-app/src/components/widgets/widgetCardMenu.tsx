@@ -5,48 +5,46 @@ import DeleteWidgetButton from "@/components/projects/deleteWidgetButton"
 import type { File, Widget } from "@/generated/prisma/client"
 import type { DraggableAttributes } from "@dnd-kit/core"
 import { ChevronLeft, ChevronRight, Move, Settings } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { Button } from "../ui/button"
 import AddEditDialog from "./dialogs/addEditDialog"
+
+interface WidgetType {
+	type: string
+	title: string
+}
 
 export default function WidgetCardMenu({
 	projectId,
 	userFiles,
 	widget,
-	isFullColumn,
 	dragAttributes,
 	dragListeners,
 }: {
 	projectId: string
 	userFiles?: File[]
 	widget: Widget
-	isFullColumn: boolean
 	dragAttributes?: DraggableAttributes
 	dragListeners?: {}
 }) {
-	interface WidgetType {
-		type: string
-		title: string
-	}
-
-	const [mounted, setMounted] = useState(false)
+	const [isPending, startTransition] = useTransition()
 	const [isDialogOpen, setIsDialogOpen] = useState(false)
 	const [dialogType, setDialogType] = useState<WidgetType | null>(null)
 
+	const isFullColumn = Boolean(
+		(widget.config as Record<string, any>)?.fullColumn ?? false,
+	)
 	const widgetTitle =
 		JSON.parse(JSON.stringify(widget.config)).layoutConfig?.title ?? "Notes"
 
-	useEffect(() => {
-		setMounted(true)
-	}, [])
-
-	async function handleColumnSwith() {
-		const res = await switchWidgetColumnType(widget.id)
-		if (!res.success) {
-			toast.error(res.message)
-			return
-		}
+	function handleColumnSwitch() {
+		startTransition(async () => {
+			const res = await switchWidgetColumnType(widget.id)
+			if (!res.success) {
+				toast.error(res.message)
+			}
+		})
 	}
 
 	function handleEditWidget({ type, title }: WidgetType) {
@@ -69,7 +67,8 @@ export default function WidgetCardMenu({
 						variant='secondary'
 						size='icon'
 						className='rounded-full w-8 h-8'
-						onClick={handleColumnSwith}>
+						onClick={handleColumnSwitch}
+						disabled={isPending}>
 						{isFullColumn ? <ChevronLeft /> : <ChevronRight />}
 					</Button>
 					<Button

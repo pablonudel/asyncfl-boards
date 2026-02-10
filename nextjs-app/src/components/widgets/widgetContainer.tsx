@@ -4,29 +4,25 @@ import type { File, Widget } from "@/generated/prisma/client"
 import { cn } from "@/lib/utils"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { useEffect, useState } from "react"
+import { memo } from "react"
 import { Card, CardContent } from "../ui/card"
 import WidgetCardMenu from "../widgets/widgetCardMenu"
 import NotesWidget from "./notesWidget"
 import ParetoFrontier from "./paretoFrontier"
 import ScatterWidget from "./scatterWidget"
 
-export default function WidgetContainer({
+function WidgetContainer({
 	projectId,
 	userFiles,
 	widget,
-	isFullColumn,
 }: {
 	projectId: string
 	userFiles: File[]
 	widget: Widget
-	isFullColumn: boolean
 }) {
-	const [mounted, setMounted] = useState(false)
-
-	useEffect(() => {
-		setMounted(true)
-	}, [])
+	const isFullColumn = Boolean(
+		(widget.config as Record<string, any>)?.fullColumn ?? false,
+	)
 
 	const {
 		setNodeRef,
@@ -37,8 +33,9 @@ export default function WidgetContainer({
 		isDragging,
 	} = useSortable({ id: widget.id })
 
-	const dragAttributes = mounted ? attributes : undefined
-	const dragListeners = mounted ? listeners : undefined
+	// No need to conditionally set attributes - useSortable always returns safe values
+	const dragAttributes = attributes
+	const dragListeners = listeners
 
 	const style = {
 		transform: CSS.Transform.toString({
@@ -66,17 +63,12 @@ export default function WidgetContainer({
 				projectId={projectId}
 				userFiles={userFiles}
 				widget={widget}
-				isFullColumn={isFullColumn}
 				dragAttributes={dragAttributes}
 				dragListeners={dragListeners}
 			/>
 			<CardContent className='px-0'>
-				{widget.type === "scatter.rounds" && (
-					<ScatterWidget widget={widget} isFullColumn={isFullColumn} />
-				)}
-				{widget.type === "scatter.pareto" && (
-					<ParetoFrontier widget={widget} isFullColumn={isFullColumn} />
-				)}
+				{widget.type === "scatter.rounds" && <ScatterWidget widget={widget} />}
+				{widget.type === "scatter.pareto" && <ParetoFrontier widget={widget} />}
 				{widget.type === "notes" && (
 					<NotesWidget widgetConfig={widget.config} />
 				)}
@@ -85,3 +77,11 @@ export default function WidgetContainer({
 		</Card>
 	)
 }
+
+// Memoize to prevent drag animations from forcing content re-renders
+export default memo(WidgetContainer, (prevProps, nextProps) => {
+	if (prevProps.widget.id !== nextProps.widget.id) return false
+	const prevConfig = JSON.stringify(prevProps.widget.config)
+	const nextConfig = JSON.stringify(nextProps.widget.config)
+	return prevConfig === nextConfig
+})
