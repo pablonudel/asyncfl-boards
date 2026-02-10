@@ -298,7 +298,7 @@ export default function NotesDialog({
 		<>
 			<RichTextProvider editor={editor}>
 				<RichTextToolbar status={contentStatus} />
-				<div className='z-0 px-10'>
+				<div className='z-0 px-10 pt-8 pb-8'>
 					<EditorContent editor={editor} />
 				</div>
 

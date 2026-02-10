@@ -63,14 +63,16 @@ export default function WidgetCardMenu({
 		<>
 			<div className='flex justify-center w-full gap-1 absolute top-0 px-4 -translate-y-1/2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity delay-500 duration-300 z-10'>
 				<div className='bg-background p-1 rounded-full space-x-1 border'>
-					<Button
-						variant='secondary'
-						size='icon'
-						className='rounded-full w-8 h-8'
-						onClick={handleColumnSwitch}
-						disabled={isPending}>
-						{isFullColumn ? <ChevronLeft /> : <ChevronRight />}
-					</Button>
+					{widget.type !== "notes" && (
+						<Button
+							variant='secondary'
+							size='icon'
+							className='rounded-full w-8 h-8'
+							onClick={handleColumnSwitch}
+							disabled={isPending}>
+							{isFullColumn ? <ChevronLeft /> : <ChevronRight />}
+						</Button>
+					)}
 					<Button
 						variant='secondary'
 						size='icon'
