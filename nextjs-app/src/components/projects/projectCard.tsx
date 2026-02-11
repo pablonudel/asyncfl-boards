@@ -6,8 +6,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card"
-import { Settings } from "lucide-react"
 import Link from "next/link"
+import ProjectCardMenu from "./projectCardMenu"
 
 type project = {
 	id: string
@@ -40,14 +40,15 @@ export default function ProjectCard({ project }: { project: project }) {
 							</p>
 						)}
 					</div>
-					<Link href={`/projects/${project.id}/settings`}>
+					{/* <Link href={`/projects/${project.id}/settings`}>
 						<Button
 							variant='ghost'
 							size='sm'
 							className='p-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-300 text-foreground/50'>
 							<Settings />
 						</Button>
-					</Link>
+					</Link> */}
+					<ProjectCardMenu project={project} />
 				</CardTitle>
 			</CardHeader>
 			<CardContent className='flex-1'>

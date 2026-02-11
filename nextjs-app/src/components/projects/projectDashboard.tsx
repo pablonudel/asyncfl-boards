@@ -1,5 +1,4 @@
 import { getUserSession } from "@/actions/auth/auth.actions"
-import { Button } from "@/components/ui/button"
 import {
 	Empty,
 	EmptyDescription,
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/empty"
 import { getUserFiles } from "@/data/filesData"
 import { getUserProjectById, getWidgetsByProjectId } from "@/data/projectsData"
-import { CircleX, Settings } from "lucide-react"
+import { CircleX } from "lucide-react"
 import Link from "next/link"
 import AddWidgetDropdown from "./addWidgetDropdown"
 import ProjectWidgets from "./projectWidgets"
@@ -61,14 +60,6 @@ export default async function ProjectDashboard({
 						</Link>
 						<span className=' text-muted-foreground font-light'>/</span>
 						<h1 className='text-2xl font-bold'>{project.name}</h1>
-						<Link href={`/projects/${project.id}/settings`}>
-							<Button
-								variant='ghost'
-								size='icon'
-								className='rounded-full w-7 h-7'>
-								<Settings />
-							</Button>
-						</Link>
 					</div>
 					<AddWidgetDropdown
 						userFiles={resFiles.files || []}

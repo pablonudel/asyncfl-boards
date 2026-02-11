@@ -1,10 +1,8 @@
 "use client"
 import { deleteProject } from "@/actions/projects/crudProjects.actions"
-import type { Project } from "@/generated/prisma/client"
 import { editProjectSchema } from "@/lib/schemas/projectSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { EllipsisVertical, SquarePen, Trash } from "lucide-react"
-import Link from "next/link"
+import { EllipsisVertical, Trash } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
@@ -26,14 +24,17 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu"
+import EditProjectBtn from "./editProjectBtn"
 
-export default function ProjectCardMenu({
-	project,
-	userId,
-}: {
-	project: Project
-	userId: string
-}) {
+type project = {
+	id: string
+	name: string
+	createdAt: Date
+	updatedAt: Date
+	description: string | null
+}
+
+export default function ProjectCardMenu({ project }: { project: project }) {
 	const router = useRouter()
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
@@ -65,12 +66,7 @@ export default function ProjectCardMenu({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align='end'>
-					<Link href={`/projects/${project.id}/settings`}>
-						<DropdownMenuItem>
-							<SquarePen />
-							Project Settings
-						</DropdownMenuItem>
-					</Link>
+					<EditProjectBtn project={project} />
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						variant='destructive'
