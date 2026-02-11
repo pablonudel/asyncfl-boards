@@ -6,7 +6,8 @@
 		"dev": "prisma generate && next dev",
 		"build": "prisma generate && next build",
 		"start": "next start",
-		"lint": "eslint"
+		"lint": "eslint",
+		"clean": "rm -rf .next && rm -rf .next/cache"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.226.0",
