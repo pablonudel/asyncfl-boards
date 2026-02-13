@@ -29,7 +29,7 @@ export default function EditProjectBtn({
 				onClick={() => setIsOpen(true)}
 				className='rounded-sm w-full justify-start p-2!'>
 				<SquarePen />
-				Edit Project
+				Edit
 			</Button>
 			<ProjectDialog
 				mode='edit'

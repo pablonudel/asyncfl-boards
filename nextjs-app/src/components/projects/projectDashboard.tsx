@@ -8,9 +8,11 @@ import {
 } from "@/components/ui/empty"
 import { getUserFiles } from "@/data/filesData"
 import { getUserProjectById, getWidgetsByProjectId } from "@/data/projectsData"
+import { cn } from "@/lib/utils"
 import { CircleX } from "lucide-react"
-import Link from "next/link"
+import { Badge } from "../ui/badge"
 import AddWidgetDropdown from "./addWidgetDropdown"
+import ProjectCardMenu from "./projectCardMenu"
 import ProjectWidgets from "./projectWidgets"
 
 export default async function ProjectDashboard({
@@ -48,11 +50,42 @@ export default async function ProjectDashboard({
 	const project = resProjects.project
 	const widgets = resWidgets.success ? (resWidgets.widgets ?? []) : []
 
+	const isNewProject =
+		project.createdAt.getTime() === project.updatedAt.getTime()
+
 	return (
 		<>
 			<div className='space-y-4'>
+				<div className='space-y-4'>
+					<div className='flex items-center justify-between'>
+						<div className='flex items-center gap-4'>
+							<Badge
+								variant={project.isPublic ? "default" : "outline"}
+								className={cn(
+									project.isPublic && "bg-green-600 text-white font-bold",
+								)}>
+								{project.isPublic ? "Public" : "Private"}
+							</Badge>
+							<p className='text-sm'>
+								{isNewProject
+									? `Created on ${project.createdAt.toLocaleDateString()}`
+									: `Last update on ${project.updatedAt.toLocaleDateString()}`}
+							</p>
+						</div>
+						<ProjectCardMenu project={project} />
+					</div>
+					<div className='space-y-1'>
+						<h1 className='text-3xl font-bold'>{project.name}</h1>
+						<p className='text-lg'>{project.description}</p>
+					</div>
+				</div>
 				<div className='flex justify-between items-center'>
-					<div className='flex items-baseline gap-2'>
+					{/* <Link
+						href={`/projects`}
+						className=' text-muted-foreground font-light hover:text-foreground'>
+						Projects
+					</Link> */}
+					{/* <div className='flex items-baseline gap-2'>
 						<Link
 							href={`/projects`}
 							className=' text-muted-foreground font-light hover:text-foreground'>
@@ -60,7 +93,7 @@ export default async function ProjectDashboard({
 						</Link>
 						<span className=' text-muted-foreground font-light'>/</span>
 						<h1 className='text-2xl font-bold'>{project.name}</h1>
-					</div>
+					</div> */}
 					<AddWidgetDropdown
 						userFiles={resFiles.files || []}
 						projectId={project.id}

@@ -8,17 +8,7 @@ export async function getUserProjects(userId: string) {
 	try {
 		const res = await prisma.user.findMany({
 			where: { id: userId },
-			select: {
-				projects: {
-					select: {
-						id: true,
-						name: true,
-						description: true,
-						createdAt: true,
-						updatedAt: true,
-					},
-				},
-			},
+			select: { projects: true },
 		})
 		const projects = res.flatMap((user) => user.projects)
 		return { success: true, projects }

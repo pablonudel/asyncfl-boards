@@ -2,7 +2,7 @@
 import { deleteProject } from "@/actions/projects/crudProjects.actions"
 import { editProjectSchema } from "@/lib/schemas/projectSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { EllipsisVertical, Trash } from "lucide-react"
+import { EllipsisVertical, Eye, Trash } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
@@ -52,7 +52,7 @@ export default function ProjectCardMenu({ project }: { project: project }) {
 			toast.error(res.message)
 		} else {
 			toast.success(res.message)
-			router.refresh()
+			router.push("/projects")
 		}
 		setShowDeleteDialog(false)
 	}
@@ -61,18 +61,23 @@ export default function ProjectCardMenu({ project }: { project: project }) {
 		<>
 			<DropdownMenu modal={false}>
 				<DropdownMenuTrigger asChild>
-					<Button variant='ghost' size='icon'>
+					<Button variant='secondary' size='icon' className='rounded-full'>
 						<EllipsisVertical />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align='end'>
 					<EditProjectBtn project={project} />
+					<DropdownMenuItem variant='default' className='font-medium'>
+						<Eye className='text-foreground' />
+						Make Public
+					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						variant='destructive'
-						onSelect={() => setShowDeleteDialog(true)}>
+						onSelect={() => setShowDeleteDialog(true)}
+						className='font-medium'>
 						<Trash />
-						Delete Project
+						Delete
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
