@@ -9,7 +9,14 @@ const nextConfig: NextConfig = {
 		},
 	},
 	images: {
-		remotePatterns: [new URL(`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}/**/*`)],
+		remotePatterns: [
+			{
+				protocol: "http", // o 'https' en producción
+				hostname: "localhost",
+				port: "3000",
+				pathname: "/api/**",
+			},
+		],
 	},
 }
 

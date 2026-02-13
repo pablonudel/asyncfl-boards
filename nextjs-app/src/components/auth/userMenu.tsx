@@ -1,5 +1,5 @@
 import { getUserSession } from "@/actions/auth/auth.actions"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -19,23 +19,24 @@ export default async function UserMenu() {
 	if (!session.user) return null
 	const user = session.user
 
-	const avatarPath = `${process.env.STORAGE_PATH_BASE}/${user.id}/${user.image}`
+	const userInitials = `${user.firstName.charAt(0).toUpperCase()}${user.lastName.charAt(0).toUpperCase()}`
 
 	return (
 		<div className='flex gap-2 items-center'>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Avatar className='h-9 w-9 cursor-default'>
-						<AvatarImage
-							src={avatarPath || undefined}
-							alt={user.name}
-							className='object-cover'
-						/>
-						<AvatarFallback className='font-bold'>{`${user.firstName
-							.charAt(0)
-							.toUpperCase()}${user.lastName
-							.charAt(0)
-							.toUpperCase()}`}</AvatarFallback>
+						{user.image ? (
+							<AvatarImage
+								src={`/api/avatar`}
+								alt={user.name}
+								className='object-cover'
+							/>
+						) : (
+							<div className='flex items-center justify-center h-9 w-9 font-bold bg-foreground/10'>
+								{userInitials}
+							</div>
+						)}
 					</Avatar>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className='w-56' align='end'>

@@ -78,10 +78,11 @@ export default function AvatarUploader() {
 			{session?.user?.image ? (
 				<div className='relative'>
 					<Image
-						src={`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}/${session.user.id}/${session.user.image}`}
+						src={`/api/avatar`}
 						alt='User Avatar'
 						width={112}
 						height={112}
+						unoptimized
 						className={cn(
 							"rounded-full h-full w-full object-cover",
 							isDragActive && "opacity-50",
