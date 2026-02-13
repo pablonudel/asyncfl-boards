@@ -4,10 +4,10 @@ import { deleteAvatarFile, uploadAvatarFile } from "@/actions/user/user.action"
 import { authClient } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 import { Trash, Upload } from "lucide-react"
-import Image from "next/image"
 import { useCallback } from "react"
 import { FileRejection, useDropzone } from "react-dropzone"
 import { toast } from "sonner"
+import { Avatar, AvatarImage } from "../ui/avatar"
 import { Button } from "../ui/button"
 
 export default function AvatarUploader() {
@@ -77,17 +77,13 @@ export default function AvatarUploader() {
 			<input {...getInputProps()} />
 			{session?.user?.image ? (
 				<div className='relative'>
-					<Image
-						src={`/api/avatar`}
-						alt='User Avatar'
-						width={112}
-						height={112}
-						unoptimized
-						className={cn(
-							"rounded-full h-full w-full object-cover",
-							isDragActive && "opacity-50",
-						)}
-					/>
+					<Avatar className='w-25 h-25'>
+						<AvatarImage
+							src={`/api/avatar?v=${session.user.updatedAt.getTime()}`} // Cache busting
+							alt={session.user.name}
+							className='object-cover'
+						/>
+					</Avatar>
 					<Button
 						variant='default'
 						size='icon'

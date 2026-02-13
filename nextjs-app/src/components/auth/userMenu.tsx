@@ -28,7 +28,7 @@ export default async function UserMenu() {
 					<Avatar className='h-9 w-9 cursor-default'>
 						{user.image ? (
 							<AvatarImage
-								src={`/api/avatar`}
+								src={`/api/avatar?v=${user.updatedAt.getTime()}`} // Cache busting
 								alt={user.name}
 								className='object-cover'
 							/>
