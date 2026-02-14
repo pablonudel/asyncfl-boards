@@ -1,9 +1,19 @@
 "use client"
-import { deleteProject } from "@/actions/projects/crudProjects.actions"
+import {
+	deleteProject,
+	toggleProjectPublic,
+} from "@/actions/projects/crudProjects.actions"
 import { Project } from "@/generated/prisma/client"
 import { editProjectSchema } from "@/lib/schemas/projectSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { EllipsisVertical, Eye, EyeOff, SquarePen, Trash } from "lucide-react"
+import {
+	EllipsisVertical,
+	Eye,
+	EyeOff,
+	Link2,
+	SquarePen,
+	Trash,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
@@ -57,6 +67,24 @@ export default function ProjectCardMenu({
 		setShowDeleteDialog(false)
 	}
 
+	const handleTogglePublic = async () => {
+		const res = await toggleProjectPublic(project.id)
+		if (!res.success) {
+			toast.error(res.message)
+		} else {
+			if (res.isPublic) {
+				const publicUrl = `${window.location.origin}/public/${res.idPublic}`
+				try {
+					await navigator.clipboard.writeText(publicUrl)
+				} catch (error) {
+					console.error("Failed to copy public link to clipboard:", error)
+				}
+			}
+			toast.success(res.message)
+			router.refresh()
+		}
+	}
+
 	return (
 		<>
 			<DropdownMenu modal={false} onOpenChange={onOpenChange}>
@@ -71,21 +99,27 @@ export default function ProjectCardMenu({
 						<SquarePen />
 						Edit Project
 					</DropdownMenuItem>
-					<DropdownMenuItem variant='default' className='font-medium'>
-						{project.isPublic ? (
-							<EyeOff className='text-foreground' />
-						) : (
-							<Eye className='text-foreground' />
-						)}
+					<DropdownMenuItem
+						variant='default'
+						onClick={() => handleTogglePublic()}>
+						{project.isPublic ? <EyeOff /> : <Eye />}
 						Make {project.isPublic ? "Private" : "Public"}
 					</DropdownMenuItem>
+					{project.isPublic && (
+						<>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem>
+								<Link2 />
+								Public Link
+							</DropdownMenuItem>
+						</>
+					)}
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						variant='destructive'
-						onClick={() => setShowDeleteDialog(true)}
-						className='font-medium'>
+						onClick={() => setShowDeleteDialog(true)}>
 						<Trash />
-						Delete
+						Delete Project
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

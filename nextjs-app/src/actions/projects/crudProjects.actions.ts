@@ -3,9 +3,9 @@
 import { prisma } from "@/lib/prisma"
 import { createProjectSchema } from "@/lib/schemas/projectSchema"
 import { GetSession } from "@/lib/session"
+import { nanoid } from "nanoid"
 import { revalidatePath, revalidateTag } from "next/cache"
 import * as z from "zod"
-// import { removeAllProjectFiles } from "./crudFiles.actions"
 
 export async function createProject(
 	userId: string,
@@ -18,8 +18,15 @@ export async function createProject(
 		if (session.user.id !== userId)
 			return { success: false, message: "Forbidden" }
 
+		const idPublic = nanoid(10)
+
 		const project = await prisma.project.create({
-			data: { name: data.name, description: data.description, userId },
+			data: {
+				name: data.name,
+				description: data.description,
+				userId,
+				idPublic,
+			},
 		})
 
 		revalidateTag(`projects:${userId}`, "max")
@@ -129,25 +136,6 @@ export async function deleteProject(projectId: string) {
 		})
 		if (!own) return { success: false, message: "Project not found" }
 
-		// Delete files first (best-effort if tienes helper externo)
-		// const resFilesDeleting = await removeAllProjectFiles(
-		// 	session.user.id,
-		// 	projectId
-		// )
-		// if (!resFilesDeleting.success) {
-		// 	return { success: false, message: resFilesDeleting.message }
-		// }
-
-		// const files = await prisma.file.findMany({
-		// 	where: { projectId },
-		// 	select: { id: true, fileName: true },
-		// })
-		// for (const f of files) {
-		// 	try {
-		// 		await prisma.file.delete({ where: { id: f.id } })
-		// 	} catch {}
-		// }
-
 		await prisma.project.delete({ where: { id: projectId } })
 
 		revalidateTag(`projects:${session.user.id}`, "max")
@@ -157,5 +145,41 @@ export async function deleteProject(projectId: string) {
 	} catch (error) {
 		console.error("Error deleting project:", error)
 		return { success: false, message: "Failed to delete project" }
+	}
+}
+
+export async function toggleProjectPublic(projectId: string) {
+	try {
+		const session = await GetSession()
+		if (!session || !session.user)
+			return { success: false, message: "Unauthorized" }
+
+		const own = await prisma.project.findFirst({
+			where: { id: projectId, userId: session.user.id },
+		})
+		if (!own) return { success: false, message: "Project not found" }
+
+		const project = await prisma.project.update({
+			where: { id: projectId },
+			data: { isPublic: !own.isPublic },
+		})
+
+		const resMessage = project.isPublic
+			? "The project is now public, link copied to clipboard!"
+			: "The project is now private"
+
+		revalidateTag(`project:${projectId}`, "max")
+		revalidatePath(`/projects`)
+		revalidatePath(`/projects/${projectId}`)
+
+		return {
+			success: true,
+			message: resMessage,
+			idPublic: project.idPublic,
+			isPublic: project.isPublic,
+		}
+	} catch (error) {
+		console.error("Error toggling project public status:", error)
+		return { success: false, message: "Failed to toggle project public status" }
 	}
 }
