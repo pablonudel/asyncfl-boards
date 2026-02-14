@@ -1,11 +1,6 @@
 "use client"
-import {
-	deleteProject,
-	toggleProjectPublic,
-} from "@/actions/projects/crudProjects.actions"
+import { toggleProjectPublic } from "@/actions/projects/crudProjects.actions"
 import { Project } from "@/generated/prisma/client"
-import { editProjectSchema } from "@/lib/schemas/projectSchema"
-import { zodResolver } from "@hookform/resolvers/zod"
 import {
 	EllipsisVertical,
 	Eye,
@@ -16,18 +11,8 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { z } from "zod"
 import { Button } from "../ui/button"
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "../ui/dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -35,7 +20,9 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu"
+import DeleteProjectDialog from "./deleteProjectDialog"
 import ProjectDialog from "./projectDialog"
+import PublicLinkDialog from "./publicLinkDialog"
 
 export default function ProjectCardMenu({
 	project,
@@ -47,25 +34,7 @@ export default function ProjectCardMenu({
 	const router = useRouter()
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 	const [showProjectDialog, setShowProjectDialog] = useState(false)
-
-	const form = useForm<z.infer<typeof editProjectSchema>>({
-		resolver: zodResolver(editProjectSchema),
-		defaultValues: {
-			name: project.name,
-			description: project.description ?? "",
-		},
-	})
-
-	const handleDeleteProject = async () => {
-		const res = await deleteProject(project.id)
-		if (!res.success) {
-			toast.error(res.message)
-		} else {
-			toast.success(res.message)
-			router.push("/projects")
-		}
-		setShowDeleteDialog(false)
-	}
+	const [showPublicLinkDialog, setShowPublicLinkDialog] = useState(false)
 
 	const handleTogglePublic = async () => {
 		const res = await toggleProjectPublic(project.id)
@@ -95,7 +64,9 @@ export default function ProjectCardMenu({
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align='end'>
 					{/* <EditProjectBtn project={project} /> */}
-					<DropdownMenuItem onClick={() => setShowProjectDialog(true)}>
+					<DropdownMenuItem
+						variant='default'
+						onClick={() => setShowProjectDialog(true)}>
 						<SquarePen />
 						Edit Project
 					</DropdownMenuItem>
@@ -108,7 +79,9 @@ export default function ProjectCardMenu({
 					{project.isPublic && (
 						<>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem>
+							<DropdownMenuItem
+								variant='default'
+								onClick={() => setShowPublicLinkDialog(true)}>
 								<Link2 />
 								Public Link
 							</DropdownMenuItem>
@@ -132,30 +105,19 @@ export default function ProjectCardMenu({
 				project={project}
 			/>
 
+			{/* Public Link Dialog */}
+			<PublicLinkDialog
+				project={project}
+				open={showPublicLinkDialog}
+				onOpenChange={setShowPublicLinkDialog}
+			/>
+
 			{/* Delete Dialog */}
-			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>
-							Are you sure you want to delete this project?
-						</DialogTitle>
-					</DialogHeader>
-					<DialogDescription>
-						This action cannot be undone. This will permanently delete the
-						project and all of its data.
-					</DialogDescription>
-					<DialogFooter>
-						<Button
-							variant='secondary'
-							onClick={() => setShowDeleteDialog(false)}>
-							Cancel
-						</Button>
-						<Button variant='destructive' onClick={() => handleDeleteProject()}>
-							Delete Project
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+			<DeleteProjectDialog
+				projectId={project.id}
+				open={showDeleteDialog}
+				onOpenChange={setShowDeleteDialog}
+			/>
 		</>
 	)
 }

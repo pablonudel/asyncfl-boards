@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prisma"
 import { createProjectSchema } from "@/lib/schemas/projectSchema"
 import { GetSession } from "@/lib/session"
-import { nanoid } from "nanoid"
 import { revalidatePath, revalidateTag } from "next/cache"
 import * as z from "zod"
 
@@ -18,14 +17,11 @@ export async function createProject(
 		if (session.user.id !== userId)
 			return { success: false, message: "Forbidden" }
 
-		const idPublic = nanoid(10)
-
 		const project = await prisma.project.create({
 			data: {
 				name: data.name,
 				description: data.description,
 				userId,
-				idPublic,
 			},
 		})
 

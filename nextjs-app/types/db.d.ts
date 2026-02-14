@@ -75,7 +75,7 @@ export type Project = {
     description: string | null;
     widgetsOrder: Generated<string[]>;
     isPublic: Generated<boolean>;
-    idPublic: string | null;
+    idPublic: Generated<string | null>;
     userId: string;
 };
 export type Run = {

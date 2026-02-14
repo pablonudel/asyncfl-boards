@@ -1,5 +1,6 @@
 import { getUserSession } from "@/actions/auth/auth.actions"
 import { getUserProjects } from "@/data/projectsData"
+import { Project } from "@/generated/prisma/client"
 import { CircleX, FolderSearch } from "lucide-react"
 import { Suspense } from "react"
 import {
@@ -11,21 +12,16 @@ import {
 } from "../ui/empty"
 import ProjectCard from "./projectCard"
 
-type project = {
-	id: string
-	name: string
-	createdAt: Date
-	updatedAt: Date
-	description: string | null
-}
-
 export default async function ProjectList() {
 	const session = await getUserSession()
 	if (!session.user) return null
 	const user = session.user
 
 	const res = await getUserProjects(user.id)
-	const projects: project[] = res.success ? (res.projects ?? []) : []
+	const projects: Project[] = res.success ? (res.projects ?? []) : []
+
+	// order projects by createdAt date, most recent first
+	projects.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 
 	if (!projects)
 		return (

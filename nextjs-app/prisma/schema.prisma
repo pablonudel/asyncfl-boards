@@ -118,7 +118,7 @@ model Project {
   widgets      Widget[]
   widgetsOrder String[] @default([])
   isPublic     Boolean  @default(false)
-  idPublic     String?  @unique
+  idPublic     String?  @default(nanoid(10))
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
