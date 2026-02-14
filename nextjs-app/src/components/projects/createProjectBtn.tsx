@@ -11,14 +11,16 @@ export default function CreateProjectBtn({
 	mode: "create" | "edit"
 	userId: string
 }) {
-	const [isOpen, setIsOpen] = useState(false)
+	const [showProjectDialog, setShowProjectDialog] = useState(false)
 	return (
 		<>
-			<Button onClick={() => setIsOpen(true)}>Create New Project</Button>
+			<Button onClick={() => setShowProjectDialog(true)}>
+				Create New Project
+			</Button>
 			<ProjectDialog
 				mode={mode}
-				open={isOpen}
-				onOpenChange={setIsOpen}
+				open={showProjectDialog}
+				onOpenChange={setShowProjectDialog}
 				userId={userId}
 			/>
 		</>

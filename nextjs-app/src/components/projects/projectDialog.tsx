@@ -11,14 +11,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog"
-
-type project = {
-	id: string
-	name: string
-	createdAt: Date
-	updatedAt: Date
-	description: string | null
-}
+import { Project } from "@/generated/prisma/client"
 
 export default function ProjectDialog({
 	mode,
@@ -30,7 +23,7 @@ export default function ProjectDialog({
 	mode: "create" | "edit"
 	open: boolean
 	onOpenChange: (open: boolean) => void
-	project?: project
+	project?: Project
 	userId?: string
 }) {
 	// const [open, setOpen] = useState(false)

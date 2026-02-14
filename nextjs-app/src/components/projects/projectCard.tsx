@@ -1,18 +1,26 @@
+"use client"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Project } from "@/generated/prisma/client"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { useState } from "react"
 import ProjectCardMenu from "./projectCardMenu"
 
 export default function ProjectCard({ project }: { project: Project }) {
+	const [isMenuOpen, setIsMenuOpen] = useState(false)
 	// Comparar timestamps (ms desde epoch)
 	const isNewProject =
 		project.createdAt.getTime() === project.updatedAt.getTime()
 
 	return (
-		<Card className='h-80 w-full hover:scale-[1.03] duration-300 transition-transform group'>
+		<Card
+			className={cn(
+				"h-80 w-full hover:scale-103 duration-300 transition-transform group",
+				isMenuOpen && "scale-103",
+			)}>
 			<CardHeader className='flex items-center justify-between w-full gap-2'>
 				<div className='flex items-center gap-2'>
 					<Badge
@@ -28,8 +36,12 @@ export default function ProjectCard({ project }: { project: Project }) {
 							: `Last update on ${project.updatedAt.toLocaleDateString()}`}
 					</p>
 				</div>
-				<div className='opacity-0 group-hover:opacity-100 duration-300 transition-opacity'>
-					<ProjectCardMenu project={project} />
+				<div
+					className={cn(
+						"opacity-0 group-hover:opacity-100 duration-300 transition-opacity",
+						isMenuOpen && "opacity-100",
+					)}>
+					<ProjectCardMenu project={project} onOpenChange={setIsMenuOpen} />
 				</div>
 			</CardHeader>
 			<CardContent className='flex-1 space-y-4'>

@@ -1,8 +1,9 @@
 "use client"
 import { deleteProject } from "@/actions/projects/crudProjects.actions"
+import { Project } from "@/generated/prisma/client"
 import { editProjectSchema } from "@/lib/schemas/projectSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { EllipsisVertical, Eye, Trash } from "lucide-react"
+import { EllipsisVertical, Eye, EyeOff, SquarePen, Trash } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
@@ -24,19 +25,18 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu"
-import EditProjectBtn from "./editProjectBtn"
+import ProjectDialog from "./projectDialog"
 
-type project = {
-	id: string
-	name: string
-	createdAt: Date
-	updatedAt: Date
-	description: string | null
-}
-
-export default function ProjectCardMenu({ project }: { project: project }) {
+export default function ProjectCardMenu({
+	project,
+	onOpenChange,
+}: {
+	project: Project
+	onOpenChange?: (open: boolean) => void
+}) {
 	const router = useRouter()
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+	const [showProjectDialog, setShowProjectDialog] = useState(false)
 
 	const form = useForm<z.infer<typeof editProjectSchema>>({
 		resolver: zodResolver(editProjectSchema),
@@ -59,28 +59,45 @@ export default function ProjectCardMenu({ project }: { project: project }) {
 
 	return (
 		<>
-			<DropdownMenu modal={false}>
+			<DropdownMenu modal={false} onOpenChange={onOpenChange}>
 				<DropdownMenuTrigger asChild>
 					<Button variant='secondary' size='icon' className='rounded-full'>
 						<EllipsisVertical />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align='end'>
-					<EditProjectBtn project={project} />
+					{/* <EditProjectBtn project={project} /> */}
+					<DropdownMenuItem onClick={() => setShowProjectDialog(true)}>
+						<SquarePen />
+						Edit Project
+					</DropdownMenuItem>
 					<DropdownMenuItem variant='default' className='font-medium'>
-						<Eye className='text-foreground' />
-						Make Public
+						{project.isPublic ? (
+							<EyeOff className='text-foreground' />
+						) : (
+							<Eye className='text-foreground' />
+						)}
+						Make {project.isPublic ? "Private" : "Public"}
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						variant='destructive'
-						onSelect={() => setShowDeleteDialog(true)}
+						onClick={() => setShowDeleteDialog(true)}
 						className='font-medium'>
 						<Trash />
 						Delete
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
+
+			{/* Project Dialog */}
+			<ProjectDialog
+				mode='edit'
+				open={showProjectDialog}
+				onOpenChange={setShowProjectDialog}
+				project={project}
+			/>
+
 			{/* Delete Dialog */}
 			<Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<DialogContent>
