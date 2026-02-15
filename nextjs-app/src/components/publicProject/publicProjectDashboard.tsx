@@ -1,7 +1,11 @@
-import { getProjectByIdPublic } from "@/data/projectsData"
+import {
+	getProjectByIdPublic,
+	getWidgetsByProjectId,
+} from "@/data/projectsData"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import NavBar from "../general/navBar"
+import ProjectWidgets from "../projects/projectWidgets"
 import { Avatar, AvatarImage } from "../ui/avatar"
 
 export default async function PublicProjectDashboard({
@@ -19,6 +23,7 @@ export default async function PublicProjectDashboard({
 	const projectUser = await prisma.user.findUnique({
 		where: { id: resProject.project.userId },
 		select: {
+			id: true,
 			name: true,
 			email: true,
 			updatedAt: true,
@@ -30,6 +35,12 @@ export default async function PublicProjectDashboard({
 	if (!projectUser) {
 		return <p>Project owner not found</p>
 	}
+
+	const resWidgets = await getWidgetsByProjectId(
+		resProject.project.id,
+		resProject.project.userId,
+	)
+	const widgets = resWidgets.success ? (resWidgets.widgets ?? []) : []
 
 	const userInitials = `${projectUser.firstName.charAt(0).toUpperCase()}${projectUser.lastName.charAt(0).toUpperCase()}`
 
@@ -48,7 +59,7 @@ export default async function PublicProjectDashboard({
 						<Avatar className='h-12 w-12 cursor-default'>
 							{projectUser?.image ? (
 								<AvatarImage
-									src={`/api/avatar?v=${projectUser.updatedAt.getTime()}`} // Cache busting
+									src={`/api/avatar/${projectUser.id}?v=${projectUser.updatedAt.getTime()}`} // Cache busting
 									alt={projectUser.name}
 									className='object-cover'
 								/>
@@ -76,7 +87,12 @@ export default async function PublicProjectDashboard({
 						})}
 					</p>
 				</div>
-				<div>Dashboard</div>
+				<ProjectWidgets
+					projectWidgets={widgets}
+					widgetsOrder={resProject.project.widgetsOrder || []}
+					projectId={resProject.project.id}
+					isPublic={true}
+				/>
 			</div>
 		</div>
 	)

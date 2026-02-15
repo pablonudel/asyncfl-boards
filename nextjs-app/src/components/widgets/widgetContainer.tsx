@@ -13,12 +13,14 @@ import ScatterWidget from "./scatterWidget"
 
 function WidgetContainer({
 	projectId,
-	userFiles,
+	userFiles = [],
 	widget,
+	isPublic = false,
 }: {
 	projectId: string
-	userFiles: File[]
+	userFiles?: File[]
 	widget: Widget
+	isPublic?: boolean
 }) {
 	const isFullColumn = Boolean(
 		(widget.config as Record<string, any>)?.fullColumn ?? false,
@@ -59,13 +61,16 @@ function WidgetContainer({
 					isDragging ? "opacity-50" : "opacity-100"
 				} ${widget.type === "notes" ? "border-background shadow-none hover:border-foreground/10 bg-transparent" : ""}`,
 			)}>
-			<WidgetCardMenu
-				projectId={projectId}
-				userFiles={userFiles}
-				widget={widget}
-				dragAttributes={dragAttributes}
-				dragListeners={dragListeners}
-			/>
+			{!isPublic && (
+				<WidgetCardMenu
+					projectId={projectId}
+					userFiles={userFiles}
+					widget={widget}
+					dragAttributes={dragAttributes}
+					dragListeners={dragListeners}
+				/>
+			)}
+
 			<CardContent className='px-0'>
 				{widget.type === "scatter.rounds" && <ScatterWidget widget={widget} />}
 				{widget.type === "scatter.pareto" && <ParetoFrontier widget={widget} />}

@@ -1,21 +1,15 @@
-import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { promises as fs } from "fs"
-import { headers } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 import { join } from "node:path"
 import path from "path"
 
-export async function GET(req: NextRequest) {
+export async function GET(
+	req: NextRequest,
+	ctx: RouteContext<"/api/avatar/[userId]">,
+) {
 	try {
-		const session = await auth.api.getSession({
-			headers: await headers(),
-		})
-		if (!session || !session.user) {
-			return new NextResponse("Unauthorized", { status: 401 })
-		}
-
-		const userId = session.user.id
+		const { userId } = await ctx.params
 
 		const user = await prisma.user.findUnique({
 			where: { id: userId },

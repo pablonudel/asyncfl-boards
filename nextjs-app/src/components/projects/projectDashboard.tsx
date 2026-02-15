@@ -80,20 +80,6 @@ export default async function ProjectDashboard({
 					</div>
 				</div>
 				<div className='flex justify-between items-center'>
-					{/* <Link
-						href={`/projects`}
-						className=' text-muted-foreground font-light hover:text-foreground'>
-						Projects
-					</Link> */}
-					{/* <div className='flex items-baseline gap-2'>
-						<Link
-							href={`/projects`}
-							className=' text-muted-foreground font-light hover:text-foreground'>
-							Projects
-						</Link>
-						<span className=' text-muted-foreground font-light'>/</span>
-						<h1 className='text-2xl font-bold'>{project.name}</h1>
-					</div> */}
 					<AddWidgetDropdown
 						userFiles={resFiles.files || []}
 						projectId={project.id}

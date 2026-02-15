@@ -27,12 +27,14 @@ export default function ProjectWidgets({
 	projectWidgets,
 	widgetsOrder,
 	projectId,
-	userFiles,
+	userFiles = [],
+	isPublic = false,
 }: {
 	projectWidgets: Widget[]
 	widgetsOrder: string[]
 	projectId: string
-	userFiles: File[]
+	userFiles?: File[]
+	isPublic?: boolean
 }) {
 	// Solo manejo de orden (optimistic update)
 	const [order, setOrder] = useState<string[]>([])
@@ -91,7 +93,7 @@ export default function ProjectWidgets({
 					<EmptyMedia>
 						<LayoutDashboard size={48} />
 					</EmptyMedia>
-					<EmptyTitle>You haven&apos;t created any widget yet.</EmptyTitle>
+					<EmptyTitle>This project has no widgets yet.</EmptyTitle>
 				</EmptyHeader>
 			</Empty>
 		)
@@ -111,6 +113,7 @@ export default function ProjectWidgets({
 							userFiles={userFiles}
 							key={widget.id}
 							widget={widget}
+							isPublic={isPublic}
 						/>
 					))}
 				</div>
@@ -122,6 +125,7 @@ export default function ProjectWidgets({
 							widget={sortedWidgets.find((w) => w.id === activeId) as Widget}
 							projectId={projectId}
 							userFiles={userFiles}
+							isPublic={isPublic}
 						/>
 					</div>
 				) : null}

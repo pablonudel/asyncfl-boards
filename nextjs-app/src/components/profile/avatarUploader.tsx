@@ -79,7 +79,7 @@ export default function AvatarUploader() {
 				<div className='relative'>
 					<Avatar className='w-25 h-25'>
 						<AvatarImage
-							src={`/api/avatar?v=${session.user.updatedAt.getTime()}`} // Cache busting
+							src={`/api/avatar/${session.user.id}?v=${session.user.updatedAt.getTime()}`} // Cache busting
 							alt={session.user.name}
 							className='object-cover'
 						/>

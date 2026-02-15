@@ -17,7 +17,7 @@ export async function proxy(req: NextRequest) {
 
 	if (!session) {
 		const url = new URL("/", req.url)
-		if (isProtectedApi || isProtectedRoute) {
+		if (isProtectedRoute) {
 			return NextResponse.redirect(url)
 		}
 	}
@@ -31,7 +31,7 @@ export const config = {
 		"/profile/:path*",
 		"/projects/:path*",
 		"/files/:path*",
-		"/api/avatar/:path*",
+		// "/api/avatar/:path*",
 		// si querés sumar más, agregalos aquí
 	],
 }
