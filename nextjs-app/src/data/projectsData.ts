@@ -68,3 +68,19 @@ export async function getWidgetsByProjectId(projectId: string, userId: string) {
 		return { success: false, message: "Failed to get project widgets" }
 	}
 }
+
+export async function getProjectByIdPublic(idPublic: string) {
+	try {
+		const project = await prisma.project.findFirst({
+			where: { idPublic: idPublic, isPublic: true },
+		})
+		if (!project) {
+			return { success: false, message: "Project not found" }
+		}
+
+		return { success: true, project }
+	} catch (error) {
+		console.error("Error getting project by public ID:", error)
+		return { success: false, message: "Failed to get project by public ID" }
+	}
+}

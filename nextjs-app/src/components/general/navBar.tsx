@@ -1,8 +1,13 @@
 import UserMenu from "@/components/auth/userMenu"
 import Link from "next/link"
 import { Suspense } from "react"
+import { ModeToggle } from "./modeToggle"
 
-export default async function NavBar() {
+export default async function NavBar({
+	isPublic = false,
+}: {
+	isPublic?: boolean
+}) {
 	return (
 		<div className='flex justify-between items-center p-2 border rounded-full backdrop-blur-2xl'>
 			<Link href='/projects' className='ms-4'>
@@ -11,9 +16,14 @@ export default async function NavBar() {
 					<span className='font-medium'>Boards</span>
 				</p>
 			</Link>
-			<Suspense fallback={<div>Loading user menu...</div>}>
-				<UserMenu />
-			</Suspense>
+			<div className='flex items-center gap-2'>
+				{!isPublic && (
+					<Suspense fallback={<div>Loading user menu...</div>}>
+						<UserMenu />
+					</Suspense>
+				)}
+				<ModeToggle />
+			</div>
 		</div>
 	)
 }

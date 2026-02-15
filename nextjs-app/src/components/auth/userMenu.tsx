@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Files, LayoutGrid, User } from "lucide-react"
 import Link from "next/link"
-import { ModeToggle } from "../general/modeToggle"
 import SignOutItem from "./signOutItem"
 
 export default async function UserMenu() {
@@ -72,7 +71,6 @@ export default async function UserMenu() {
 					<SignOutItem />
 				</DropdownMenuContent>
 			</DropdownMenu>
-			<ModeToggle />
 		</div>
 	)
 }
