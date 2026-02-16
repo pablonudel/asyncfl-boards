@@ -1,5 +1,6 @@
 import PublicProjectDashboard from "@/components/publicProject/publicProjectDashboard"
 import { Suspense } from "react"
+import Loading from "./loading"
 
 export default async function Page({
 	params,
@@ -7,7 +8,7 @@ export default async function Page({
 	params: Promise<{ idPublic: string }>
 }) {
 	return (
-		<Suspense fallback={<div>Loading public project...</div>}>
+		<Suspense fallback={<Loading />}>
 			<PublicProjectDashboard params={params} />
 		</Suspense>
 	)

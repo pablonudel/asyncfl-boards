@@ -4,6 +4,7 @@ import {
 } from "@/data/projectsData"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
+import { notFound } from "next/navigation"
 import NavBar from "../general/navBar"
 import ProjectWidgets from "../projects/projectWidgets"
 import { Avatar, AvatarImage } from "../ui/avatar"
@@ -17,7 +18,7 @@ export default async function PublicProjectDashboard({
 
 	const resProject = await getProjectByIdPublic(idPublic)
 	if (!resProject.success || !resProject.project) {
-		return <p>Project not found</p>
+		return notFound()
 	}
 
 	const projectUser = await prisma.user.findUnique({
@@ -33,7 +34,7 @@ export default async function PublicProjectDashboard({
 		},
 	})
 	if (!projectUser) {
-		return <p>Project owner not found</p>
+		return notFound()
 	}
 
 	const resWidgets = await getWidgetsByProjectId(
