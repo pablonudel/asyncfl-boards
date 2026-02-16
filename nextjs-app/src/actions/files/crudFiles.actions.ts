@@ -57,16 +57,19 @@ export async function uploadUserFile(file: File) {
 		const fileNameOk = /^[a-zA-Z0-9._-]+$/.test(file.name)
 		if (!fileNameOk) return { success: false, message: "Invalid file name." }
 
-		const uploadFile = await fetch(`${process.env.MOTIA_API_URL}/api/upload`, {
-			method: "POST",
-			body: (() => {
-				const formData = new FormData()
-				formData.append("userId", session.user.id)
-				formData.append("fileType", "resultsFile")
-				formData.append("file", file)
-				return formData
-			})(),
-		})
+		const uploadFile = await fetch(
+			`${process.env.NEXT_PUBLIC_API_URL}/api/upload`,
+			{
+				method: "POST",
+				body: (() => {
+					const formData = new FormData()
+					formData.append("userId", session.user.id)
+					formData.append("fileType", "resultsFile")
+					formData.append("file", file)
+					return formData
+				})(),
+			},
+		)
 		const uploadResult = await uploadFile.json()
 
 		if (!uploadResult.success) {
