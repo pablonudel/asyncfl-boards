@@ -12,7 +12,13 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Button } from "../ui/button"
-import { Separator } from "../ui/separator"
+import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "../ui/card"
 
 export default function PublicLinkDialog({
 	project,
@@ -65,16 +71,25 @@ export default function PublicLinkDialog({
 						Copy
 					</Button>
 				</div>
-				<Separator />
-				<h2 className='text-md font-medium'>Regenerate Public Link</h2>
-				<p className='text-xs'>
-					By clicking the button below, you will generate a new public link for
-					this project. The previous public link will become invalid and will no
-					longer grant access to the project. This action cannot be undone.
-				</p>
-				<Button variant='secondary' onClick={handleRegenerateLink}>
-					Regenerate Public Link
-				</Button>
+				<Card>
+					<CardHeader>
+						<CardTitle>Regenerate Public Link</CardTitle>
+					</CardHeader>
+					<CardContent className='text-xs'>
+						By clicking the button below, you will generate a new public link
+						for this project. The previous public link will become invalid and
+						will no longer grant access to the project. This action cannot be
+						undone.
+					</CardContent>
+					<CardFooter>
+						<Button
+							variant='secondary'
+							onClick={handleRegenerateLink}
+							className='w-full'>
+							Regenerate
+						</Button>
+					</CardFooter>
+				</Card>
 			</DialogContent>
 		</Dialog>
 	)

@@ -2,6 +2,7 @@
 
 import { updateProjectWidgetsOrder } from "@/actions/projects/crudProjects.actions"
 import type { File, Widget } from "@/generated/prisma/client"
+import { cn } from "@/lib/utils"
 import {
 	closestCenter,
 	DndContext,
@@ -108,7 +109,7 @@ export default function ProjectWidgets({
 			onDragEnd={handleDragEnd}
 			onDragStart={(e) => setActiveId(e.active.id)}>
 			<SortableContext items={order} strategy={rectSwappingStrategy}>
-				<div className='grid grid-cols-2 gap-6 pt-6'>
+				<div className='grid grid-cols-2 gap-x-6 gap-y-8'>
 					{sortedWidgets.map((widget) => (
 						<WidgetContainer
 							projectId={projectId}
@@ -123,7 +124,12 @@ export default function ProjectWidgets({
 			</SortableContext>
 			<DragOverlay>
 				{activeId ? (
-					<div className='shadow-2xl rounded-lg'>
+					<div
+						className={cn(
+							"shadow-xl rounded-lg",
+							sortedWidgets.find((w) => w.id === activeId)?.type === "notes" &&
+								"rounded-none bg-background px-8",
+						)}>
 						<WidgetContainer
 							widget={sortedWidgets.find((w) => w.id === activeId) as Widget}
 							projectId={projectId}

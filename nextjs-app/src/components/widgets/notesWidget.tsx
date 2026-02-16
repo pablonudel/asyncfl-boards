@@ -125,7 +125,7 @@ export default function NotesWidget({
 	}
 
 	return (
-		<div className='p-8'>
+		<div className='py-8'>
 			<EditorContent editor={editor} />
 		</div>
 	)

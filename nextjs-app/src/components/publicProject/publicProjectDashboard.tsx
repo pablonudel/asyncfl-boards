@@ -50,43 +50,45 @@ export default async function PublicProjectDashboard({
 			<div className='sticky top-4 left-4 right-4 mx-auto z-50'>
 				<NavBar isPublic={true} />
 			</div>
-			<div className='px-6 space-y-8'>
-				<div>
-					<h1 className='text-3xl font-bold'>{resProject.project.name}</h1>
-					<p className='text-lg'>{resProject.project.description}</p>
-				</div>
-				<div className='flex items-center justify-between gap-4 border-t border-b py-4'>
-					<div className='flex items-center gap-4'>
-						<Avatar className='h-12 w-12 cursor-default'>
-							{projectUser?.image ? (
-								<AvatarImage
-									src={`/api/avatar/${projectUser.id}?v=${projectUser.updatedAt.getTime()}`} // Cache busting
-									alt={projectUser.name}
-									className='object-cover'
-								/>
-							) : (
-								<div className='flex items-center justify-center h-9 w-9 font-bold bg-foreground/10'>
-									{userInitials}
-								</div>
-							)}
-						</Avatar>
-						<div>
-							<p className='text-sm/2 font-bold pt-2'>{projectUser.name}</p>
-							<Link
-								href={`mailto:${projectUser.email}`}
-								className='text-xs hover:underline text-muted-foreground'>
-								{projectUser?.email}
-							</Link>
-						</div>
+			<div className='px-6'>
+				<div className='space-y-8'>
+					<div>
+						<h1 className='text-3xl font-bold'>{resProject.project.name}</h1>
+						<p className='text-lg'>{resProject.project.description}</p>
 					</div>
-					<p className='text-sm text-muted-foreground text-end'>
-						Last update <br />
-						{resProject.project.updatedAt.toLocaleDateString("us-US", {
-							year: "numeric",
-							month: "short",
-							day: "2-digit",
-						})}
-					</p>
+					<div className='flex items-center justify-between gap-4 border-t border-b py-4'>
+						<div className='flex items-center gap-4'>
+							<Avatar className='h-12 w-12 cursor-default'>
+								{projectUser?.image ? (
+									<AvatarImage
+										src={`/api/avatar/${projectUser.id}?v=${projectUser.updatedAt.getTime()}`} // Cache busting
+										alt={projectUser.name}
+										className='object-cover'
+									/>
+								) : (
+									<div className='flex items-center justify-center h-9 w-9 font-bold bg-foreground/10'>
+										{userInitials}
+									</div>
+								)}
+							</Avatar>
+							<div>
+								<p className='text-sm/2 font-bold pt-2'>{projectUser.name}</p>
+								<Link
+									href={`mailto:${projectUser.email}`}
+									className='text-xs hover:underline text-muted-foreground'>
+									{projectUser?.email}
+								</Link>
+							</div>
+						</div>
+						<p className='text-sm text-muted-foreground text-end'>
+							Last update <br />
+							{resProject.project.updatedAt.toLocaleDateString("us-US", {
+								year: "numeric",
+								month: "short",
+								day: "2-digit",
+							})}
+						</p>
+					</div>
 				</div>
 				<ProjectWidgets
 					projectWidgets={widgets}

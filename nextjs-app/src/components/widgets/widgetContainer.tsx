@@ -61,7 +61,7 @@ function WidgetContainer({
 					!isFullColumn ? "lg:col-span-1" : ""
 				} ${isFullColumn ? "col-span-2" : ""} ${
 					isDragging ? "opacity-50" : "opacity-100"
-				} ${widget.type === "notes" ? "border-background shadow-none hover:border-foreground/10 bg-transparent" : ""}`,
+				} ${widget.type === "notes" ? "border-0 rounded-none shadow-none bg-transparent" : ""}`,
 			)}>
 			{!isPublic && (
 				<WidgetCardMenu
