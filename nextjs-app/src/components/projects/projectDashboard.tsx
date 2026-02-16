@@ -62,7 +62,7 @@ export default async function ProjectDashboard({
 							<Badge
 								variant={project.isPublic ? "default" : "outline"}
 								className={cn(
-									project.isPublic && "bg-green-600 text-white font-bold",
+									project.isPublic && "bg-blue-600 text-white font-bold",
 								)}>
 								{project.isPublic ? "Public" : "Private"}
 							</Badge>

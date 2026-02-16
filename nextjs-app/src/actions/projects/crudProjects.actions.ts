@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { createProjectSchema } from "@/lib/schemas/projectSchema"
 import { GetSession } from "@/lib/session"
+import { nanoid } from "nanoid"
 import { revalidatePath, revalidateTag } from "next/cache"
 import * as z from "zod"
 
@@ -177,5 +178,38 @@ export async function toggleProjectPublic(projectId: string) {
 	} catch (error) {
 		console.error("Error toggling project public status:", error)
 		return { success: false, message: "Failed to toggle project public status" }
+	}
+}
+
+export async function regenerateProjectPublicLink(projectId: string) {
+	try {
+		const session = await GetSession()
+		if (!session || !session.user)
+			return { success: false, message: "Unauthorized" }
+
+		const own = await prisma.project.findFirst({
+			where: { id: projectId, userId: session.user.id },
+			select: { id: true },
+		})
+		if (!own) return { success: false, message: "Project not found" }
+
+		const newIdPublic = nanoid(10)
+		const updated = await prisma.project.update({
+			where: { id: projectId },
+			data: { idPublic: newIdPublic },
+		})
+
+		revalidateTag(`project:${projectId}`, "max")
+		revalidatePath(`/projects`)
+		revalidatePath(`/projects/${projectId}`)
+
+		return {
+			success: true,
+			message: "Public link regenerated successfully",
+			idPublic: updated.idPublic,
+		}
+	} catch (error) {
+		console.error("Error regenerating project public link:", error)
+		return { success: false, message: "Failed to regenerate public link" }
 	}
 }
