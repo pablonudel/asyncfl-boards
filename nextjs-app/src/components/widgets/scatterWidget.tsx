@@ -71,7 +71,15 @@ function hexToRgba(hex: string, alpha = 0.2) {
 	return `rgba(${r},${g},${b},${alpha})`
 }
 
-function ScatterWidget({ widget }: { widget: Widget }) {
+function ScatterWidget({
+	widget,
+	userId,
+	isPublic = false,
+}: {
+	widget: Widget
+	userId?: string
+	isPublic?: boolean
+}) {
 	const { theme } = useTheme()
 	const [dataConfig, setDataConfig] = useState<any[]>([])
 	const [isLoading, setIsLoading] = useState(true)
@@ -127,24 +135,31 @@ function ScatterWidget({ widget }: { widget: Widget }) {
 
 	useEffect(() => {
 		async function loadData() {
-			const { data: session } = await authClient.getSession()
-			if (!session?.user) return
+			let UserID: string | undefined
+			if (isPublic && userId) {
+				UserID = userId
+			} else if (!isPublic || !userId) {
+				const { data: session } = await authClient.getSession()
+				if (!session?.user) return
+				UserID = session.user.id
+			} else {
+				setIsLoading(false)
+				setErrorMsg("Could not load data, user not authenticated")
+				return
+			}
 			setIsLoading(true)
 			setErrorMsg(null)
 
 			const plotPromises = widgetDataConfig.map(async (plotConfig: any) => {
 				try {
-					const source = await getDataFromSource(
-						session.user.id,
-						plotConfig.source,
-					)
+					const source = await getDataFromSource(UserID, plotConfig.source)
 
 					const sourceData = source.array as number[][][]
 					const sourceShape = source.shape
 					const rounds =
 						sourceShape.length > 2
 							? source.array[0].length
-							: await getDataFromSource(session.user.id, plotConfig.x).then(
+							: await getDataFromSource(UserID, plotConfig.x).then(
 									(res) => res.array[0].length,
 								)
 

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog"
 import { Project } from "@/generated/prisma/client"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 // import { nanoid } from "nanoid"
 
 export default function PublicLinkDialog({
@@ -19,7 +20,11 @@ export default function PublicLinkDialog({
 	open: boolean
 	onOpenChange: (open: boolean) => void
 }) {
-	const publicUrl = `${window.location.origin}/public/${project.idPublic}`
+	const [publicUrl, setPublicUrl] = useState("")
+
+	useEffect(() => {
+		setPublicUrl(`${window.location.origin}/public/${project.idPublic}`)
+	}, [project.idPublic])
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>

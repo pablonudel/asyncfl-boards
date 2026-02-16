@@ -92,6 +92,7 @@ export default async function PublicProjectDashboard({
 					widgetsOrder={resProject.project.widgetsOrder || []}
 					projectId={resProject.project.id}
 					isPublic={true}
+					userId={resProject.project.userId}
 				/>
 			</div>
 		</div>

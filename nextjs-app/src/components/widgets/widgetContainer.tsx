@@ -16,11 +16,13 @@ function WidgetContainer({
 	userFiles = [],
 	widget,
 	isPublic = false,
+	userId,
 }: {
 	projectId: string
 	userFiles?: File[]
 	widget: Widget
 	isPublic?: boolean
+	userId?: string
 }) {
 	const isFullColumn = Boolean(
 		(widget.config as Record<string, any>)?.fullColumn ?? false,
@@ -72,7 +74,9 @@ function WidgetContainer({
 			)}
 
 			<CardContent className='px-0'>
-				{widget.type === "scatter.rounds" && <ScatterWidget widget={widget} />}
+				{widget.type === "scatter.rounds" && (
+					<ScatterWidget widget={widget} userId={userId} isPublic={isPublic} />
+				)}
 				{widget.type === "scatter.pareto" && <ParetoFrontier widget={widget} />}
 				{widget.type === "notes" && (
 					<NotesWidget widgetConfig={widget.config} />

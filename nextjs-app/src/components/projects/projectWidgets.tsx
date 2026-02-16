@@ -29,12 +29,14 @@ export default function ProjectWidgets({
 	projectId,
 	userFiles = [],
 	isPublic = false,
+	userId,
 }: {
 	projectWidgets: Widget[]
 	widgetsOrder: string[]
 	projectId: string
 	userFiles?: File[]
 	isPublic?: boolean
+	userId?: string
 }) {
 	// Solo manejo de orden (optimistic update)
 	const [order, setOrder] = useState<string[]>([])
@@ -114,6 +116,7 @@ export default function ProjectWidgets({
 							key={widget.id}
 							widget={widget}
 							isPublic={isPublic}
+							userId={userId}
 						/>
 					))}
 				</div>
@@ -126,6 +129,7 @@ export default function ProjectWidgets({
 							projectId={projectId}
 							userFiles={userFiles}
 							isPublic={isPublic}
+							userId={userId}
 						/>
 					</div>
 				) : null}
