@@ -72,9 +72,7 @@ export default async function PublicProjectDashboard({
 								)}
 							</Avatar>
 							<div>
-								<p className='text-sm/tight font-bold'>
-									Federico Antonio Guitierrez
-								</p>
+								<p className='text-sm/tight font-bold'>{projectUser.name}</p>
 								<Link
 									href={`mailto:${projectUser.email}`}
 									className='text-xs hover:underline text-muted-foreground'>
