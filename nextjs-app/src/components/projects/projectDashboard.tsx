@@ -11,6 +11,7 @@ import { getUserProjectById, getWidgetsByProjectId } from "@/data/projectsData"
 import { cn } from "@/lib/utils"
 import { CircleX } from "lucide-react"
 import { Badge } from "../ui/badge"
+import { Separator } from "../ui/separator"
 import AddWidgetDropdown from "./addWidgetDropdown"
 import ProjectCardMenu from "./projectCardMenu"
 import ProjectWidgets from "./projectWidgets"
@@ -78,6 +79,7 @@ export default async function ProjectDashboard({
 						<h1 className='text-3xl font-bold'>{project.name}</h1>
 						<p className='text-lg'>{project.description}</p>
 					</div>
+					<Separator className='mt-8' />
 				</div>
 				<div className='flex justify-between items-center'>
 					<AddWidgetDropdown

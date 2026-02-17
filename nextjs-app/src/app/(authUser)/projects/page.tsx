@@ -11,7 +11,6 @@ export default async function Page() {
 				<Suspense fallback={<div>Loading...</div>}>
 					<CreateProjectWrapper />
 				</Suspense>
-				{/* <CreateProjectDialog /> */}
 			</div>
 			<Suspense fallback={<div>Loading projects...</div>}>
 				<ProjectList />

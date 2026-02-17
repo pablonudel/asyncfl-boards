@@ -61,39 +61,41 @@ export default function WidgetCardMenu({
 
 	return (
 		<>
-			<div className='flex justify-center w-full gap-1 absolute top-0 px-4 -translate-y-1/2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity delay-500 duration-300 z-10'>
-				<div className='bg-background p-1 rounded-full space-x-1 border'>
-					{widget.type !== "notes" && (
+			<div className='w-full flex justify-center gap-1 '>
+				<div className='absolute top-0 px-4 -translate-y-1/2 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto transition-opacity delay-500 duration-300 z-10'>
+					<div className='bg-background p-1 rounded-full space-x-1 border'>
+						{widget.type !== "notes" && (
+							<Button
+								variant='secondary'
+								size='icon'
+								className='rounded-full w-8 h-8'
+								onClick={handleColumnSwitch}
+								disabled={isPending}>
+								{isFullColumn ? <ChevronLeft /> : <ChevronRight />}
+							</Button>
+						)}
+						<Button
+							variant='secondary'
+							size='icon'
+							className='rounded-full h-8 w-8'
+							{...(dragAttributes ?? {})}
+							{...(dragListeners ?? {})}>
+							<Move />
+						</Button>
 						<Button
 							variant='secondary'
 							size='icon'
 							className='rounded-full w-8 h-8'
-							onClick={handleColumnSwitch}
-							disabled={isPending}>
-							{isFullColumn ? <ChevronLeft /> : <ChevronRight />}
+							onClick={() =>
+								handleEditWidget({
+									type: getWidgetType(),
+									title: `Edit ${widgetTitle}`,
+								})
+							}>
+							<Settings />
 						</Button>
-					)}
-					<Button
-						variant='secondary'
-						size='icon'
-						className='rounded-full h-8 w-8'
-						{...(dragAttributes ?? {})}
-						{...(dragListeners ?? {})}>
-						<Move />
-					</Button>
-					<Button
-						variant='secondary'
-						size='icon'
-						className='rounded-full w-8 h-8'
-						onClick={() =>
-							handleEditWidget({
-								type: getWidgetType(),
-								title: `Edit ${widgetTitle}`,
-							})
-						}>
-						<Settings />
-					</Button>
-					<DeleteWidgetButton widgetId={widget.id} projectId={projectId} />
+						<DeleteWidgetButton widgetId={widget.id} projectId={projectId} />
+					</div>
 				</div>
 			</div>
 

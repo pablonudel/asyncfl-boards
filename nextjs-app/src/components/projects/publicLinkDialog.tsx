@@ -51,19 +51,19 @@ export default function PublicLinkDialog({
 				<DialogHeader>
 					<DialogTitle>Public Link</DialogTitle>
 				</DialogHeader>
-				<div className='flex items-center gap-2'>
-					<div className='w-full text-center border rounded-md p-2 border-blue-500 text-blue-500 bg-blue-500/10'>
+				<div className='flex flex-col md:flex-row items-center gap-2'>
+					<div className='w-full text-center border rounded-md py-2 px-1 border-blue-500 text-blue-500 bg-blue-500/10'>
 						<Link
 							href={publicUrl}
 							target='_blank'
 							rel='noopener noreferrer'
-							className='hover:underline'>
+							className='text-sm font-bold hover:underline'>
 							{publicUrl}
 						</Link>
 					</div>
 					<Button
 						variant='outline'
-						className='h-full'
+						className='w-full md:h-full md:w-auto'
 						onClick={() => {
 							navigator.clipboard.writeText(publicUrl)
 							toast.success("Public link copied to clipboard!")

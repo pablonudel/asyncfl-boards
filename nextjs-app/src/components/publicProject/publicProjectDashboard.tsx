@@ -50,14 +50,14 @@ export default async function PublicProjectDashboard({
 			<div className='sticky top-4 left-4 right-4 mx-auto z-50'>
 				<NavBar isPublic={true} />
 			</div>
-			<div className='px-6'>
-				<div className='space-y-8'>
+			<div className='px-6 mb-16'>
+				<div className='space-y-8 mb-8'>
 					<div>
 						<h1 className='text-3xl font-bold'>{resProject.project.name}</h1>
 						<p className='text-lg'>{resProject.project.description}</p>
 					</div>
-					<div className='flex items-center justify-between gap-4 border-t border-b py-4'>
-						<div className='flex items-center gap-4'>
+					<div className='flex items-center justify-between gap-2 border-t border-b py-4'>
+						<div className='flex items-center gap-2'>
 							<Avatar className='h-12 w-12 cursor-default'>
 								{projectUser?.image ? (
 									<AvatarImage
@@ -72,7 +72,9 @@ export default async function PublicProjectDashboard({
 								)}
 							</Avatar>
 							<div>
-								<p className='text-sm/2 font-bold pt-2'>{projectUser.name}</p>
+								<p className='text-sm/tight font-bold'>
+									Federico Antonio Guitierrez
+								</p>
 								<Link
 									href={`mailto:${projectUser.email}`}
 									className='text-xs hover:underline text-muted-foreground'>
@@ -80,7 +82,7 @@ export default async function PublicProjectDashboard({
 								</Link>
 							</div>
 						</div>
-						<p className='text-sm text-muted-foreground text-end'>
+						<p className='text-xs text-muted-foreground text-end grow text-nowrap'>
 							Last update <br />
 							{resProject.project.updatedAt.toLocaleDateString("us-US", {
 								year: "numeric",

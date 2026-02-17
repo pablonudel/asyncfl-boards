@@ -6,7 +6,7 @@ export default function RootLayout({
 	children: React.ReactNode
 }>) {
 	return (
-		<div className='container mx-auto space-y-8 relative px-4'>
+		<div className='container mx-auto space-y-8 relative px-4 mb-16'>
 			<div className='sticky top-4 left-4 right-4 mx-auto z-50'>
 				<NavBar />
 			</div>

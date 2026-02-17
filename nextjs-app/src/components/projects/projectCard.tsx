@@ -38,8 +38,8 @@ export default function ProjectCard({ project }: { project: Project }) {
 				</div>
 				<div
 					className={cn(
-						"opacity-0 group-hover:opacity-100 duration-300 transition-opacity",
-						isMenuOpen && "opacity-100",
+						"lg:opacity-0 group-hover:opacity-100 duration-300 transition-opacity",
+						isMenuOpen && "lg:opacity-100",
 					)}>
 					<ProjectCardMenu project={project} onOpenChange={setIsMenuOpen} />
 				</div>

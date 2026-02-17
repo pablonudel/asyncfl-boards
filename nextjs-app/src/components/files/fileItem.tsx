@@ -23,7 +23,7 @@ export default function FileItem({ file }: { file: File }) {
 				<FileIcon />
 				<p className='text-xs'>{formatFileSize(file.fileSize)}</p>
 			</ItemMedia>
-			<ItemContent>
+			<ItemContent className='overflow-hidden'>
 				<ItemTitle className='w-full'>
 					<FileReferenceForm file={file} />
 				</ItemTitle>

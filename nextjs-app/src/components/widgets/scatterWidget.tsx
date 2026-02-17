@@ -340,7 +340,17 @@ function ScatterWidget({
 				style={{ width: "100%", height: "100%" }}
 				data={dataConfig}
 				layout={layoutConfig}
-				config={{ displaylogo: false, responsive: true }}
+				config={{
+					displaylogo: false,
+					responsive: true,
+					modeBarButtonsToRemove: [
+						"zoom2d",
+						"pan2d",
+						"zoomIn2d",
+						"zoomOut2d",
+						"autoScale2d",
+					],
+				}}
 			/>
 		</div>
 	)

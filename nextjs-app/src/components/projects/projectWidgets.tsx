@@ -9,6 +9,7 @@ import {
 	DragOverlay,
 	KeyboardSensor,
 	PointerSensor,
+	TouchSensor,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core"
@@ -53,6 +54,9 @@ export default function ProjectWidgets({
 	}, [widgetsOrder, projectWidgets])
 
 	const sensors = useSensors(
+		useSensor(TouchSensor, {
+			activationConstraint: { delay: 250, tolerance: 5 },
+		}),
 		useSensor(PointerSensor, {
 			activationConstraint: { distance: 8 },
 		}),

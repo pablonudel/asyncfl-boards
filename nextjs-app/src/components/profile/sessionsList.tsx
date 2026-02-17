@@ -37,7 +37,7 @@ export default function SessionsList({
 					<Badge variant='secondary'>No other active sessions found</Badge>
 				</div>
 			) : (
-				<div className='flex justify-between items-center'>
+				<div className='flex flex-col justify-between items-start gap-2 md:flex-row md:items-center'>
 					<h3>Other Active Sessions</h3>
 					<Button
 						variant='destructive'
@@ -77,7 +77,7 @@ function SessionCard({
 				onSuccess() {
 					router.refresh()
 				},
-			}
+			},
 		)
 	}
 
@@ -100,9 +100,18 @@ function SessionCard({
 	}
 	return (
 		<Card>
-			<CardHeader className='flex justify-between'>
+			<CardHeader className='flex justify-between items-center'>
 				<CardTitle>{getBrowserInfo()}</CardTitle>
 				{isCurrent && <Badge>Current Session</Badge>}
+				{!isCurrent && (
+					<Button
+						variant='destructive'
+						size='sm'
+						onClick={revokeSession}
+						disabled={isSubmitting}>
+						{isSubmitting ? <Spinner /> : <Trash />}
+					</Button>
+				)}
 			</CardHeader>
 			<CardContent>
 				<div className='flex items-center justify-between'>
@@ -113,23 +122,14 @@ function SessionCard({
 							<Monitor />
 						)}
 						<div>
-							<p className='text-sm text-muted-foreground'>
+							<p className='text-sm text-muted-foreground overflow-hidden truncate'>
 								Created: {formatDate(session.createdAt)}
 							</p>
-							<p className='text-sm text-muted-foreground'>
+							<p className='text-sm text-muted-foreground overflow-hidden truncate'>
 								Expires: {formatDate(session.expiresAt)}
 							</p>
 						</div>
 					</div>
-					{!isCurrent && (
-						<Button
-							variant='destructive'
-							size='sm'
-							onClick={revokeSession}
-							disabled={isSubmitting}>
-							{isSubmitting ? <Spinner /> : <Trash />}
-						</Button>
-					)}
 				</div>
 			</CardContent>
 		</Card>
