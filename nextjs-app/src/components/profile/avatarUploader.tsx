@@ -13,23 +13,19 @@ import { Button } from "../ui/button"
 export default function AvatarUploader() {
 	const { data: session, refetch } = authClient.useSession()
 
-	async function uploadFile(file: File) {
-		await uploadAvatarFile(file)
-		refetch()
-	}
-
 	async function deleteFile() {
 		await deleteAvatarFile()
 		refetch()
 	}
 
-	const onDrop = useCallback((acceptedFiles: File[]) => {
-		toast.promise(Promise.all(acceptedFiles.map((file) => uploadFile(file))), {
-			loading: "Uploading file...",
-			success: "File uploaded successfully!",
-			error: "Error uploading file.",
-		})
-		acceptedFiles.forEach(uploadFile)
+	const onDrop = useCallback(async (acceptedFiles: File[]) => {
+		const { success, message } = await uploadAvatarFile(acceptedFiles[0])
+		if (!success) {
+			toast.error(message)
+		} else {
+			toast.success(message)
+		}
+		refetch()
 	}, [])
 
 	const onDropRejected = useCallback((fileRejections: FileRejection[]) => {

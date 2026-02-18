@@ -6,6 +6,7 @@ import { rm } from "fs/promises"
 import { revalidatePath, revalidateTag } from "next/cache"
 import { unlink } from "node:fs/promises"
 import { join } from "path"
+import { saveResultsFile } from "../uploadFile.action"
 
 export async function getUserFile(userId: string, file: string) {
 	try {
@@ -57,24 +58,11 @@ export async function uploadUserFile(file: File) {
 		const fileNameOk = /^[a-zA-Z0-9._-]+$/.test(file.name)
 		if (!fileNameOk) return { success: false, message: "Invalid file name." }
 
-		const uploadFile = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/api/upload`,
-			{
-				method: "POST",
-				body: (() => {
-					const formData = new FormData()
-					formData.append("userId", session.user.id)
-					formData.append("fileType", "resultsFile")
-					formData.append("file", file)
-					return formData
-				})(),
-			},
+		const { success, message, uploadedFile } = await saveResultsFile(
+			file,
+			session.user.id,
 		)
-		const uploadResult = await uploadFile.json()
-
-		if (!uploadResult.success) {
-			return { success: false, message: uploadResult.message }
-		}
+		if (!uploadedFile) return { success: success, message }
 
 		const fileExists = await getUserFile(session.user.id, file.name)
 		if (fileExists) {
@@ -82,8 +70,8 @@ export async function uploadUserFile(file: File) {
 				await prisma.file.update({
 					where: { id: fileExists.id, userId: session.user.id },
 					data: {
-						fileSize: uploadResult.file.fileSize,
-						fileShape: uploadResult.file.fileShape,
+						fileSize: uploadedFile.fileSize,
+						fileShape: uploadedFile.fileShape,
 					},
 				})
 			} catch (error) {
@@ -99,8 +87,8 @@ export async function uploadUserFile(file: File) {
 					data: {
 						fileName: file.name,
 						referenceName: file.name,
-						fileSize: uploadResult.file.fileSize,
-						fileShape: uploadResult.file.fileShape,
+						fileSize: uploadedFile.fileSize,
+						fileShape: uploadedFile.fileShape,
 						userId: session.user.id,
 					},
 				})
@@ -113,13 +101,9 @@ export async function uploadUserFile(file: File) {
 			}
 		}
 
-		// revalidateTag(`projects:${session.user.id}`, "max")
-		// revalidateTag(`project:${projectId}`, "max")
-		// revalidatePath(`/projects/${projectId}/settings`)
-		// revalidatePath(`/projects/${projectId}`)
 		revalidateTag(`files:${session.user.id}`, "max")
 		revalidatePath("/files")
-		return { success: true, message: uploadResult.message }
+		return { success: success, message: message }
 	} catch (error) {
 		console.error("Error uploading project file:", error)
 		return { success: false, message: "Failed to upload file" }

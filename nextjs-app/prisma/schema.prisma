@@ -56,7 +56,7 @@ model Job {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  folderId      String       @unique
+  folderId      String       @default(nanoid(7))
   name          String
   description   String?
   status        String       @default("CREATED") // CREATED, READY, SYNCING

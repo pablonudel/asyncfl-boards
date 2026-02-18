@@ -51,7 +51,7 @@ export type Job = {
     id: string;
     createdAt: Generated<Timestamp>;
     updatedAt: Timestamp;
-    folderId: string;
+    folderId: Generated<string>;
     name: string;
     description: string | null;
     status: Generated<string>;

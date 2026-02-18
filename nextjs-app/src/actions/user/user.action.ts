@@ -5,6 +5,7 @@ import { GetSession } from "@/lib/session"
 import { revalidatePath } from "next/cache"
 import { unlink } from "node:fs/promises"
 import { join } from "path"
+import { saveAvatarFile } from "../uploadFile.action"
 
 export async function GetUserById(userId: string) {
 	try {
@@ -32,37 +33,24 @@ export async function uploadAvatarFile(file: File) {
 		)
 			return { success: false, message: "Invalid file name." }
 
-		const uploadFile = await fetch(
-			`${process.env.NEXT_PUBLIC_API_URL}/api/upload`,
-			{
-				method: "POST",
-				body: (() => {
-					const formData = new FormData()
-					formData.append("userId", session.user.id)
-					formData.append("fileType", "avatarFile")
-					formData.append("file", file)
-					return formData
-				})(),
-			},
+		const { success, message, uploadedFile } = await saveAvatarFile(
+			file,
+			session.user.id,
 		)
-		const uploadResult = await uploadFile.json()
-
-		if (!uploadResult.success) {
-			return { success: false, message: uploadResult.message }
-		}
+		if (!uploadedFile) return { success: success, message: message }
 
 		await prisma.user.update({
 			where: { id: session.user.id },
 			data: {
-				image: uploadResult.file.filename,
+				image: uploadedFile.fileName,
 			},
 		})
 
 		revalidatePath("/profile")
-		return { success: true, message: "File uploaded" }
+		return { success: success, message: message }
 	} catch (error) {
 		console.error("Error uploading avatar file:", error)
-		return { success: false, message: "Failed to upload file" }
+		return { success: false, message: "Failed to upload avatar file" }
 	}
 }
 

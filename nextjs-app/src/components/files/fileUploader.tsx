@@ -51,7 +51,7 @@ export default function FileUploader() {
 				toast.error("One or more files exceed the maximum size of 5 MB.")
 			}
 			if (invalidFileType) {
-				toast.error("Invalid file type. Only .npy files are allowed.")
+				toast.error("Invalid file type. Only .npy and .json files are allowed.")
 			}
 		}
 	}, [])
@@ -63,6 +63,7 @@ export default function FileUploader() {
 		maxSize: 1024 * 1024 * 5, // 5 MB
 		accept: {
 			"application/octet-stream": [".npy"],
+			"application/json": [".json"],
 		},
 	})
 
