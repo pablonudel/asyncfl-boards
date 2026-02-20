@@ -91,7 +91,7 @@ export default function DataTab({
 					render={({ field, fieldState }) => (
 						<Field data-invalid={fieldState.invalid}>
 							<FieldLabel className='block text-sm font-medium'>
-								Graph Title
+								Title
 							</FieldLabel>
 							<Input {...field} type='text' />
 							{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -104,7 +104,7 @@ export default function DataTab({
 					render={({ field, fieldState }) => (
 						<Field className='w-44' data-invalid={fieldState.invalid}>
 							<FieldLabel className='block text-sm font-medium'>
-								Graph Height (px)
+								Height (px)
 							</FieldLabel>
 							<Input {...field} type='number' />
 							{fieldState.invalid && <FieldError errors={[fieldState.error]} />}

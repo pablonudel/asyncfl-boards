@@ -11,6 +11,7 @@ import NotesDialog from "@/components/widgets/dialogs/notesDialog"
 import ScatterDialog from "@/components/widgets/dialogs/scatterDialog"
 import type { File } from "@/generated/prisma/client"
 import { JsonValue } from "@prisma/client/runtime/client"
+import ParetoDialog from "./paretoDialog"
 
 export default function AddEditDialog({
 	isDialogOpen,
@@ -20,6 +21,7 @@ export default function AddEditDialog({
 	projectId,
 	widgetConfig,
 	widgetId,
+	userId,
 	mode,
 }: {
 	isDialogOpen: boolean
@@ -29,6 +31,7 @@ export default function AddEditDialog({
 	projectId: string
 	widgetConfig?: JsonValue
 	widgetId?: string
+	userId: string
 	mode: string
 }) {
 	const scatterTypes = ["rounds", "time"]
@@ -64,25 +67,40 @@ export default function AddEditDialog({
 							mode={mode}
 						/>
 					)}
-					{dialogType?.type === "table" && (
-						<div>Table Widget Form Goes Here</div>
+					{dialogType?.type === "pareto" && (
+						<ParetoDialog
+							userFiles={userFiles}
+							projectId={projectId}
+							userId={userId}
+							widgetConfig={widgetConfig}
+							widgetId={widgetId}
+							setIsDialogOpen={() => setIsDialogOpen(false)}
+							mode={mode}
+						/>
 					)}
-					{dialogType?.type === "text" && <div>Text Widget Form Goes Here</div>}
 				</div>
 
 				{/* Footer fijo (opcional) */}
 				<DialogFooter className='shrink-0'>
-					{dialogType?.type === "notes" ? (
-						<Button form='notes-form' type='submit'>
-							{mode === "edit" ? "Save Changes" : "Add Widget"}
-						</Button>
-					) : (
-						<Button form='scatter-form' type='submit'>
-							{mode === "edit" ? "Save Changes" : "Add Widget"}
-						</Button>
-					)}
+					<SubmitButton type={dialogType?.type} mode={mode} />
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
+	)
+}
+
+function SubmitButton({
+	type,
+	mode,
+}: {
+	type: string | undefined
+	mode: string
+}) {
+	const formId = `${type}-form`
+	const buttonText = mode === "edit" ? "Save Changes" : "Add Widget"
+	return (
+		<Button form={formId} type='submit'>
+			{buttonText}
+		</Button>
 	)
 }

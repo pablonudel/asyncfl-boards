@@ -5,13 +5,11 @@ import { join } from "node:path"
 import { load } from "npyjs"
 import { reshape } from "npyjs/reshape"
 
+const STORAGE_PATH_BASE = process.env.STORAGE_PATH_BASE
+
 export async function readNpyFile(userId: string, fileName: string) {
-	const absolutePath = join(
-		process.env.STORAGE_PATH_BASE!,
-		userId,
-		"files",
-		fileName,
-	)
+	if (!STORAGE_PATH_BASE) throw new Error("STORAGE_PATH_BASE no configurado")
+	const absolutePath = join(STORAGE_PATH_BASE, userId, "files", fileName)
 
 	try {
 		// Read file synchronously and convert to ArrayBuffer
@@ -37,6 +35,20 @@ export async function readNpyFile(userId: string, fileName: string) {
 		return { array, shape }
 	} catch (error) {
 		console.error("Error crítico en readNpyFile:", error)
+		throw error
+	}
+}
+
+export async function readJsonFile(userId: string, fileName: string) {
+	if (!STORAGE_PATH_BASE) throw new Error("STORAGE_PATH_BASE no configurado")
+	const absolutePath = join(STORAGE_PATH_BASE, userId, "files", fileName)
+
+	try {
+		const fileContent = readFileSync(absolutePath, "utf-8")
+		const jsonData = JSON.parse(fileContent)
+		return jsonData
+	} catch (error) {
+		console.error("Error crítico en readJsonFile:", error)
 		throw error
 	}
 }

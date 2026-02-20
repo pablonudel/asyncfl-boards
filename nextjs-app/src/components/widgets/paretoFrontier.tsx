@@ -1,124 +1,103 @@
 "use client"
 
+import { Progress } from "@/components/ui/progress"
+import { Slider } from "@/components/ui/slider"
 import { Widget } from "@/generated/prisma/client"
 import { authClient } from "@/lib/auth-client"
-import { readNpyFile } from "@/lib/readFiles"
-import { FileX } from "lucide-react"
+import { readJsonFile } from "@/lib/readFiles"
+import { FileX, Info } from "lucide-react"
 import { useTheme } from "next-themes"
 import dynamic from "next/dynamic"
-import { memo, useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "../ui/accordion"
+import { Badge } from "../ui/badge"
+import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "../ui/card"
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "../ui/table"
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false })
 
-async function getDataFromSource(userId: string, source: string) {
-	return await readNpyFile(userId!, source)
-}
-
-interface SimulationResult {
-	simIndex: number
-	finalAccuracy: number
-	finalLoss: number
-	totalTime: number
-	roundTimes: number[]
-	resolutionRatio?: number
-	theta?: number
-	energy?: number
-	adjustedTime?: number
-}
-
-export const processRawData = (
-	dataAccLoss: number[][][],
-	dataTimes: number[][],
-): SimulationResult[] => {
-	return dataAccLoss.map((simAccData, idx) => {
-		const simTimes = dataTimes[idx]
-		const totalExecutionTime = simTimes.reduce((a, b) => a + b, 0)
-		const lastRecordedMetrics = simAccData[simAccData.length - 1]
-
-		// Normalizar accuracy a [0, 1]
-		const rawAccuracy = lastRecordedMetrics[0]
-		const finalAccuracy = rawAccuracy > 1 ? rawAccuracy / 100 : rawAccuracy
-
-		return {
-			simIndex: idx,
-			finalAccuracy,
-			finalLoss: lastRecordedMetrics[1],
-			totalTime: totalExecutionTime,
-			roundTimes: simTimes,
-			resolutionRatio: simTimes.length / simAccData.length,
-		}
-	})
-}
-
-export function generateDerivedMetrics(
-	sims: SimulationResult[],
-	p: number,
-	m: number,
-) {
-	return sims.map((sim) => {
-		// Validación de entradas
-		if (sim.totalTime <= 0 || p <= 0 || m <= 0) {
-			return { ...sim, theta: 0, energy: 0, adjustedTime: sim.totalTime }
-		}
-
-		// Tiempo ajustado por capacidad de procesamiento
-		// A menor p, más tiempo toma procesar las mismas tareas
-		const adjustedTime = sim.totalTime / p
-
-		// Modelo de carga de trabajo
-		const workload = (m * p) / sim.totalTime
-
-		// Modelo de potencia: P(w) = P_base + k * w^α
-		const P_base = 5.0
-		const k = 0.01
-		const alpha = 1.5
-		const avgPower = P_base + k * Math.pow(workload, alpha)
-
-		// Energía total = Potencia promedio × Tiempo ajustado
-		const energy = avgPower * adjustedTime
-
-		// Theta como métrica de intensidad
-		const theta = m / (p * sim.totalTime)
-
-		return {
-			...sim,
-			theta: isFinite(theta) ? theta : 0,
-			energy: isFinite(energy) ? energy : 0,
-			adjustedTime: isFinite(adjustedTime) ? adjustedTime : sim.totalTime,
-		}
-	})
-}
-
-export function getParetoFrontier(
-	points: { x: number; y: number; index: number }[],
-) {
-	const frontier = points.filter(
-		(p1) =>
-			!points.some(
-				(p2) =>
-					// p2 domina a p1 si:
-					(p2.x < p1.x && p2.y >= p1.y) || // p2 tiene menos costo y igual/mejor accuracy
-					(p2.x <= p1.x && p2.y > p1.y), // p2 tiene igual/menos costo y mejor accuracy
-			),
-	)
-	return frontier.sort((a, b) => a.x - b.x)
-}
-
-function ParetoFrontier({ widget }: { widget: Widget }) {
+export default function ParetoFrontier({
+	widget,
+	userId,
+	isPublic,
+}: {
+	widget: Widget
+	userId?: string
+	isPublic?: boolean
+}) {
 	const { theme } = useTheme()
-	const [rawData, setRawData] = useState<{
-		sourceAccLoss: any
-		sourceTimes: any
-	} | null>(null)
+	const [dataConfig, setDataConfig] = useState<any>(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [errorMsg, setErrorMsg] = useState<string | null>(null)
 	const [plotKey, setPlotKey] = useState(0)
 	const containerRef = useRef<HTMLDivElement | null>(null)
 
-	// Estados para los sliders
-	const [p, setP] = useState(0.5)
-	const [m, setM] = useState(100)
-	const [viewMode, setViewMode] = useState<"time" | "energy">("energy")
+	const [optimalData, setOptimalData] = useState<any>(null)
+	const [selectedRho, setSelectedRho] = useState<any>(null)
+	const [concurrenceValue, setConcurrenceValue] = useState(29)
+	const [mMinMax, setMMinMax] = useState({ min: 0, max: 0 })
+	const [networkConfig, setNetworkConfig] = useState<any>(null)
+	const [userRouting, setUserRouting] = useState<number[]>([])
+	const [userWeights, setUserWeights] = useState<number[]>([])
+	const [devicesCount, setDevicesCount] = useState<number[]>([])
+
+	const colorPalette = [
+		[
+			"bg-blue-700/50",
+			"bg-cyan-500/50",
+			"bg-teal-500/50",
+			"bg-emerald-500/50",
+			"bg-lime-500/50",
+			"bg-yellow-400/50",
+			"bg-amber-500/50",
+			"bg-orange-500/50",
+		],
+		[
+			"bg-blue-700",
+			"bg-cyan-500",
+			"bg-teal-500",
+			"bg-emerald-500",
+			"bg-lime-500",
+			"bg-yellow-400",
+			"bg-amber-500",
+			"bg-orange-500",
+		],
+		[
+			"border-blue-700",
+			"border-cyan-500",
+			"border-teal-500",
+			"border-emerald-500",
+			"border-lime-500",
+			"border-yellow-400",
+			"border-amber-500",
+			"border-orange-500",
+		],
+	]
+
+	function calculateProportions(weights: number[], counts: number[]): number[] {
+		const totalWeighted = weights.reduce((sum, w, i) => sum + w * counts[i], 0)
+
+		return weights.map((w, i) => (w * counts[i]) / totalWeighted)
+	}
 
 	const config =
 		typeof widget.config === "object" && widget.config !== null
@@ -131,8 +110,19 @@ function ParetoFrontier({ widget }: { widget: Widget }) {
 		[widget.config],
 	)
 
+	const handleSliderChange = (index: number, newValue: number) => {
+		const updatedUserWeights = [...userWeights]
+		updatedUserWeights[index] = newValue
+		setUserWeights(updatedUserWeights)
+		const updatedWeights = calculateProportions(
+			updatedUserWeights,
+			devicesCount,
+		)
+		setUserRouting(updatedWeights)
+	}
+
 	// Direct access for component use
-	const widgetDataConfig = (config as Record<string, any>).dataConfig || []
+	const widgetDataConfig = (config as Record<string, any>).dataConfig || {}
 	const widgetLayoutConfig = (config as Record<string, any>).layoutConfig || {}
 
 	// Stable configRevision for useEffect dependency (data load trigger)
@@ -162,31 +152,70 @@ function ParetoFrontier({ widget }: { widget: Widget }) {
 		setPlotKey((prev) => prev + 1)
 	}, [fullColumn])
 
-	// Cargar datos raw una sola vez
+	async function getDataFromSource(userId: string, fileName: string) {
+		return await readJsonFile(userId, fileName)
+	}
+
 	useEffect(() => {
 		async function loadData() {
-			const { data: session } = await authClient.getSession()
-			if (!session?.user) return
+			let UserID: string | undefined
+			if (isPublic && userId) {
+				UserID = userId
+			} else if (!isPublic || !userId) {
+				const { data: session } = await authClient.getSession()
+				if (!session?.user) return
+				UserID = session.user.id
+			} else {
+				setIsLoading(false)
+				setErrorMsg("Could not load data, user not authenticated")
+				return
+			}
 			setIsLoading(true)
 			setErrorMsg(null)
 
 			try {
-				const plotConfig = widgetDataConfig[0]
-				if (!plotConfig?.source) {
-					throw new Error("No source configuration found")
+				const source = await getDataFromSource(UserID, widgetDataConfig.source)
+
+				const finalPlotData = {
+					...widgetDataConfig,
+					hovertemplate: `Rho %{customdata[0]}<br>m: %{customdata[1]}<br>Energy: %{y:.2s}<br>Time: %{x:.2s}<extra></extra>`,
+					x: source.optimal_frontier.map((item: any) => item.tau),
+					y: source.optimal_frontier.map((item: any) => item.energy),
+					customdata: source.optimal_frontier.map((item: any) => [
+						item.rho,
+						item.m,
+					]),
 				}
 
-				const sourceAccLoss = await getDataFromSource(
-					session.user.id,
-					plotConfig.source.accloss,
+				const optimalData = source.optimal_frontier
+				const selectedIndex = Math.floor(optimalData.length / 2)
+				const selectedRho = optimalData[selectedIndex]
+				const mMinMax = source.frontier_stats.m
+				const networkConfig = source.network_config
+				// const devices = networkConfig.devices
+				// const numOfClients = networkConfig.num_clients
+				// const numOfRhos = source.metadata.rho_values.length
+				const numOfDevices = networkConfig.devices.length
+
+				const userWeights: number[] = new Array(numOfDevices).fill(1)
+				const devicesCount: number[] = Object.values(
+					networkConfig.client_distribution,
 				)
-				const sourceTimes = await getDataFromSource(
-					session.user.id,
-					plotConfig.source.times,
+				const calculatedProportions = calculateProportions(
+					userWeights,
+					devicesCount,
 				)
 
-				setRawData({ sourceAccLoss, sourceTimes })
+				setDataConfig([finalPlotData])
+				setOptimalData(optimalData)
+				setSelectedRho(selectedRho)
+				setMMinMax(mMinMax)
+				setNetworkConfig(networkConfig)
+				setUserWeights(userWeights)
+				setDevicesCount(devicesCount)
+				setUserRouting(calculatedProportions)
 			} catch (error) {
+				console.error(error)
 				setErrorMsg("Error loading data from source")
 			} finally {
 				setIsLoading(false)
@@ -196,81 +225,11 @@ function ParetoFrontier({ widget }: { widget: Widget }) {
 		loadData()
 	}, [widget.id, configRevision])
 
-	// Pre-procesamiento (se ejecuta solo cuando cambian los archivos raw)
-	const baseSims = useMemo(() => {
-		if (!rawData) return []
-		return processRawData(
-			rawData.sourceAccLoss.array as number[][][],
-			rawData.sourceTimes.array as number[][],
-		)
-	}, [rawData])
-
-	// Cálculo de métricas dinámicas (se ejecuta al mover sliders)
-	const currentMetrics = useMemo(() => {
-		if (baseSims.length === 0) return []
-		return generateDerivedMetrics(baseSims, p, m)
-	}, [baseSims, p, m])
-
-	// Cálculo de Frontera de Pareto
-	const paretoPoints = useMemo(() => {
-		if (currentMetrics.length === 0) return []
-		const points = currentMetrics.map((d) => ({
-			x: viewMode === "energy" ? d.energy : d.adjustedTime || d.totalTime,
-			y: d.finalAccuracy,
-			index: d.simIndex,
-		}))
-		return getParetoFrontier(points)
-	}, [currentMetrics, viewMode])
-
-	// Data para el plot de Pareto
-	const paretoPlotData = useMemo(() => {
-		if (currentMetrics.length === 0) return []
-		return [
-			{
-				x: currentMetrics.map((d) =>
-					viewMode === "energy" ? d.energy : d.adjustedTime || d.totalTime,
-				),
-				y: currentMetrics.map((d) => d.finalAccuracy),
-				mode: "markers",
-				name: "Simulations",
-				marker: { color: "#94a3b8", size: 6, opacity: 0.4 },
-			},
-			{
-				x: paretoPoints.map((p) => p.x),
-				y: paretoPoints.map((p) => p.y),
-				mode: "lines+markers",
-				name: "Pareto Frontier",
-				line: { color: "#ef4444", shape: "hv" },
-				marker: { color: "#ef4444", size: 8 },
-			},
-		]
-	}, [currentMetrics, paretoPoints, viewMode])
-
-	// Data para el plot de Energy-Theta
-	const energyThetaPlotData = useMemo(() => {
-		if (currentMetrics.length === 0) return []
-		return [
-			{
-				x: currentMetrics.map((d) => d.theta),
-				y: currentMetrics.map((d) => d.energy),
-				mode: "markers",
-				// type: "scatter",
-				marker: {
-					color: currentMetrics.map((d) => d.theta),
-					colorscale: "Viridis",
-					size: 8,
-				},
-				text: currentMetrics.map((d) => `Sim ID: ${d.simIndex}`),
-				name: "Energy-Theta Map",
-			},
-		]
-	}, [currentMetrics])
-
 	const layoutConfig = {
 		title: {
 			text: widgetLayoutConfig.title,
 		},
-		height: widgetLayoutConfig.height || 400,
+		height: widgetLayoutConfig.height,
 		scattermode: widgetLayoutConfig.scattermode,
 		xaxis: {
 			title: { text: widgetLayoutConfig.xaxis?.title },
@@ -321,91 +280,231 @@ function ParetoFrontier({ widget }: { widget: Widget }) {
 	}
 
 	return (
-		<div ref={containerRef} className='w-full h-full min-h-80 space-y-4'>
-			{/* Sliders UI */}
-			<div className='flex gap-4 p-4 border rounded-lg'>
-				<div className='flex flex-col gap-2'>
-					<label>Processing Power (p): {p.toFixed(2)}</label>
-					<input
-						type='range'
-						min='0.1'
-						max='1'
-						step='0.01'
-						value={p}
-						onChange={(e) => setP(parseFloat(e.target.value))}
-					/>
-				</div>
-				<div className='flex flex-col gap-2'>
-					<label>Tasks (m): {m}</label>
-					<input
-						type='range'
-						min='10'
-						max='1000'
-						step='10'
-						value={m}
-						onChange={(e) => setM(parseInt(e.target.value))}
-					/>
-				</div>
-				<div className='flex flex-col gap-2'>
-					<label>View Mode:</label>
-					<select
-						value={viewMode}
-						onChange={(e) => setViewMode(e.target.value as "time" | "energy")}>
-						<option value='energy'>Energy</option>
-						<option value='time'>Time</option>
-					</select>
-				</div>
-			</div>
-
-			{/* Pareto Frontier Plot */}
-			<div className='w-full'>
-				<h3 className='text-lg font-semibold mb-2'>Pareto Frontier</h3>
-				<Plot
-					key={`pareto-${plotKey}`}
-					className='w-full h-full'
-					useResizeHandler
-					style={{ width: "100%", height: "100%" }}
-					data={paretoPlotData}
-					layout={{
-						...layoutConfig,
-						title: {
-							text:
-								"Pareto Frontier: Accuracy vs " +
-								(viewMode === "energy" ? "Energy" : "Time"),
-						},
-					}}
-					config={{ displaylogo: false, responsive: true }}
-				/>
-			</div>
-
-			{/* Energy-Theta Plot */}
-			<div className='w-full'>
-				<h3 className='text-lg font-semibold mb-2'>
-					Energy-Theta Relationship
-				</h3>
-				<Plot
-					key={`theta-${plotKey}`}
-					className='w-full h-full'
-					useResizeHandler
-					style={{ width: "100%", height: "100%" }}
-					data={energyThetaPlotData}
-					layout={{
-						...layoutConfig,
-						title: { text: "Energy vs Theta (θ)" },
-						xaxis: { ...layoutConfig.xaxis, title: { text: "Theta (θ)" } },
-						yaxis: { ...layoutConfig.yaxis, title: { text: "Energy (J)" } },
-					}}
-					config={{ displaylogo: false, responsive: true }}
-				/>
+		<div ref={containerRef} className='w-full h-full min-h-80'>
+			<Plot
+				key={plotKey}
+				className='w-full h-full'
+				useResizeHandler
+				style={{ width: "100%", height: "100%" }}
+				data={dataConfig}
+				layout={layoutConfig}
+				config={{
+					displaylogo: false,
+					responsive: true,
+					modeBarButtonsToRemove: [
+						"zoom2d",
+						"lasso2d",
+						"select2d",
+						"pan2d",
+						"zoomIn2d",
+						"zoomOut2d",
+						"autoScale2d",
+					],
+				}}
+			/>
+			<div className='p-8'>
+				<Accordion type='single' collapsible>
+					<AccordionItem value='config'>
+						<AccordionTrigger className='font-bold'>
+							Interactive Configuration
+						</AccordionTrigger>
+						<AccordionContent className='space-y-4'>
+							<div className='flex gap-4'>
+								<Card className='w-1/2 rounded-sm'>
+									<CardHeader>
+										<CardTitle>Optimal Reference</CardTitle>
+									</CardHeader>
+									<CardContent>
+										{optimalData.map((item: any, index: number) => {
+											const isSelected =
+												selectedRho && item.rho === selectedRho.rho
+											return (
+												<Badge
+													key={index}
+													variant={isSelected ? "default" : "outline"}
+													onClick={() => setSelectedRho(item)}
+													className='cursor-pointer'>
+													{item.rho}
+												</Badge>
+											)
+										})}
+										{selectedRho && (
+											<div>
+												<p>
+													<span>E </span>
+													{selectedRho.energy.toFixed(2)}
+												</p>
+												<p>
+													<span>T </span>
+													{selectedRho.tau.toFixed(2)}
+												</p>
+												<p>
+													<span>M </span>
+													{selectedRho.m}
+												</p>
+												<p>
+													<span>λ </span>
+													{selectedRho.throughput.toFixed(2)}
+												</p>
+											</div>
+										)}
+									</CardContent>
+								</Card>
+								<Card className='w-1/2 rounded-sm'>
+									<CardHeader>
+										<CardTitle>Concurrence · M</CardTitle>
+									</CardHeader>
+									<CardContent className='h-full'>
+										<div className='flex items-center justify-between gap-2 mb-4'>
+											<p>Concurrent Tasks</p>
+											<Badge variant='default'>{concurrenceValue}</Badge>
+										</div>
+										<Slider
+											value={concurrenceValue}
+											max={mMinMax.max}
+											min={mMinMax.min}
+											step={1}
+											onValueChange={(value) =>
+												setConcurrenceValue(value as number)
+											}
+											className='mb-1'
+										/>
+										<div className='flex items-center justify-between gap-2 text-xs text-muted-foreground'>
+											<p>{mMinMax.min}</p>
+											<p>{mMinMax.max}</p>
+										</div>
+									</CardContent>
+									<CardFooter>
+										<span className='text-xs text-muted-foreground'>
+											Optimal {selectedRho.m}
+										</span>
+									</CardFooter>
+								</Card>
+							</div>
+							<Card className='w-1/2 rounded-sm'>
+								<CardHeader>
+									<CardTitle>
+										Routing · P{" "}
+										<Badge variant='outline'>Relative Weights</Badge>
+									</CardTitle>
+								</CardHeader>
+								<CardContent>
+									<div className='space-y-2'>
+										{Object.entries(selectedRho.routing_by_type).map(
+											([key, { total }]: any[], index: number) => (
+												<div
+													key={key}
+													className={`flex flex-col space-y-1 not-last:border-b not-last:pb-4 not-first:pt-2`}>
+													<div className='flex items-center justify-between mb-4'>
+														<div className='flex items-center gap-2'>
+															<p className='font-bold'>{key}</p>
+															<span className='text-xs text-muted-foreground'>
+																| Qty {networkConfig.client_distribution[key]}
+															</span>
+															<Tooltip>
+																<TooltipTrigger>
+																	<Info size={14} />
+																</TooltipTrigger>
+																<TooltipContent side='right'>
+																	{networkConfig.devices.map(
+																		(device: any, index: number) =>
+																			device.name === key && (
+																				<div key={index}>
+																					<Table className='text-background text-xs'>
+																						<TableHeader>
+																							<TableRow>
+																								<TableHead className='text-background text-md font-bold'>
+																									{key}
+																								</TableHead>
+																								<TableHead className='text-background'>
+																									Speed
+																								</TableHead>
+																								<TableHead className='text-background'>
+																									Power
+																								</TableHead>
+																							</TableRow>
+																						</TableHeader>
+																						<TableBody>
+																							<TableRow>
+																								<TableCell>
+																									Computation
+																								</TableCell>
+																								<TableCell className='text-right'>
+																									{device.comp_speed}
+																								</TableCell>
+																								<TableCell className='text-right'>
+																									{device.comp_power_watts}w
+																								</TableCell>
+																							</TableRow>
+																							<TableRow>
+																								<TableCell>Upload</TableCell>
+																								<TableCell className='text-right'>
+																									{device.upload_speed}
+																								</TableCell>
+																								<TableCell className='text-right'>
+																									{device.upload_power_watts}w
+																								</TableCell>
+																							</TableRow>
+																							<TableRow className='border-none'>
+																								<TableCell>Download</TableCell>
+																								<TableCell className='text-right'>
+																									{device.download_speed}
+																								</TableCell>
+																								<TableCell className='text-right'>
+																									{device.download_power_watts}w
+																								</TableCell>
+																							</TableRow>
+																						</TableBody>
+																					</Table>
+																				</div>
+																			),
+																	)}
+																</TooltipContent>
+															</Tooltip>
+														</div>
+														<Badge
+															variant='outline'
+															className={`${colorPalette[2][index]} font-bold`}>
+															{userWeights[index].toFixed(2)}
+														</Badge>
+													</div>
+													<Slider
+														defaultValue={[1]}
+														max={3}
+														min={0.01}
+														step={0.01}
+														onValueChange={(value) =>
+															handleSliderChange(index, value as number)
+														}
+													/>
+													<div>
+														<p className='text-xs'>
+															Interactive {userRouting[index].toFixed(4)}
+														</p>
+														<Progress
+															value={userRouting[index] * 100}
+															data-slot='progress-indicator'
+															indicatorColor={colorPalette[1][index]}
+														/>
+														<Progress
+															value={total * 100}
+															data-slot='progress-indicator'
+															indicatorColor={colorPalette[0][index]}
+														/>
+														<p className='text-xs text-muted-foreground'>
+															Optimal {total.toFixed(4)}
+														</p>
+													</div>
+												</div>
+											),
+										)}
+									</div>
+								</CardContent>
+							</Card>
+						</AccordionContent>
+					</AccordionItem>
+				</Accordion>
 			</div>
 		</div>
 	)
 }
-
-// Memoize to prevent re-render when only parent changes, not actual config
-export default memo(ParetoFrontier, (prevProps, nextProps) => {
-	if (prevProps.widget.id !== nextProps.widget.id) return false
-	const prevConfig = JSON.stringify(prevProps.widget.config)
-	const nextConfig = JSON.stringify(nextProps.widget.config)
-	return prevConfig === nextConfig
-})

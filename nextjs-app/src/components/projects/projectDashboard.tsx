@@ -85,6 +85,7 @@ export default async function ProjectDashboard({
 					<AddWidgetDropdown
 						userFiles={resFiles.files || []}
 						projectId={project.id}
+						userId={user.id}
 					/>
 				</div>
 				<ProjectWidgets

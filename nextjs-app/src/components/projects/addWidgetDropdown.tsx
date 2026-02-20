@@ -15,9 +15,11 @@ import AddEditDialog from "../widgets/dialogs/addEditDialog"
 export default function AddWidgetDropdown({
 	userFiles,
 	projectId,
+	userId,
 }: {
 	userFiles: File[]
 	projectId: string
+	userId: string
 }) {
 	interface WidgetType {
 		type: string
@@ -75,6 +77,15 @@ export default function AddWidgetDropdown({
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						onClick={() =>
+							handleAddWidget({
+								type: "pareto",
+								title: "Add Pareto's Frontier",
+							})
+						}>
+						Pareto's Frontier
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						onClick={() =>
 							handleAddWidget({ type: "notes", title: "Add Note" })
 						}>
 						Notes
@@ -88,6 +99,7 @@ export default function AddWidgetDropdown({
 				dialogType={dialogType}
 				userFiles={userFiles}
 				projectId={projectId}
+				userId={userId}
 				mode='create'
 			/>
 		</>

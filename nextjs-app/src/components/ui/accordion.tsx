@@ -13,7 +13,7 @@ function Accordion({
 		<AccordionPrimitive.Root
 			data-slot='accordion'
 			{...props}
-			className='px-4 bg-muted-foreground/10 rounded-sm'
+			className='px-4 rounded-sm border'
 		/>
 	)
 }
@@ -42,7 +42,7 @@ function AccordionTrigger({
 				data-slot='accordion-trigger'
 				className={cn(
 					"focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
-					className
+					className,
 				)}
 				{...props}>
 				{children}

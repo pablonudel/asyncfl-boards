@@ -45,9 +45,11 @@ export default function FileUploaderButton({
 			return
 		}
 
-		const invalidTypes = files.filter((f) => !f.name.endsWith(".npy"))
+		const invalidTypes = files.filter(
+			(f) => !f.name.endsWith(".npy") && !f.name.endsWith(".json"),
+		)
 		if (invalidTypes.length > 0) {
-			toast.error("Invalid file type. Only .npy files are allowed.")
+			toast.error("Invalid file type. Only .npy and .json files are allowed.")
 			return
 		}
 
@@ -68,7 +70,7 @@ export default function FileUploaderButton({
 				ref={inputRef}
 				type='file'
 				multiple
-				accept='.npy'
+				accept='.npy,.json'
 				onChange={handleFileChange}
 				className='hidden'
 			/>

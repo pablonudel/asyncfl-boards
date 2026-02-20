@@ -4,43 +4,41 @@ import {
 	updateScatterConfig,
 } from "@/actions/widgets/crudWidgets.actions"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import DataTab from "@/components/widgets/dialogs/accloss-rounds/dataTab"
-import LayoutTab from "@/components/widgets/dialogs/accloss-rounds/layoutTab"
 import type { File } from "@/generated/prisma/client"
 import {
 	FileNameMapping,
 	layoutSchema,
 } from "@/lib/schemas/generalWidgetsSchemas"
-import {
-	defaultScatterPlot,
-	scatterDataSchema,
-} from "@/lib/schemas/scatterWidgetSchema"
+import { paretoSchema } from "@/lib/schemas/scatterWidgetSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { JsonValue } from "@prisma/client/runtime/client"
 import { useEffect, useState } from "react"
 import { useForm, type Resolver } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
+import LayoutTab from "./accloss-rounds/layoutTab"
+import DataTab from "./pareto/dataTab"
 
-export default function ScatterDialog({
+export default function ParetoDialog({
 	userFiles,
 	projectId,
+	userId,
 	widgetConfig,
 	widgetId,
 	setIsDialogOpen,
-	type,
 	mode,
 }: {
 	userFiles?: File[]
 	projectId: string
+	userId: string
 	widgetConfig?: JsonValue
 	widgetId?: string
 	setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>
-	type: string
 	mode: string
 }) {
 	const [files, setFiles] = useState<FileNameMapping[]>([])
 	const editConfig = JSON.parse(JSON.stringify(widgetConfig || "{}"))
+
 	const editLayoutConfig = {
 		title: editConfig.layoutConfig?.title,
 		height: editConfig.layoutConfig?.height,
@@ -73,35 +71,21 @@ export default function ScatterDialog({
 		},
 	}
 
-	const editDataConfig = () => {
-		let dataConfig: any[] = []
-		editConfig.dataConfig.forEach((plot: any) => {
-			dataConfig.push({
-				source: plot.source,
-				aggregationMode: plot.aggregationMode,
-				showBand: plot.showBand,
-				normalizeMode: plot.normalizeMode,
-				x: plot.x,
-				y: plot.y,
-				type: plot.type,
-				mode: plot.mode,
-				name: plot.name,
-				line: {
-					shape: plot.line.shape,
-					dash: plot.line.dash,
-					width: plot.line.width,
-					color: plot.line.color,
-				},
-				marker: {
-					color: plot.marker.color,
-					size: plot.marker.size,
-					symbol: plot.marker.symbol,
-				},
-				hoverinfo: plot.hoverinfo,
-				hovertemplate: plot.hovertemplate,
-			})
-		})
-		return dataConfig
+	const editDataConfig = {
+		source: editConfig.dataConfig?.source,
+		default_rho_index: editConfig.dataConfig?.default_rho_index,
+		epsilon: editConfig.dataConfig?.epsilon,
+		L: editConfig.dataConfig?.L,
+		sigma: editConfig.dataConfig?.sigma,
+		G: editConfig.dataConfig?.G,
+		M: editConfig.dataConfig?.M,
+		A: editConfig.dataConfig?.A,
+		GPU: editConfig.dataConfig?.GPU,
+		Mobile: editConfig.dataConfig?.Mobile,
+		Laptop: editConfig.dataConfig?.Laptop,
+		IoT: editConfig.dataConfig?.IoT,
+		HPC: editConfig.dataConfig?.HPC,
+		m: editConfig.dataConfig?.m,
 	}
 
 	useEffect(() => {
@@ -117,7 +101,7 @@ export default function ScatterDialog({
 
 	const formSchema = z.object({
 		layoutConfig: layoutSchema,
-		dataConfig: scatterDataSchema,
+		dataConfig: paretoSchema,
 	})
 
 	const formData = useForm<z.infer<typeof formSchema>>({
@@ -131,8 +115,7 @@ export default function ScatterDialog({
 							height: 400,
 							scattermode: "overlay",
 							xaxis: {
-								title:
-									type === "rounds" ? "Rounds" : type === "time" ? "Time" : "",
+								title: "Time τ",
 								showgrid: true,
 								griddash: "solid",
 								side: "bottom",
@@ -142,7 +125,7 @@ export default function ScatterDialog({
 								visible: true,
 							},
 							yaxis: {
-								title: "",
+								title: "Energy E",
 								showgrid: true,
 								griddash: "solid",
 								side: "left",
@@ -160,37 +143,31 @@ export default function ScatterDialog({
 						},
 			dataConfig:
 				mode === "edit"
-					? editDataConfig()
-					: [
-							{
-								source: "",
-								aggregationMode: "average",
-								showBand: "none",
-								normalizeMode: false,
-								x: "",
-								y: 0,
-								type: "scatter",
-								mode: "lines",
-								name: "",
-								line: {
-									shape: "spline",
-									dash: "solid",
-									width: 2,
-									color: "#3333CC",
-								},
-								marker: {
-									color: "#3333CC",
-									size: 6,
-									symbol: "circle",
-								},
-								hoverinfo: "all",
-								hovertemplate: "",
+					? editDataConfig
+					: {
+							source: "",
+							type: "pareto",
+							mode: "lines+markers",
+							name: "Optimal Frontier",
+							line: {
+								shape: "spline",
+								dash: "solid",
+								width: 2,
+								color: "#3333CC",
 							},
-						],
+							marker: {
+								color: "#3333CC",
+								size: 6,
+								symbol: "circle",
+							},
+							hoverinfo: "template",
+							// hovertemplate: "Time: %{x}<br>Energy: %{y}",
+						},
 		},
 	})
 
 	async function onSubmit(data: z.infer<typeof formSchema>) {
+		console.log(data)
 		try {
 			let res
 			if (mode === "edit" && widgetId) {
@@ -204,7 +181,7 @@ export default function ScatterDialog({
 					projectId,
 					data.dataConfig,
 					data.layoutConfig,
-					type,
+					"pareto",
 				)
 			}
 			if (!res.success) {
@@ -226,14 +203,15 @@ export default function ScatterDialog({
 					<TabsTrigger value='Data'>Graph Config</TabsTrigger>
 					<TabsTrigger value='Layout'>Advanced Layout Config</TabsTrigger>
 				</TabsList>
-				<form id='rounds-form' onSubmit={formData.handleSubmit(onSubmit)}>
+				<form id='pareto-form' onSubmit={formData.handleSubmit(onSubmit)}>
 					{/* Data Tab */}
 					<TabsContent value='Data'>
 						<DataTab
 							formData={formData}
-							defaultPlot={defaultScatterPlot}
+							// defaultPlot={defaultParetoPlot}
 							files={files}
 							projectId={projectId}
+							userId={userId}
 						/>
 					</TabsContent>
 					{/* Layout Tab */}
