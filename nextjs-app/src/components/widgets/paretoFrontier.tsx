@@ -59,6 +59,8 @@ export default function ParetoFrontier({
 	const [userRouting, setUserRouting] = useState<number[]>([])
 	const [userWeights, setUserWeights] = useState<number[]>([])
 	const [devicesCount, setDevicesCount] = useState<number[]>([])
+	const [defaultParams, setDefaultParams] = useState<any>(null)
+	const [editableParams, setEditableParams] = useState<any>(null)
 
 	const colorPalette = [
 		[
@@ -196,6 +198,8 @@ export default function ParetoFrontier({
 				// const numOfClients = networkConfig.num_clients
 				// const numOfRhos = source.metadata.rho_values.length
 				const numOfDevices = networkConfig.devices.length
+				const defaultParams = source.fl_params_default
+				const editableParams = source.editable_params
 
 				const userWeights: number[] = new Array(numOfDevices).fill(1)
 				const devicesCount: number[] = Object.values(
@@ -214,6 +218,8 @@ export default function ParetoFrontier({
 				setUserWeights(userWeights)
 				setDevicesCount(devicesCount)
 				setUserRouting(calculatedProportions)
+				setDefaultParams(defaultParams)
+				setEditableParams(editableParams)
 			} catch (error) {
 				console.error(error)
 				setErrorMsg("Error loading data from source")
@@ -381,126 +387,183 @@ export default function ParetoFrontier({
 									</CardFooter>
 								</Card>
 							</div>
-							<Card className='w-1/2 rounded-sm'>
-								<CardHeader>
-									<CardTitle>
-										Routing · P{" "}
-										<Badge variant='outline'>Relative Weights</Badge>
-									</CardTitle>
-								</CardHeader>
-								<CardContent>
-									<div className='space-y-2'>
-										{Object.entries(selectedRho.routing_by_type).map(
-											([key, { total }]: any[], index: number) => (
-												<div
-													key={key}
-													className={`flex flex-col space-y-1 not-last:border-b not-last:pb-4 not-first:pt-2`}>
-													<div className='flex items-center justify-between mb-4'>
-														<div className='flex items-center gap-2'>
-															<p className='font-bold'>{key}</p>
-															<span className='text-xs text-muted-foreground'>
-																| Qty {networkConfig.client_distribution[key]}
-															</span>
-															<Tooltip>
-																<TooltipTrigger>
-																	<Info size={14} />
-																</TooltipTrigger>
-																<TooltipContent side='right'>
-																	{networkConfig.devices.map(
-																		(device: any, index: number) =>
-																			device.name === key && (
-																				<div key={index}>
-																					<Table className='text-background text-xs'>
-																						<TableHeader>
-																							<TableRow>
-																								<TableHead className='text-background text-md font-bold'>
-																									{key}
-																								</TableHead>
-																								<TableHead className='text-background'>
-																									Speed
-																								</TableHead>
-																								<TableHead className='text-background'>
-																									Power
-																								</TableHead>
-																							</TableRow>
-																						</TableHeader>
-																						<TableBody>
-																							<TableRow>
-																								<TableCell>
-																									Computation
-																								</TableCell>
-																								<TableCell className='text-right'>
-																									{device.comp_speed}
-																								</TableCell>
-																								<TableCell className='text-right'>
-																									{device.comp_power_watts}w
-																								</TableCell>
-																							</TableRow>
-																							<TableRow>
-																								<TableCell>Upload</TableCell>
-																								<TableCell className='text-right'>
-																									{device.upload_speed}
-																								</TableCell>
-																								<TableCell className='text-right'>
-																									{device.upload_power_watts}w
-																								</TableCell>
-																							</TableRow>
-																							<TableRow className='border-none'>
-																								<TableCell>Download</TableCell>
-																								<TableCell className='text-right'>
-																									{device.download_speed}
-																								</TableCell>
-																								<TableCell className='text-right'>
-																									{device.download_power_watts}w
-																								</TableCell>
-																							</TableRow>
-																						</TableBody>
-																					</Table>
-																				</div>
-																			),
-																	)}
-																</TooltipContent>
-															</Tooltip>
+							<div className='flex gap-4'>
+								<Card className='w-1/2 rounded-sm'>
+									<CardHeader>
+										<CardTitle>
+											Routing · P{" "}
+											<Badge variant='outline'>Relative Weights</Badge>
+										</CardTitle>
+									</CardHeader>
+									<CardContent>
+										<div className='space-y-2'>
+											{Object.entries(selectedRho.routing_by_type).map(
+												([key, { total }]: any[], index: number) => (
+													<div
+														key={key}
+														className={`flex flex-col space-y-1 not-last:border-b not-last:pb-4 not-first:pt-2`}>
+														<div className='flex items-center justify-between mb-4'>
+															<div className='flex items-center gap-2'>
+																<p className='font-bold'>{key}</p>
+																<span className='text-xs text-muted-foreground'>
+																	| Qty {networkConfig.client_distribution[key]}
+																</span>
+																<Tooltip>
+																	<TooltipTrigger>
+																		<Info size={14} />
+																	</TooltipTrigger>
+																	<TooltipContent side='right'>
+																		{networkConfig.devices.map(
+																			(device: any, index: number) =>
+																				device.name === key && (
+																					<div key={index}>
+																						<Table className='text-background text-xs'>
+																							<TableHeader>
+																								<TableRow>
+																									<TableHead className='text-background text-md font-bold'>
+																										{key}
+																									</TableHead>
+																									<TableHead className='text-background'>
+																										Speed
+																									</TableHead>
+																									<TableHead className='text-background'>
+																										Power
+																									</TableHead>
+																								</TableRow>
+																							</TableHeader>
+																							<TableBody>
+																								<TableRow>
+																									<TableCell>
+																										Computation
+																									</TableCell>
+																									<TableCell className='text-right'>
+																										{device.comp_speed}
+																									</TableCell>
+																									<TableCell className='text-right'>
+																										{device.comp_power_watts}w
+																									</TableCell>
+																								</TableRow>
+																								<TableRow>
+																									<TableCell>Upload</TableCell>
+																									<TableCell className='text-right'>
+																										{device.upload_speed}
+																									</TableCell>
+																									<TableCell className='text-right'>
+																										{device.upload_power_watts}w
+																									</TableCell>
+																								</TableRow>
+																								<TableRow className='border-none'>
+																									<TableCell>
+																										Download
+																									</TableCell>
+																									<TableCell className='text-right'>
+																										{device.download_speed}
+																									</TableCell>
+																									<TableCell className='text-right'>
+																										{
+																											device.download_power_watts
+																										}
+																										w
+																									</TableCell>
+																								</TableRow>
+																							</TableBody>
+																						</Table>
+																					</div>
+																				),
+																		)}
+																	</TooltipContent>
+																</Tooltip>
+															</div>
+															<Badge
+																variant='outline'
+																className={`${colorPalette[2][index]} font-bold`}>
+																{userWeights[index].toFixed(2)}
+															</Badge>
 														</div>
-														<Badge
-															variant='outline'
-															className={`${colorPalette[2][index]} font-bold`}>
-															{userWeights[index].toFixed(2)}
+														<Slider
+															defaultValue={[1]}
+															max={3}
+															min={0.01}
+															step={0.01}
+															onValueChange={(value) =>
+																handleSliderChange(index, value as number)
+															}
+														/>
+														<div>
+															<p className='text-xs'>
+																Interactive {userRouting[index].toFixed(4)}
+															</p>
+															<Progress
+																value={userRouting[index] * 100}
+																data-slot='progress-indicator'
+																indicatorColor={colorPalette[1][index]}
+															/>
+															<Progress
+																value={total * 100}
+																data-slot='progress-indicator'
+																indicatorColor={colorPalette[0][index]}
+															/>
+															<p className='text-xs text-muted-foreground'>
+																Optimal {total.toFixed(4)}
+															</p>
+														</div>
+													</div>
+												),
+											)}
+										</div>
+									</CardContent>
+								</Card>
+								<Card className='w-1/2 rounded-sm'>
+									<CardHeader>
+										<CardTitle>FL Params</CardTitle>
+									</CardHeader>
+									<CardContent className='h-full'>
+										{Object.entries(editableParams).map(
+											(
+												[
+													key,
+													{
+														label,
+														default: defaultValue,
+														min,
+														max,
+														step,
+														description,
+													},
+												]: any,
+												index: number,
+											) => (
+												<div
+													key={index}
+													className='mb-4 not-last:border-b not-last:pb-4'>
+													<div className='flex items-center justify-between mb-1'>
+														<p className='font-bold'>{label}</p>
+														<Badge variant='default'>
+															{defaultParams[key].toFixed(2)}
 														</Badge>
 													</div>
+													<p className='text-xs text-muted-foreground mb-4'>
+														{description}
+													</p>
 													<Slider
-														defaultValue={[1]}
-														max={3}
-														min={0.01}
-														step={0.01}
-														onValueChange={(value) =>
-															handleSliderChange(index, value as number)
-														}
+														defaultValue={[defaultValue]}
+														max={max}
+														min={min}
+														step={step}
+														className='mb-1'
+														// onValueChange={(value) => handleSliderChange(key, value as number)}
 													/>
-													<div>
-														<p className='text-xs'>
-															Interactive {userRouting[index].toFixed(4)}
-														</p>
-														<Progress
-															value={userRouting[index] * 100}
-															data-slot='progress-indicator'
-															indicatorColor={colorPalette[1][index]}
-														/>
-														<Progress
-															value={total * 100}
-															data-slot='progress-indicator'
-															indicatorColor={colorPalette[0][index]}
-														/>
-														<p className='text-xs text-muted-foreground'>
-															Optimal {total.toFixed(4)}
-														</p>
+													<div className='flex items-center justify-between text-xs text-muted-foreground'>
+														<p>{min}</p>
+														<p>def.: {defaultValue.toFixed(2)}</p>
+														<p>{max}</p>
 													</div>
 												</div>
 											),
 										)}
-									</div>
-								</CardContent>
-							</Card>
+									</CardContent>
+								</Card>
+							</div>
 						</AccordionContent>
 					</AccordionItem>
 				</Accordion>
