@@ -716,7 +716,7 @@ export default function ParetoFrontier({
 							)
 						})}
 					</div>
-					{/* Sección de ajuste de concurren`cia */}
+					{/* Sección de ajuste de concurrencia */}
 					<div className='space-y-2 border-b px-4 py-8'>
 						<p className='font-bold'>Concurrence · m</p>
 						<div className='flex items-center justify-between gap-2 mb-4'>
@@ -735,7 +735,7 @@ export default function ParetoFrontier({
 						/>
 						<div className='flex items-center justify-between gap-2 text-xs text-muted-foreground'>
 							<p>{mMinMax.min}</p>
-							<p> def.: {selectedRho.m}</p>
+							<p> Optimal {selectedRho.m}</p>
 							<p>{mMinMax.max}</p>
 						</div>
 					</div>
