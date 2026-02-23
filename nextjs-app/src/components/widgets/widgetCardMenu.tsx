@@ -61,41 +61,39 @@ export default function WidgetCardMenu({
 
 	return (
 		<>
-			<div className='w-full flex justify-center gap-1 '>
-				<div className='absolute top-0 px-4 -translate-y-1/2 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto transition-opacity delay-500 duration-300 z-10'>
-					<div className='bg-background p-1 rounded-full space-x-1 border'>
-						{widget.type !== "notes" && (
-							<Button
-								variant='secondary'
-								size='icon'
-								className='rounded-full w-8 h-8'
-								onClick={handleColumnSwitch}
-								disabled={isPending}>
-								{isFullColumn ? <ChevronLeft /> : <ChevronRight />}
-							</Button>
-						)}
-						<Button
-							variant='secondary'
-							size='icon'
-							className='rounded-full h-8 w-8'
-							{...(dragAttributes ?? {})}
-							{...(dragListeners ?? {})}>
-							<Move />
-						</Button>
+			<div className='absolute top-0 left-1/2 -translate-y-1/2 -translate-x-1/2 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto transition-opacity delay-500 duration-300 z-10'>
+				<div className='bg-background p-1 rounded-full space-x-1 border w-fit'>
+					{widget.type !== "notes" && (
 						<Button
 							variant='secondary'
 							size='icon'
 							className='rounded-full w-8 h-8'
-							onClick={() =>
-								handleEditWidget({
-									type: getWidgetType(),
-									title: `Edit ${widgetTitle}`,
-								})
-							}>
-							<Settings />
+							onClick={handleColumnSwitch}
+							disabled={isPending}>
+							{isFullColumn ? <ChevronLeft /> : <ChevronRight />}
 						</Button>
-						<DeleteWidgetButton widgetId={widget.id} projectId={projectId} />
-					</div>
+					)}
+					<Button
+						variant='secondary'
+						size='icon'
+						className='rounded-full h-8 w-8'
+						{...(dragAttributes ?? {})}
+						{...(dragListeners ?? {})}>
+						<Move />
+					</Button>
+					<Button
+						variant='secondary'
+						size='icon'
+						className='rounded-full w-8 h-8'
+						onClick={() =>
+							handleEditWidget({
+								type: getWidgetType(),
+								title: `Edit ${widgetTitle}`,
+							})
+						}>
+						<Settings />
+					</Button>
+					<DeleteWidgetButton widgetId={widget.id} projectId={projectId} />
 				</div>
 			</div>
 
@@ -108,6 +106,7 @@ export default function WidgetCardMenu({
 				widgetConfig={widget.config}
 				widgetId={widget.id}
 				mode='edit'
+				userId=''
 			/>
 		</>
 	)

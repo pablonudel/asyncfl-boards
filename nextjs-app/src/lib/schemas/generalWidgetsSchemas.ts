@@ -46,7 +46,7 @@ export const layoutSchema = z.object({
 	}),
 	legend: z.object({
 		visible: z.boolean().default(true),
-		orientation: z.enum(["v", "h"]).default("v"),
+		orientation: z.enum(["v", "h"]).default("h"),
 		x: z.coerce.number().min(-2).max(3),
 		y: z.coerce.number().min(-2).max(3),
 	}),

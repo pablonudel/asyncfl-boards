@@ -57,7 +57,7 @@ function WidgetContainer({
 			style={style}
 			ref={setNodeRef}
 			className={cn(
-				`relative group h-fit p-0 col-span-2 ${
+				`group h-fit p-0 col-span-2 ${
 					!isFullColumn ? "lg:col-span-1" : ""
 				} ${isFullColumn ? "col-span-2" : ""} ${
 					isDragging ? "opacity-50" : "opacity-100"
@@ -72,17 +72,24 @@ function WidgetContainer({
 					dragListeners={dragListeners}
 				/>
 			)}
-
-			<CardContent className='px-0'>
-				{widget.type === "scatter.rounds" && (
-					<ScatterWidget widget={widget} userId={userId} isPublic={isPublic} />
-				)}
-				{widget.type === "scatter.pareto" && <ParetoFrontier widget={widget} />}
-				{widget.type === "notes" && (
-					<NotesWidget widgetConfig={widget.config} />
-				)}
-				{/* Other widget types to be implemented... */}
-			</CardContent>
+			<div className='relative overflow-hidden'>
+				<CardContent className='px-0'>
+					{widget.type === "scatter.rounds" && (
+						<ScatterWidget
+							widget={widget}
+							userId={userId}
+							isPublic={isPublic}
+						/>
+					)}
+					{widget.type === "scatter.pareto" && (
+						<ParetoFrontier widget={widget} />
+					)}
+					{widget.type === "notes" && (
+						<NotesWidget widgetConfig={widget.config} />
+					)}
+					{/* Other widget types to be implemented... */}
+				</CardContent>
+			</div>
 		</Card>
 	)
 }

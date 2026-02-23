@@ -103,21 +103,6 @@ export default function DataTab({
 						</Field>
 					)}
 				/>
-				{/* {fileData && (
-					<Card>
-						<CardContent>
-							<div className='flex items-cente justify-between'>
-								{fileData.metadata.rho_values.map(
-									(rho: number, index: number) => (
-										<Badge key={index} variant='outline'>
-											{rho}
-										</Badge>
-									),
-								)}
-							</div>
-						</CardContent>
-					</Card>
-				)} */}
 			</div>
 		</>
 	)

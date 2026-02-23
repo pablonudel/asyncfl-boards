@@ -1,28 +1,16 @@
 "use client"
 
-import { Progress } from "@/components/ui/progress"
-import { Slider } from "@/components/ui/slider"
 import { Widget } from "@/generated/prisma/client"
 import { authClient } from "@/lib/auth-client"
 import { readJsonFile } from "@/lib/readFiles"
-import { FileX, Info } from "lucide-react"
+import { FileX, Info, RotateCcw, SlidersHorizontal, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import dynamic from "next/dynamic"
-import { useEffect, useMemo, useRef, useState } from "react"
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "../ui/accordion"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Badge } from "../ui/badge"
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "../ui/card"
+import { Button } from "../ui/button"
+import { Progress } from "../ui/progress"
+import { Slider } from "../ui/slider"
 import {
 	Table,
 	TableBody,
@@ -34,6 +22,216 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false })
+
+function getSliderValue(
+	value: number | readonly number[],
+	fallback: number,
+): number {
+	if (typeof value === "number") {
+		return value
+	}
+
+	return value[0] ?? fallback
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// FUNCIONES DE CÁLCULO DE BUZEN Y MÉTRICAS
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Algoritmo de Buzen para calcular la constante de normalización
+ * de una red de colas cerrada con estaciones M/M/1 y M/M/∞
+ */
+function buzenAlgo(
+	numClients: number,
+	numTasks: number,
+	routing: number[],
+	compSpeeds: number[],
+	uplinkSpeeds: number[],
+	downlinkSpeeds: number[],
+): Float64Array {
+	const Z = new Float64Array(numTasks + 1)
+	Z[0] = 1.0
+
+	// Estaciones M/M/1 (computación)
+	for (let i = 0; i < numClients; i++) {
+		const rho = routing[i] / compSpeeds[i]
+		for (let m = 1; m <= numTasks; m++) {
+			Z[m] += rho * Z[m - 1]
+		}
+	}
+
+	// Estaciones M/M/∞ (uplink + downlink)
+	const rhoInf = [
+		...uplinkSpeeds.map((s, i) => routing[i] / s),
+		...downlinkSpeeds.map((s, i) => routing[i] / s),
+	]
+
+	for (const rho of rhoInf) {
+		const y = new Float64Array(numTasks + 1)
+		y[0] = 1.0
+		for (let k = 1; k <= numTasks; k++) {
+			y[k] = (y[k - 1] * rho) / k
+		}
+
+		const Zprev = Z.slice()
+		for (let k = 1; k <= numTasks; k++) {
+			for (let m = numTasks; m >= k; m--) {
+				Z[m] += y[k] * Zprev[m - k]
+			}
+		}
+	}
+
+	return Z
+}
+
+/**
+ * Calcula el vector ED (Expected Delay) para cada cliente
+ */
+function edVector(
+	routing: number[],
+	numTasks: number,
+	Z: Float64Array,
+	compSpeeds: number[],
+	uplinkSpeeds: number[],
+	downlinkSpeeds: number[],
+): Float64Array {
+	const n = routing.length
+	const ED = new Float64Array(n)
+	const denom = Z[numTasks - 1]
+
+	for (let i = 0; i < n; i++) {
+		const r = routing[i] / compSpeeds[i]
+		let val = 0
+		for (let k = 0; k < numTasks - 1; k++) {
+			val += Math.pow(r, k) * Z[numTasks - 2 - k]
+		}
+		const infTerm =
+			Z[numTasks - 2] *
+			routing[i] *
+			(1 / uplinkSpeeds[i] + 1 / downlinkSpeeds[i])
+		ED[i] = (r * val + infTerm) / denom
+	}
+
+	return ED
+}
+
+/**
+ * Calcula el tiempo de convergencia τ y otras métricas
+ */
+function evaluateMetrics(
+	routing: number[],
+	m: number,
+	networkConfig: any,
+	flParams: any,
+) {
+	const { computation_speeds, uplink_speeds, downlink_speeds } = networkConfig
+	const { L, A, epsilon, sigma, G, M: Mparam } = flParams
+	const n = routing.length
+
+	const B = 2 * Mparam * Mparam + sigma * sigma
+	const C = G * G + sigma * sigma
+
+	const Z = buzenAlgo(
+		n,
+		m,
+		routing,
+		computation_speeds,
+		uplink_speeds,
+		downlink_speeds,
+	)
+	const ED = edVector(
+		routing,
+		m,
+		Z,
+		computation_speeds,
+		uplink_speeds,
+		downlink_speeds,
+	)
+
+	let sumInvR = 0
+	let sumEDinvR2 = 0
+	for (let i = 0; i < n; i++) {
+		const invR = 1 / routing[i]
+		sumInvR += invR
+		sumEDinvR2 += ED[i] * invR * invR
+	}
+
+	const T2 = ((4 + (6 * B) / epsilon) * sumInvR) / n
+	const T3 = Math.sqrt((3 * C * (m - 1) * sumEDinvR2) / epsilon)
+	const totalTime = ((T2 + T3) * 24 * L * A) / (n * epsilon)
+	const throughput = Z[m - 1] / Z[m]
+
+	return {
+		tau: totalTime / throughput,
+		totalTime,
+		T2,
+		T3,
+		throughput,
+	}
+}
+
+/**
+ * Calcula la energía consumida
+ */
+function evaluateEnergy(
+	routing: number[],
+	m: number,
+	networkConfig: any,
+	flParams: any,
+): number {
+	const {
+		computation_speeds,
+		uplink_speeds,
+		downlink_speeds,
+		computation_energy,
+		uplink_energy,
+		downlink_energy,
+	} = networkConfig
+
+	const { totalTime } = evaluateMetrics(routing, m, networkConfig, flParams)
+
+	let energyPerRound = 0
+	for (let i = 0; i < routing.length; i++) {
+		energyPerRound +=
+			routing[i] *
+			(uplink_energy[i] / uplink_speeds[i] +
+				downlink_energy[i] / downlink_speeds[i] +
+				computation_energy[i] / computation_speeds[i])
+	}
+
+	return totalTime * energyPerRound
+}
+
+/**
+ * Calcula las proporciones de trabajo por tipo de dispositivo
+ */
+function calculateProportions(weights: number[], counts: number[]): number[] {
+	const totalWeighted = weights.reduce((sum, w, i) => sum + w * counts[i], 0)
+	return weights.map((w, i) => (w * counts[i]) / totalWeighted)
+}
+
+/**
+ * Construye el routing completo (100 valores) a partir de proporciones por tipo
+ */
+function buildFullRouting(proportions: number[], devices: any[]): number[] {
+	const routing: number[] = []
+
+	devices.forEach((device, i) => {
+		const proportion = proportions[i]
+		const perClient = proportion / device.count
+
+		for (let j = 0; j < device.count; j++) {
+			routing.push(perClient)
+		}
+	})
+
+	return routing
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// COMPONENTE PRINCIPAL
+// ══════════════════════════════════════════════════════════════════════
 
 export default function ParetoFrontier({
 	widget,
@@ -50,17 +248,20 @@ export default function ParetoFrontier({
 	const [errorMsg, setErrorMsg] = useState<string | null>(null)
 	const [plotKey, setPlotKey] = useState(0)
 	const containerRef = useRef<HTMLDivElement | null>(null)
+	const [isFullColumn, setIsFullColumn] = useState(true)
+	const [sidebarOpen, setSidebarOpen] = useState(false)
 
 	const [optimalData, setOptimalData] = useState<any>(null)
 	const [selectedRho, setSelectedRho] = useState<any>(null)
 	const [concurrenceValue, setConcurrenceValue] = useState(29)
 	const [mMinMax, setMMinMax] = useState({ min: 0, max: 0 })
 	const [networkConfig, setNetworkConfig] = useState<any>(null)
-	const [userRouting, setUserRouting] = useState<number[]>([])
 	const [userWeights, setUserWeights] = useState<number[]>([])
 	const [devicesCount, setDevicesCount] = useState<number[]>([])
 	const [defaultParams, setDefaultParams] = useState<any>(null)
+	const [baseDefaultParams, setBaseDefaultParams] = useState<any>(null)
 	const [editableParams, setEditableParams] = useState<any>(null)
+	const [initialConcurrenceValue, setInitialConcurrenceValue] = useState(0)
 
 	const colorPalette = [
 		[
@@ -95,12 +296,6 @@ export default function ParetoFrontier({
 		],
 	]
 
-	function calculateProportions(weights: number[], counts: number[]): number[] {
-		const totalWeighted = weights.reduce((sum, w, i) => sum + w * counts[i], 0)
-
-		return weights.map((w, i) => (w * counts[i]) / totalWeighted)
-	}
-
 	const config =
 		typeof widget.config === "object" && widget.config !== null
 			? widget.config
@@ -112,16 +307,124 @@ export default function ParetoFrontier({
 		[widget.config],
 	)
 
-	const handleSliderChange = (index: number, newValue: number) => {
-		const updatedUserWeights = [...userWeights]
-		updatedUserWeights[index] = newValue
-		setUserWeights(updatedUserWeights)
-		const updatedWeights = calculateProportions(
-			updatedUserWeights,
-			devicesCount,
-		)
-		setUserRouting(updatedWeights)
-	}
+	// ── Calcular proporciones de routing del usuario (MEMOIZADO) ───────
+	const userRoutingProportions = useMemo(() => {
+		if (!userWeights.length || !devicesCount.length) return []
+		return calculateProportions(userWeights, devicesCount)
+	}, [userWeights, devicesCount])
+
+	// ── Construir routing completo del usuario (100 valores) (MEMOIZADO) ──
+	const fullUserRouting = useMemo(() => {
+		if (!userRoutingProportions.length || !networkConfig?.devices) return []
+		return buildFullRouting(userRoutingProportions, networkConfig.devices)
+	}, [userRoutingProportions, networkConfig])
+
+	// ── Calcular métricas del usuario (MEMOIZADO) ─────────────────────────
+	const userMetrics = useMemo(() => {
+		if (
+			!fullUserRouting.length ||
+			!networkConfig ||
+			!defaultParams ||
+			concurrenceValue === 0
+		) {
+			return null
+		}
+
+		try {
+			const { tau, throughput } = evaluateMetrics(
+				fullUserRouting,
+				concurrenceValue,
+				networkConfig,
+				defaultParams,
+			)
+			const energy = evaluateEnergy(
+				fullUserRouting,
+				concurrenceValue,
+				networkConfig,
+				defaultParams,
+			)
+
+			return {
+				tau,
+				energy,
+				throughput,
+				m: concurrenceValue,
+			}
+		} catch (error) {
+			console.error("Error calculating user metrics:", error)
+			return null
+		}
+	}, [fullUserRouting, concurrenceValue, networkConfig, defaultParams])
+
+	// ── Handler optimizado para cambio de pesos ────────────────────────────
+	const handleUpdateWeights = useCallback((index: number, newValue: number) => {
+		setUserWeights((prev) => {
+			const updated = [...prev]
+			updated[index] = newValue
+			return updated
+		})
+	}, [])
+
+	// ── Handler optimizado para cambio de parámetros FL ────────────────────
+	const handleUpdateParams = useCallback((key: string, newValue: number) => {
+		setDefaultParams((prev: any) => ({
+			...prev,
+			[key]: newValue,
+		}))
+	}, [])
+
+	const handleResetUserValues = useCallback(() => {
+		if (!networkConfig?.devices?.length || !baseDefaultParams || !mMinMax.max) {
+			return
+		}
+
+		setConcurrenceValue(initialConcurrenceValue)
+		setUserWeights(new Array(networkConfig.devices.length).fill(1))
+		setDefaultParams({ ...baseDefaultParams })
+	}, [networkConfig, baseDefaultParams, initialConcurrenceValue, mMinMax.max])
+
+	const optimalValidation = useMemo(() => {
+		if (!selectedRho || !networkConfig || !baseDefaultParams) {
+			return null
+		}
+
+		try {
+			const computed = evaluateMetrics(
+				selectedRho.routing,
+				selectedRho.m,
+				networkConfig,
+				baseDefaultParams,
+			)
+			const energy = evaluateEnergy(
+				selectedRho.routing,
+				selectedRho.m,
+				networkConfig,
+				baseDefaultParams,
+			)
+
+			const relError = (computedValue: number, referenceValue: number) => {
+				if (referenceValue === 0) return 0
+				return Math.abs((computedValue - referenceValue) / referenceValue) * 100
+			}
+
+			const tauError = relError(computed.tau, selectedRho.tau)
+			const energyError = relError(energy, selectedRho.energy)
+			const throughputError = relError(
+				computed.throughput,
+				selectedRho.throughput,
+			)
+
+			return {
+				tauError,
+				energyError,
+				throughputError,
+				maxError: Math.max(tauError, energyError, throughputError),
+			}
+		} catch (error) {
+			console.error("Error validating optimal point:", error)
+			return null
+		}
+	}, [selectedRho, networkConfig, baseDefaultParams])
 
 	// Direct access for component use
 	const widgetDataConfig = (config as Record<string, any>).dataConfig || {}
@@ -194,31 +497,30 @@ export default function ParetoFrontier({
 				const selectedRho = optimalData[selectedIndex]
 				const mMinMax = source.frontier_stats.m
 				const networkConfig = source.network_config
-				// const devices = networkConfig.devices
-				// const numOfClients = networkConfig.num_clients
-				// const numOfRhos = source.metadata.rho_values.length
 				const numOfDevices = networkConfig.devices.length
 				const defaultParams = source.fl_params_default
 				const editableParams = source.editable_params
 
+				// Calcular m inicial (promedio del rango)
+				const initialM = Math.round((mMinMax.min + mMinMax.max) / 2)
+
+				// Inicializar pesos en 1.0 (tratamiento equitativo)
 				const userWeights: number[] = new Array(numOfDevices).fill(1)
 				const devicesCount: number[] = Object.values(
 					networkConfig.client_distribution,
-				)
-				const calculatedProportions = calculateProportions(
-					userWeights,
-					devicesCount,
 				)
 
 				setDataConfig([finalPlotData])
 				setOptimalData(optimalData)
 				setSelectedRho(selectedRho)
+				setConcurrenceValue(initialM)
+				setInitialConcurrenceValue(initialM)
 				setMMinMax(mMinMax)
 				setNetworkConfig(networkConfig)
 				setUserWeights(userWeights)
 				setDevicesCount(devicesCount)
-				setUserRouting(calculatedProportions)
 				setDefaultParams(defaultParams)
+				setBaseDefaultParams(defaultParams)
 				setEditableParams(editableParams)
 			} catch (error) {
 				console.error(error)
@@ -230,6 +532,69 @@ export default function ParetoFrontier({
 
 		loadData()
 	}, [widget.id, configRevision])
+
+	useEffect(() => {
+		try {
+			const parsed = JSON.parse(configJSON)
+			const fullCol = Boolean(parsed.fullColumn ?? false)
+			setIsFullColumn(fullCol)
+			console.log("Parsed fullColumn:", fullCol)
+		} catch {
+			setIsFullColumn(false)
+		}
+	}, [widget.config])
+
+	// ── CONSTRUIR TRACES COMPLETOS PARA PLOTLY ─────────────────────────────
+	const plotData = useMemo(() => {
+		if (!dataConfig || !selectedRho || !userMetrics) return dataConfig
+
+		const traces = [...dataConfig]
+
+		// Trace 2: Punto óptimo de referencia (estrella naranja)
+		traces.push({
+			x: [selectedRho.tau],
+			y: [selectedRho.energy],
+			mode: "markers",
+			type: "scatter",
+			name: `ρ: ${selectedRho.rho} optimal`,
+			marker: {
+				size: 12,
+				color: "#ff8904",
+				symbol: "circle",
+				// line: { color: theme === "dark" ? "#0d1117" : "#ffffff", width: 2 },
+			},
+			hovertemplate: `<span style="color: #ffffff"><b>Optimal</b><br>ρ=${selectedRho.rho}<br>m: ${selectedRho.m}<br>Energy: ${selectedRho.energy.toFixed(0)}<br>Time: ${selectedRho.tau.toFixed(2)}</span><extra></extra>`,
+		})
+
+		// Trace 3: Punto del usuario (diamante rojo)
+		traces.push({
+			x: [userMetrics.tau],
+			y: [userMetrics.energy],
+			mode: "markers",
+			type: "scatter",
+			name: "Interactive Point",
+			marker: {
+				size: 10,
+				color: "#00c951",
+				symbol: "diamond",
+				// line: { color: theme === "dark" ? "#0d1117" : "#ffffff", width: 2 },
+			},
+			hovertemplate: `<b>User</b><br>m: ${userMetrics.m}<br>Energy: ${userMetrics.energy.toFixed(0)}<br>Time: ${userMetrics.tau.toFixed(2)}<extra></extra>`,
+		})
+
+		// Trace 4: Línea conectora (línea punteada)
+		traces.push({
+			x: [userMetrics.tau, selectedRho.tau],
+			y: [userMetrics.energy, selectedRho.energy],
+			mode: "lines",
+			type: "scatter",
+			showlegend: false,
+			line: { color: "#00c951", width: 2, dash: "dot" },
+			hoverinfo: "skip",
+		})
+
+		return traces
+	}, [dataConfig, selectedRho, userMetrics, theme])
 
 	const layoutConfig = {
 		title: {
@@ -245,7 +610,7 @@ export default function ParetoFrontier({
 			tickangle: widgetLayoutConfig.xaxis?.tickangle,
 			tickprefix: widgetLayoutConfig.xaxis?.tickprefix,
 			ticksuffix: widgetLayoutConfig.xaxis?.ticksuffix,
-			visible: widgetLayoutConfig.xaxis?.visible,
+			zeroline: widgetLayoutConfig.xaxis?.zeroline,
 			gridcolor: theme === "light" ? "#d4d4d4" : "#444444",
 		},
 		yaxis: {
@@ -256,43 +621,291 @@ export default function ParetoFrontier({
 			tickangle: widgetLayoutConfig.yaxis?.tickangle,
 			tickprefix: widgetLayoutConfig.yaxis?.tickprefix,
 			ticksuffix: widgetLayoutConfig.yaxis?.ticksuffix,
-			visible: widgetLayoutConfig.yaxis?.visible,
+			zeroline: widgetLayoutConfig.yaxis?.zeroline,
 			gridcolor: theme === "light" ? "#d4d4d4" : "#444444",
 		},
+		margin: {
+			l: 50,
+			r: 50,
+			b: 50,
+			t: 50,
+		},
+		paper_bgcolor: "transparent",
+		plot_bgcolor: "transparent",
+		font: {
+			color: theme === "light" ? "#0a0a0a" : "#ffffff",
+		},
 		legend: {
-			orientation: widgetLayoutConfig.legend?.orientation,
 			x: widgetLayoutConfig.legend?.x,
 			y: widgetLayoutConfig.legend?.y,
 			visible: widgetLayoutConfig.legend?.visible,
-			bgcolor: "transparent",
-			bordercolor: "transparent",
+			orientation: widgetLayoutConfig.legend?.orientation,
 		},
-		uirevision: configRevision,
-		paper_bgcolor: "transparent",
-		plot_bgcolor: "transparent",
-		font: { color: theme === "light" ? "#0a0a0a" : "#ffffff" },
+		hovermode: "closest" as const,
 	}
 
-	if (isLoading) return <div>Loading chart...</div>
-
-	if (errorMsg) {
+	if (isLoading) {
 		return (
-			<div className='flex flex-col items-center gap-4'>
-				<FileX className='text-destructive' />
-				<p className='text-destructive text-center'>{errorMsg}</p>
-				<p className='text-sm'>Please check the source file and try again.</p>
+			<div className='flex items-center justify-center w-full h-full'>
+				<div className='text-center'>
+					<p className='text-muted-foreground'>Loading data...</p>
+				</div>
 			</div>
 		)
 	}
 
+	if (errorMsg) {
+		return (
+			<div className='flex items-center justify-center w-full h-full'>
+				<div className='text-center space-y-2'>
+					<FileX className='w-12 h-12 mx-auto text-muted-foreground' />
+					<p className='text-sm text-muted-foreground'>{errorMsg}</p>
+				</div>
+			</div>
+		)
+	}
+
+	if (!dataConfig) {
+		return (
+			<div className='flex items-center justify-center w-full h-full'>
+				<p className='text-muted-foreground'>No data available</p>
+			</div>
+		)
+	}
+
+	function handleSideBarToggle() {
+		setSidebarOpen((prev) => !prev)
+	}
+
 	return (
-		<div ref={containerRef} className='w-full h-full min-h-80'>
+		<div className='w-full p-8 min-h-80' ref={containerRef}>
+			<div
+				className={`bg-card border-l w-full max-w-120 min-w-[320px] absolute z-5 top-0 bottom-0 rounded-r-xl overflow-y-scroll shadow-lg ${sidebarOpen ? "right-0 opacity-100" : "-right-120 opacity-0"} transition-all duration-300`}>
+				<div className='flex items-center justify-between sticky top-0 bg-card w-full max-w-120 min-w-[320px] p-4 rounded-t-xl border-b z-9'>
+					<p className='font-bold'>
+						Configuration{" "}
+						<Badge
+							variant='outline'
+							onClick={() => handleResetUserValues()}
+							className='cursor-pointer'>
+							Reset <RotateCcw data-icon='inline-end' />
+						</Badge>
+					</p>
+					<Button
+						size='icon'
+						variant='secondary'
+						onClick={() => handleSideBarToggle()}
+						className='rounded-full'>
+						<X />
+					</Button>
+				</div>
+				<div>
+					{/* Sección de selección de punto óptimo */}
+					<div className='space-y-2 border-b px-4 py-8'>
+						<p className='font-bold'>Reference • ρ</p>
+						{optimalData.map((item: any, index: number) => {
+							const isSelected = selectedRho && item.rho === selectedRho.rho
+							return (
+								<Badge
+									key={index}
+									variant={isSelected ? "default" : "outline"}
+									onClick={() => setSelectedRho(item)}
+									className='cursor-pointer'>
+									{item.rho}
+								</Badge>
+							)
+						})}
+					</div>
+					{/* Sección de ajuste de concurren`cia */}
+					<div className='space-y-2 border-b px-4 py-8'>
+						<p className='font-bold'>Concurrence · m</p>
+						<div className='flex items-center justify-between gap-2 mb-4'>
+							<p className='text-sm'>Concurrent Tasks</p>
+							<Badge variant='default'>{concurrenceValue}</Badge>
+						</div>
+						<Slider
+							value={[concurrenceValue]}
+							max={mMinMax.max}
+							min={mMinMax.min}
+							step={1}
+							onValueChange={(value) =>
+								setConcurrenceValue(getSliderValue(value, mMinMax.min))
+							}
+							className='mb-1'
+						/>
+						<div className='flex items-center justify-between gap-2 text-xs text-muted-foreground'>
+							<p>{mMinMax.min}</p>
+							<p> def.: {selectedRho.m}</p>
+							<p>{mMinMax.max}</p>
+						</div>
+					</div>
+					{/* Sección de ajuste de pesos */}
+					<div className='space-y-2 border-b px-4 py-8'>
+						<p className='font-bold'>
+							Routing · P <Badge variant='outline'>Relative Weights</Badge>
+						</p>
+						<div className='space-y-2'>
+							{Object.entries(selectedRho.routing_by_type).map(
+								([key, { total }]: any[], index: number) => (
+									<div
+										key={key}
+										className={`flex flex-col space-y-1 not-last:border-b not-last:pb-4 not-first:pt-2`}>
+										<div className='flex items-center justify-between mb-4'>
+											<div className='flex items-center gap-2'>
+												<p className='text-sm font-bold'>{key}</p>
+												<span className='text-xs text-muted-foreground'>
+													| Qty {networkConfig.client_distribution[key]}
+												</span>
+												<Tooltip>
+													<TooltipTrigger>
+														<Info size={14} />
+													</TooltipTrigger>
+													<TooltipContent side='right'>
+														{networkConfig.devices.map(
+															(device: any, index: number) =>
+																device.name === key && (
+																	<div key={index}>
+																		<Table className='text-background text-xs'>
+																			<TableHeader>
+																				<TableRow>
+																					<TableHead className='text-background text-md font-bold'>
+																						{key}
+																					</TableHead>
+																					<TableHead className='text-background'>
+																						Speed
+																					</TableHead>
+																					<TableHead className='text-background'>
+																						Power
+																					</TableHead>
+																				</TableRow>
+																			</TableHeader>
+																			<TableBody>
+																				<TableRow>
+																					<TableCell>Computation</TableCell>
+																					<TableCell className='text-right'>
+																						{device.comp_speed}
+																					</TableCell>
+																					<TableCell className='text-right'>
+																						{device.comp_power_watts}w
+																					</TableCell>
+																				</TableRow>
+																				<TableRow>
+																					<TableCell>Upload</TableCell>
+																					<TableCell className='text-right'>
+																						{device.upload_speed}
+																					</TableCell>
+																					<TableCell className='text-right'>
+																						{device.upload_power_watts}w
+																					</TableCell>
+																				</TableRow>
+																				<TableRow className='border-none'>
+																					<TableCell>Download</TableCell>
+																					<TableCell className='text-right'>
+																						{device.download_speed}
+																					</TableCell>
+																					<TableCell className='text-right'>
+																						{device.download_power_watts}w
+																					</TableCell>
+																				</TableRow>
+																			</TableBody>
+																		</Table>
+																	</div>
+																),
+														)}
+													</TooltipContent>
+												</Tooltip>
+											</div>
+											<Badge
+												variant='outline'
+												className={`${colorPalette[2][index]} font-bold`}>
+												{userWeights[index].toFixed(2)}
+											</Badge>
+										</div>
+										<Slider
+											value={[userWeights[index] ?? 1]}
+											max={3}
+											min={0.01}
+											step={0.01}
+											onValueChange={(value) =>
+												handleUpdateWeights(index, getSliderValue(value, 1))
+											}
+										/>
+										<div>
+											<p className='text-xs'>
+												Interactive{" "}
+												{userRoutingProportions[index]?.toFixed(4) || 0}
+											</p>
+											<Progress
+												value={(userRoutingProportions[index] || 0) * 100}
+												data-slot='progress-indicator'
+												indicatorColor={colorPalette[1][index]}
+											/>
+											<Progress
+												value={total * 100}
+												data-slot='progress-indicator'
+												indicatorColor={colorPalette[0][index]}
+											/>
+											<p className='text-xs text-muted-foreground'>
+												Optimal {total.toFixed(4)}
+											</p>
+										</div>
+									</div>
+								),
+							)}
+						</div>
+					</div>
+					<div className='space-y-2 border-b px-4 py-8'>
+						<p className='font-bold'>FL Params</p>
+						{Object.entries(editableParams).map(
+							(
+								[
+									key,
+									{ label, default: defaultValue, min, max, step, description },
+								]: any,
+								index: number,
+							) => (
+								<div
+									key={index}
+									className='mb-4 not-last:border-b not-last:pb-4'>
+									<div className='flex items-center justify-between mb-1'>
+										<p className='font-bold'>{label}</p>
+										<Badge variant='default'>
+											{defaultParams[key].toFixed(2)}
+										</Badge>
+									</div>
+									<p className='text-xs text-muted-foreground mb-4'>
+										{description}
+									</p>
+									<Slider
+										value={[defaultParams[key] ?? defaultValue]}
+										max={max}
+										min={min}
+										step={step}
+										className='mb-1'
+										onValueChange={(value) =>
+											handleUpdateParams(
+												key,
+												getSliderValue(value, defaultValue),
+											)
+										}
+									/>
+									<div className='flex items-center justify-between text-xs text-muted-foreground'>
+										<p>{min.toFixed(2)}</p>
+										<p>def.: {defaultValue.toFixed(2)}</p>
+										<p>{max.toFixed(2)}</p>
+									</div>
+								</div>
+							),
+						)}
+					</div>
+				</div>
+			</div>
 			<Plot
 				key={plotKey}
 				className='w-full h-full'
 				useResizeHandler
 				style={{ width: "100%", height: "100%" }}
-				data={dataConfig}
+				data={plotData}
 				layout={layoutConfig}
 				config={{
 					displaylogo: false,
@@ -308,266 +921,88 @@ export default function ParetoFrontier({
 					],
 				}}
 			/>
-			<div className='p-8'>
-				<Accordion type='single' collapsible>
-					<AccordionItem value='config'>
-						<AccordionTrigger className='font-bold'>
-							Interactive Configuration
-						</AccordionTrigger>
-						<AccordionContent className='space-y-4'>
-							<div className='flex gap-4'>
-								<Card className='w-1/2 rounded-sm'>
-									<CardHeader>
-										<CardTitle>Optimal Reference</CardTitle>
-									</CardHeader>
-									<CardContent>
-										{optimalData.map((item: any, index: number) => {
-											const isSelected =
-												selectedRho && item.rho === selectedRho.rho
-											return (
-												<Badge
-													key={index}
-													variant={isSelected ? "default" : "outline"}
-													onClick={() => setSelectedRho(item)}
-													className='cursor-pointer'>
-													{item.rho}
-												</Badge>
-											)
-										})}
-										{selectedRho && (
-											<div>
-												<p>
-													<span>E </span>
-													{selectedRho.energy.toFixed(2)}
-												</p>
-												<p>
-													<span>T </span>
-													{selectedRho.tau.toFixed(2)}
-												</p>
-												<p>
-													<span>M </span>
-													{selectedRho.m}
-												</p>
-												<p>
-													<span>λ </span>
-													{selectedRho.throughput.toFixed(2)}
-												</p>
-											</div>
-										)}
-									</CardContent>
-								</Card>
-								<Card className='w-1/2 rounded-sm'>
-									<CardHeader>
-										<CardTitle>Concurrence · M</CardTitle>
-									</CardHeader>
-									<CardContent className='h-full'>
-										<div className='flex items-center justify-between gap-2 mb-4'>
-											<p>Concurrent Tasks</p>
-											<Badge variant='default'>{concurrenceValue}</Badge>
-										</div>
-										<Slider
-											value={concurrenceValue}
-											max={mMinMax.max}
-											min={mMinMax.min}
-											step={1}
-											onValueChange={(value) =>
-												setConcurrenceValue(value as number)
+			{userMetrics && (
+				<div className='space-y-4'>
+					<div className='flex items-center gap-2 justify-between'>
+						<p className='font-bold'>Interactive vs. Reference</p>
+						<Button
+							size='icon'
+							variant='secondary'
+							onClick={() => handleSideBarToggle()}
+							className='rounded-full'>
+							<SlidersHorizontal />
+						</Button>
+					</div>
+					<div className='grid grid-cols-2 gap-4 md:grid-cols-4 w-full'>
+						{[
+							{
+								label: "Time • τ",
+								user: userMetrics.tau,
+								opt: selectedRho.tau,
+								format: (v: number) => v.toFixed(2),
+							},
+							{
+								label: "Energy • E",
+								user: userMetrics.energy,
+								opt: selectedRho.energy,
+								format: (v: number) => v.toFixed(0),
+							},
+							{
+								label: "Throughput • λ",
+								user: userMetrics.throughput,
+								opt: selectedRho.throughput,
+								format: (v: number) => v.toFixed(4),
+								invert: true,
+							},
+							{
+								label: "Concurrence • m",
+								user: userMetrics.m,
+								opt: selectedRho.m,
+								format: (v: number) => v.toString(),
+								noQuality: true,
+							},
+						].map(({ label, user, opt, format, invert, noQuality }) => {
+							const delta = (((user - opt) / opt) * 100).toFixed(1)
+							const worse =
+								delta &&
+								(invert ? parseFloat(delta) < 0 : parseFloat(delta) > 0)
+							const better =
+								delta &&
+								(invert ? parseFloat(delta) > 0 : parseFloat(delta) < 0)
+
+							return (
+								<div
+									key={label}
+									className='space-y-1 bg-muted-foreground/5 p-2 rounded-sm'>
+									<p className='text-xs font-bold'>{label}</p>
+									<div>
+										<p className='text-lg font-bold'>{format(user)}</p>
+										<p className='text-xs text-muted-foreground'>
+											opt: {format(opt)}
+										</p>
+									</div>
+									{delta && (
+										<Badge
+											variant={
+												noQuality
+													? "outline"
+													: worse
+														? "destructive"
+														: better
+															? "default"
+															: "outline"
 											}
-											className='mb-1'
-										/>
-										<div className='flex items-center justify-between gap-2 text-xs text-muted-foreground'>
-											<p>{mMinMax.min}</p>
-											<p>{mMinMax.max}</p>
-										</div>
-									</CardContent>
-									<CardFooter>
-										<span className='text-xs text-muted-foreground'>
-											Optimal {selectedRho.m}
-										</span>
-									</CardFooter>
-								</Card>
-							</div>
-							<div className='flex gap-4'>
-								<Card className='w-1/2 rounded-sm'>
-									<CardHeader>
-										<CardTitle>
-											Routing · P{" "}
-											<Badge variant='outline'>Relative Weights</Badge>
-										</CardTitle>
-									</CardHeader>
-									<CardContent>
-										<div className='space-y-2'>
-											{Object.entries(selectedRho.routing_by_type).map(
-												([key, { total }]: any[], index: number) => (
-													<div
-														key={key}
-														className={`flex flex-col space-y-1 not-last:border-b not-last:pb-4 not-first:pt-2`}>
-														<div className='flex items-center justify-between mb-4'>
-															<div className='flex items-center gap-2'>
-																<p className='font-bold'>{key}</p>
-																<span className='text-xs text-muted-foreground'>
-																	| Qty {networkConfig.client_distribution[key]}
-																</span>
-																<Tooltip>
-																	<TooltipTrigger>
-																		<Info size={14} />
-																	</TooltipTrigger>
-																	<TooltipContent side='right'>
-																		{networkConfig.devices.map(
-																			(device: any, index: number) =>
-																				device.name === key && (
-																					<div key={index}>
-																						<Table className='text-background text-xs'>
-																							<TableHeader>
-																								<TableRow>
-																									<TableHead className='text-background text-md font-bold'>
-																										{key}
-																									</TableHead>
-																									<TableHead className='text-background'>
-																										Speed
-																									</TableHead>
-																									<TableHead className='text-background'>
-																										Power
-																									</TableHead>
-																								</TableRow>
-																							</TableHeader>
-																							<TableBody>
-																								<TableRow>
-																									<TableCell>
-																										Computation
-																									</TableCell>
-																									<TableCell className='text-right'>
-																										{device.comp_speed}
-																									</TableCell>
-																									<TableCell className='text-right'>
-																										{device.comp_power_watts}w
-																									</TableCell>
-																								</TableRow>
-																								<TableRow>
-																									<TableCell>Upload</TableCell>
-																									<TableCell className='text-right'>
-																										{device.upload_speed}
-																									</TableCell>
-																									<TableCell className='text-right'>
-																										{device.upload_power_watts}w
-																									</TableCell>
-																								</TableRow>
-																								<TableRow className='border-none'>
-																									<TableCell>
-																										Download
-																									</TableCell>
-																									<TableCell className='text-right'>
-																										{device.download_speed}
-																									</TableCell>
-																									<TableCell className='text-right'>
-																										{
-																											device.download_power_watts
-																										}
-																										w
-																									</TableCell>
-																								</TableRow>
-																							</TableBody>
-																						</Table>
-																					</div>
-																				),
-																		)}
-																	</TooltipContent>
-																</Tooltip>
-															</div>
-															<Badge
-																variant='outline'
-																className={`${colorPalette[2][index]} font-bold`}>
-																{userWeights[index].toFixed(2)}
-															</Badge>
-														</div>
-														<Slider
-															defaultValue={[1]}
-															max={3}
-															min={0.01}
-															step={0.01}
-															onValueChange={(value) =>
-																handleSliderChange(index, value as number)
-															}
-														/>
-														<div>
-															<p className='text-xs'>
-																Interactive {userRouting[index].toFixed(4)}
-															</p>
-															<Progress
-																value={userRouting[index] * 100}
-																data-slot='progress-indicator'
-																indicatorColor={colorPalette[1][index]}
-															/>
-															<Progress
-																value={total * 100}
-																data-slot='progress-indicator'
-																indicatorColor={colorPalette[0][index]}
-															/>
-															<p className='text-xs text-muted-foreground'>
-																Optimal {total.toFixed(4)}
-															</p>
-														</div>
-													</div>
-												),
-											)}
-										</div>
-									</CardContent>
-								</Card>
-								<Card className='w-1/2 rounded-sm'>
-									<CardHeader>
-										<CardTitle>FL Params</CardTitle>
-									</CardHeader>
-									<CardContent className='h-full'>
-										{Object.entries(editableParams).map(
-											(
-												[
-													key,
-													{
-														label,
-														default: defaultValue,
-														min,
-														max,
-														step,
-														description,
-													},
-												]: any,
-												index: number,
-											) => (
-												<div
-													key={index}
-													className='mb-4 not-last:border-b not-last:pb-4'>
-													<div className='flex items-center justify-between mb-1'>
-														<p className='font-bold'>{label}</p>
-														<Badge variant='default'>
-															{defaultParams[key].toFixed(2)}
-														</Badge>
-													</div>
-													<p className='text-xs text-muted-foreground mb-4'>
-														{description}
-													</p>
-													<Slider
-														defaultValue={[defaultValue]}
-														max={max}
-														min={min}
-														step={step}
-														className='mb-1'
-														// onValueChange={(value) => handleSliderChange(key, value as number)}
-													/>
-													<div className='flex items-center justify-between text-xs text-muted-foreground'>
-														<p>{min}</p>
-														<p>def.: {defaultValue.toFixed(2)}</p>
-														<p>{max}</p>
-													</div>
-												</div>
-											),
-										)}
-									</CardContent>
-								</Card>
-							</div>
-						</AccordionContent>
-					</AccordionItem>
-				</Accordion>
-			</div>
+											className={`text-xs ${better && "bg-green-600"} ${noQuality && "bg-muted-foreground/10"}`}>
+											{parseFloat(delta) > 0 ? "+" : ""}
+											{delta}%
+										</Badge>
+									)}
+								</div>
+							)
+						})}
+					</div>
+				</div>
+			)}
 		</div>
 	)
 }

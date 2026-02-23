@@ -305,6 +305,12 @@ function ScatterWidget({
 			visible: widgetLayoutConfig.yaxis?.visible,
 			gridcolor: theme === "light" ? "#d4d4d4" : "#444444",
 		},
+		margin: {
+			l: 50,
+			r: 50,
+			b: 50,
+			t: 50,
+		},
 		legend: {
 			orientation: widgetLayoutConfig.legend?.orientation,
 			x: widgetLayoutConfig.legend?.x,
@@ -332,7 +338,7 @@ function ScatterWidget({
 	}
 
 	return (
-		<div ref={containerRef} className='w-full h-full min-h-80'>
+		<div ref={containerRef} className='w-full h-full min-h-80 p-8'>
 			<Plot
 				key={plotKey}
 				className='w-full h-full'

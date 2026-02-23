@@ -136,9 +136,9 @@ export default function ParetoDialog({
 							},
 							legend: {
 								visible: true,
-								orientation: "v",
-								x: 1.02,
-								y: 1,
+								orientation: "h",
+								x: 0,
+								y: -0.2,
 							},
 						},
 			dataConfig:
