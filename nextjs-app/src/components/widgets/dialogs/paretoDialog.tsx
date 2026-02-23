@@ -73,19 +73,21 @@ export default function ParetoDialog({
 
 	const editDataConfig = {
 		source: editConfig.dataConfig?.source,
-		default_rho_index: editConfig.dataConfig?.default_rho_index,
-		epsilon: editConfig.dataConfig?.epsilon,
-		L: editConfig.dataConfig?.L,
-		sigma: editConfig.dataConfig?.sigma,
-		G: editConfig.dataConfig?.G,
-		M: editConfig.dataConfig?.M,
-		A: editConfig.dataConfig?.A,
-		GPU: editConfig.dataConfig?.GPU,
-		Mobile: editConfig.dataConfig?.Mobile,
-		Laptop: editConfig.dataConfig?.Laptop,
-		IoT: editConfig.dataConfig?.IoT,
-		HPC: editConfig.dataConfig?.HPC,
-		m: editConfig.dataConfig?.m,
+		type: editConfig.dataConfig?.type,
+		mode: editConfig.dataConfig?.mode,
+		name: editConfig.dataConfig?.name,
+		line: {
+			shape: editConfig.dataConfig?.line?.shape || "spline",
+			dash: editConfig.dataConfig?.line?.dash || "solid",
+			width: editConfig.dataConfig?.line?.width || 2,
+			color: editConfig.dataConfig?.line?.color || "#3333CC",
+		},
+		marker: {
+			color: editConfig.dataConfig?.marker?.color || "#3333CC",
+			size: editConfig.dataConfig?.marker?.size || 6,
+			symbol: editConfig.dataConfig?.marker?.symbol || "circle",
+		},
+		hoverinfo: editConfig.dataConfig?.hoverinfo || "template",
 	}
 
 	useEffect(() => {
@@ -208,7 +210,6 @@ export default function ParetoDialog({
 					<TabsContent value='Data'>
 						<DataTab
 							formData={formData}
-							// defaultPlot={defaultParetoPlot}
 							files={files}
 							projectId={projectId}
 							userId={userId}
