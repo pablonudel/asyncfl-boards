@@ -11,6 +11,7 @@ import NotesDialog from "@/components/widgets/dialogs/notesDialog"
 import ScatterDialog from "@/components/widgets/dialogs/scatterDialog"
 import type { File } from "@/generated/prisma/client"
 import { JsonValue } from "@prisma/client/runtime/client"
+import { useState } from "react"
 import ParetoDialog from "./paretoDialog"
 
 export default function AddEditDialog({
@@ -35,6 +36,7 @@ export default function AddEditDialog({
 	mode: string
 }) {
 	const scatterTypes = ["rounds", "time"]
+	const [isSending, setIsSending] = useState(false)
 
 	return (
 		<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -56,6 +58,7 @@ export default function AddEditDialog({
 							setIsDialogOpen={() => setIsDialogOpen(false)}
 							type={dialogType.type}
 							mode={mode}
+							onStatusChange={setIsSending}
 						/>
 					)}
 					{dialogType?.type === "notes" && (
@@ -65,6 +68,7 @@ export default function AddEditDialog({
 							widgetId={widgetId}
 							setIsDialogOpen={() => setIsDialogOpen(false)}
 							mode={mode}
+							onStatusChange={setIsSending}
 						/>
 					)}
 					{dialogType?.type === "pareto" && (
@@ -76,13 +80,18 @@ export default function AddEditDialog({
 							widgetId={widgetId}
 							setIsDialogOpen={() => setIsDialogOpen(false)}
 							mode={mode}
+							onStatusChange={setIsSending}
 						/>
 					)}
 				</div>
 
 				{/* Footer fijo (opcional) */}
 				<DialogFooter className='shrink-0'>
-					<SubmitButton type={dialogType?.type} mode={mode} />
+					<SubmitButton
+						type={dialogType?.type}
+						mode={mode}
+						isSending={isSending}
+					/>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
@@ -92,15 +101,18 @@ export default function AddEditDialog({
 function SubmitButton({
 	type,
 	mode,
+	isSending,
 }: {
 	type: string | undefined
 	mode: string
+	isSending: boolean
 }) {
 	const formId = `${type}-form`
 	const buttonText = mode === "edit" ? "Save Changes" : "Add Widget"
 	return (
-		<Button form={formId} type='submit'>
-			{buttonText}
+		<Button form={formId} type='submit' disabled={isSending}>
+			{isSending ? "Saving..." : buttonText}
+			{/* {buttonText} */}
 		</Button>
 	)
 }

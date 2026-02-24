@@ -205,12 +205,14 @@ export default function NotesDialog({
 	widgetId,
 	setIsDialogOpen,
 	mode,
+	onStatusChange,
 }: {
 	projectId: string
 	widgetConfig?: JsonValue
 	widgetId?: string
 	setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>
 	mode: string
+	onStatusChange: (isSubmitting: boolean) => void
 }) {
 	const widgetContent =
 		JSON.parse(JSON.stringify(widgetConfig || "{}")).content ?? ""
@@ -264,6 +266,7 @@ export default function NotesDialog({
 	}
 
 	async function onSubmit(e: React.FormEvent, content: string) {
+		onStatusChange(true)
 		e.preventDefault()
 		if (mode === "create") {
 			try {
@@ -277,6 +280,8 @@ export default function NotesDialog({
 			} catch (error) {
 				console.error("Error creating notes widget:", error)
 				toast.error("Failed to create notes widget. Please try again.")
+			} finally {
+				onStatusChange(false)
 			}
 		} else if (mode === "edit" && widgetId) {
 			try {
@@ -290,6 +295,8 @@ export default function NotesDialog({
 			} catch (error) {
 				console.error("Error updating notes widget:", error)
 				toast.error("Failed to update notes widget. Please try again.")
+			} finally {
+				onStatusChange(false)
 			}
 		}
 	}

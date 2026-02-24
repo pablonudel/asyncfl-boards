@@ -27,6 +27,7 @@ export default function ParetoDialog({
 	widgetId,
 	setIsDialogOpen,
 	mode,
+	onStatusChange,
 }: {
 	userFiles?: File[]
 	projectId: string
@@ -35,6 +36,7 @@ export default function ParetoDialog({
 	widgetId?: string
 	setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>
 	mode: string
+	onStatusChange: (isSubmitting: boolean) => void
 }) {
 	const [files, setFiles] = useState<FileNameMapping[]>([])
 	const editConfig = JSON.parse(JSON.stringify(widgetConfig || "{}"))
@@ -169,7 +171,7 @@ export default function ParetoDialog({
 	})
 
 	async function onSubmit(data: z.infer<typeof formSchema>) {
-		console.log(data)
+		onStatusChange(true)
 		try {
 			let res
 			if (mode === "edit" && widgetId) {
@@ -195,6 +197,8 @@ export default function ParetoDialog({
 		} catch (error) {
 			console.error("Error submitting form:", error)
 			toast.error("Failed to create widget")
+		} finally {
+			onStatusChange(false)
 		}
 	}
 

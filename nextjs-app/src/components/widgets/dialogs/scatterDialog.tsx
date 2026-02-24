@@ -30,6 +30,7 @@ export default function ScatterDialog({
 	setIsDialogOpen,
 	type,
 	mode,
+	onStatusChange,
 }: {
 	userFiles?: File[]
 	projectId: string
@@ -38,6 +39,7 @@ export default function ScatterDialog({
 	setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>
 	type: string
 	mode: string
+	onStatusChange: (isSubmitting: boolean) => void
 }) {
 	const [files, setFiles] = useState<FileNameMapping[]>([])
 	const editConfig = JSON.parse(JSON.stringify(widgetConfig || "{}"))
@@ -191,6 +193,7 @@ export default function ScatterDialog({
 	})
 
 	async function onSubmit(data: z.infer<typeof formSchema>) {
+		onStatusChange(true)
 		try {
 			let res
 			if (mode === "edit" && widgetId) {
@@ -216,6 +219,8 @@ export default function ScatterDialog({
 		} catch (error) {
 			console.error("Error submitting form:", error)
 			toast.error("Failed to create widget")
+		} finally {
+			onStatusChange(false)
 		}
 	}
 
