@@ -82,7 +82,11 @@ function WidgetContainer({
 						/>
 					)}
 					{widget.type === "scatter.pareto" && (
-						<ParetoFrontier widget={widget} />
+						<ParetoFrontier
+							widget={widget}
+							userId={userId}
+							isPublic={isPublic}
+						/>
 					)}
 					{widget.type === "notes" && (
 						<NotesWidget widgetConfig={widget.config} />

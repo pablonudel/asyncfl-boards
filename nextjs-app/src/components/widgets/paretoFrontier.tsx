@@ -577,7 +577,6 @@ export default function ParetoFrontier({
 				size: 10,
 				color: "#00c951",
 				symbol: "diamond",
-				// line: { color: theme === "dark" ? "#0d1117" : "#ffffff", width: 2 },
 			},
 			hovertemplate: `<b>User</b><br>m: ${userMetrics.m}<br>Energy: ${userMetrics.energy.toFixed(0)}<br>Time: ${userMetrics.tau.toFixed(2)}<extra></extra>`,
 		})
