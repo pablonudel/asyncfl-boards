@@ -5,8 +5,13 @@ import { GetSession } from "@/lib/session"
 import { revalidatePath } from "next/cache"
 import { unlink } from "node:fs/promises"
 import { join } from "path"
-import { saveAvatarFile } from "../uploadFile.action"
+import { saveAvatarFile } from "../files/uploadFile.action"
 
+/**
+ * Fetches a user by their ID.
+ * @param userId
+ * @returns The user object if found, otherwise null.
+ */
 export async function GetUserById(userId: string) {
 	try {
 		const user = await prisma.user.findUnique({
@@ -14,11 +19,16 @@ export async function GetUserById(userId: string) {
 		})
 		return user || null
 	} catch (error) {
-		console.error("Error fetching user names:", error)
+		console.error("Error fetching user by ID:", error)
 		return null
 	}
 }
 
+/**
+ * Uploads an avatar file for the currently authenticated user.
+ * @param file
+ * @returns An object containing the success status and a message.
+ */
 export async function uploadAvatarFile(file: File) {
 	try {
 		const session = await GetSession()
@@ -54,6 +64,10 @@ export async function uploadAvatarFile(file: File) {
 	}
 }
 
+/**
+ * Deletes the avatar file of the currently authenticated user.
+ * @returns An object containing the success status and a message.
+ */
 export async function deleteAvatarFile() {
 	try {
 		const session = await GetSession()

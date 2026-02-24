@@ -2,7 +2,12 @@ import ResetPassword from "@/components/emails/resetPassword"
 import { transporter } from "@/lib/nodemailer"
 import { render } from "@react-email/components"
 
-export async function sendReserPasswordMsg({
+/**
+ * Sends a reset password message to the user.
+ * @param user
+ * @param url
+ */
+export async function sendResetPasswordMsg({
 	user,
 	url,
 }: {

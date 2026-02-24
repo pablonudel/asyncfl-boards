@@ -2,6 +2,11 @@ import EmailVerification from "@/components/emails/emailVerification"
 import { transporter } from "@/lib/nodemailer"
 import { render } from "@react-email/components"
 
+/**
+ * Sends an email verification message to the user.
+ * @param user
+ * @param url
+ */
 export async function sendEmailVerificationMsg({
 	user,
 	url,

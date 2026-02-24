@@ -2,6 +2,11 @@
 import { prisma } from "@/lib/prisma"
 import { cacheTag } from "next/cache"
 
+/**
+ * Fetches the projects associated with a specific user from the database.
+ * @param userId
+ * @returns An object containing the success status and either the list of projects or an error message.
+ */
 export async function getUserProjects(userId: string) {
 	"use cache: remote"
 	cacheTag(`projects:${userId}`)
@@ -18,6 +23,12 @@ export async function getUserProjects(userId: string) {
 	}
 }
 
+/**
+ * Fetches a specific project by its ID for a given user from the database.
+ * @param projectId
+ * @param userId
+ * @returns	An object containing the success status and either the project details or an error message.
+ */
 export async function getUserProjectById(projectId: string, userId: string) {
 	"use cache: remote"
 	cacheTag(`project:${projectId}`)
@@ -43,6 +54,12 @@ export async function getUserProjectById(projectId: string, userId: string) {
 	}
 }
 
+/**
+ * Fetches the widgets associated with a specific project for a given user from the database.
+ * @param projectId
+ * @param userId
+ * @returns An object containing the success status and either the list of widgets or an error message.
+ */
 export async function getWidgetsByProjectId(projectId: string, userId: string) {
 	"use cache: remote"
 	cacheTag(`project-widgets:${projectId}`)
@@ -69,6 +86,11 @@ export async function getWidgetsByProjectId(projectId: string, userId: string) {
 	}
 }
 
+/**
+ * Fetches a specific public project by its public ID from the database.
+ * @param idPublic
+ * @returns An object containing the success status and either the project details or an error message.
+ */
 export async function getProjectByIdPublic(idPublic: string) {
 	try {
 		const project = await prisma.project.findFirst({

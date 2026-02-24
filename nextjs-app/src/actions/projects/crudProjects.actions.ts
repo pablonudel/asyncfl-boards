@@ -7,6 +7,12 @@ import { nanoid } from "nanoid"
 import { revalidatePath, revalidateTag } from "next/cache"
 import * as z from "zod"
 
+/**
+ * Creates a new project for the specified user with the provided data.
+ * @param userId
+ * @param data
+ * @returns An object indicating the success status, a message, and the ID of the created project if successful.
+ */
 export async function createProject(
 	userId: string,
 	data: z.infer<typeof createProjectSchema>,
@@ -40,6 +46,11 @@ export async function createProject(
 	}
 }
 
+/**
+ * Retrieves the names and IDs of all projects associated with the specified user.
+ * @param userId
+ * @returns An object indicating the success status, a message if applicable, and an array of projects with their IDs and names if successful.
+ */
 export async function getProjectsNames(userId: string) {
 	try {
 		const projects = await prisma.project.findMany({
@@ -53,6 +64,12 @@ export async function getProjectsNames(userId: string) {
 	}
 }
 
+/**
+ * Updates the name and description of a project with the specified ID using the provided data, ensuring that the user is authorized to make changes to the project.
+ * @param projectId
+ * @param data
+ * @returns An object indicating the success status, a message, and the ID of the updated project if successful.
+ */
 export async function updateProject(
 	projectId: string,
 	data: z.infer<typeof createProjectSchema>,
@@ -90,6 +107,12 @@ export async function updateProject(
 	}
 }
 
+/**
+ * Updates the order of widgets in a project with the specified ID using the provided array of widget IDs, ensuring that the user is authorized to make changes to the project.
+ * @param projectId
+ * @param widgetsOrder
+ * @returns An object indicating the success status and a message if applicable, indicating whether the widgets order was updated successfully or if there was an error during the update process.
+ */
 export async function updateProjectWidgetsOrder(
 	projectId: string,
 	widgetsOrder: string[],
@@ -121,6 +144,11 @@ export async function updateProjectWidgetsOrder(
 	}
 }
 
+/**
+ * Deletes a project with the specified ID, ensuring that the user is authorized to delete the project and that the project exists before attempting to delete it. After successful deletion, it invalidates relevant cache tags and paths to ensure that the UI reflects the changes.
+ * @param projectId
+ * @returns An object indicating the success status and a message if applicable, indicating whether the project was deleted successfully or if there was an error during the deletion process.
+ */
 export async function deleteProject(projectId: string) {
 	try {
 		const session = await GetSession()
@@ -145,6 +173,11 @@ export async function deleteProject(projectId: string) {
 	}
 }
 
+/**
+ * Toggles the public status of a project with the specified ID, ensuring that the user is authorized to make changes to the project and that the project exists before attempting to toggle its public status. After successfully toggling the public status, it invalidates relevant cache tags and paths to ensure that the UI reflects the changes, and returns an object indicating the success status, a message about the new public status, and the updated public link information if applicable.
+ * @param projectId
+ * @returns An object indicating the success status, a message about the new public status, and the updated public link information if applicable.
+ */
 export async function toggleProjectPublic(projectId: string) {
 	try {
 		const session = await GetSession()
@@ -181,6 +214,11 @@ export async function toggleProjectPublic(projectId: string) {
 	}
 }
 
+/**
+ * Regenerates the public link of a project with the specified ID, ensuring that the user is authorized to make changes to the project and that the project exists before attempting to regenerate its public link. After successfully regenerating the public link, it invalidates relevant cache tags and paths to ensure that the UI reflects the changes, and returns an object indicating the success status, a message about the successful regeneration of the public link, and the new public link information if applicable.
+ * @param projectId
+ * @returns An object indicating the success status, a message about the successful regeneration of the public link, and the new public link information if applicable.
+ */
 export async function regenerateProjectPublicLink(projectId: string) {
 	try {
 		const session = await GetSession()

@@ -1,5 +1,5 @@
 import { sendEmailVerificationMsg } from "@/actions/emails/sendEmailVerificationMsg"
-import { sendReserPasswordMsg } from "@/actions/emails/sendResetPasswordMsg"
+import { sendResetPasswordMsg } from "@/actions/emails/sendResetPasswordMsg"
 import { removeAllUserFiles } from "@/actions/files/crudFiles.actions"
 import { GetUserById } from "@/actions/user/user.action"
 import { prisma } from "@/lib/prisma"
@@ -19,7 +19,7 @@ export const auth = betterAuth({
 		enabled: true,
 		requireEmailVerification: true,
 		sendResetPassword: async ({ user, url }) => {
-			await sendReserPasswordMsg({ user, url })
+			await sendResetPasswordMsg({ user, url })
 		},
 	},
 	emailVerification: {

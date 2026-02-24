@@ -5,6 +5,14 @@ import { prisma } from "@/lib/prisma"
 import { GetSession } from "@/lib/session"
 import { revalidatePath, revalidateTag } from "next/cache"
 
+/**
+ * Creates a new scatter widget and adds it to the specified project.
+ * @param projectId
+ * @param dataConfig
+ * @param layoutConfig
+ * @param widgetSubtype
+ * @returns An object indicating success or failure, along with a message and the new widget ID if successful.
+ */
 export async function createScatterWidget(
 	projectId: string,
 	dataConfig: any,
@@ -52,6 +60,13 @@ export async function createScatterWidget(
 	}
 }
 
+/**
+ * Updates the configuration of an existing scatter widget.
+ * @param widgetId
+ * @param dataConfig
+ * @param layoutConfig
+ * @returns An object indicating success or failure, along with a message.
+ */
 export async function updateScatterConfig(
 	widgetId: string,
 	dataConfig: any,
@@ -97,6 +112,11 @@ export async function updateScatterConfig(
 	}
 }
 
+/**
+ * Fetches all widgets associated with a given project ID, ordered according to the project's widget order.
+ * @param projectId
+ * @returns An object indicating success or failure, along with a message and an array of widgets if successful.
+ */
 export async function getWidgetsByProjectId(projectId: string) {
 	try {
 		const project = await prisma.project.findUnique({
@@ -117,6 +137,11 @@ export async function getWidgetsByProjectId(projectId: string) {
 	}
 }
 
+/**
+ * Fetches a single widget by its ID.
+ * @param widgetId
+ * @returns An object indicating success or failure, along with a message and the widget if successful.
+ */
 export async function getWidgetById(widgetId: string) {
 	try {
 		const widget = await prisma.widget.findUnique({ where: { id: widgetId } })
@@ -127,6 +152,15 @@ export async function getWidgetById(widgetId: string) {
 	}
 }
 
+/**
+ * Swaps the configurations of two widgets within the same project. This is useful for reordering widgets or changing their layout without altering their underlying data.
+ * @param projectId
+ * @param widgetIdA
+ * @param widgetIdB
+ * @param newConfigA
+ * @param newConfigB
+ * @returns An object indicating success or failure, along with a message.
+ */
 export async function swapWidgetsConfig(
 	projectId: string,
 	widgetIdA: string,
@@ -173,6 +207,11 @@ export async function swapWidgetsConfig(
 	}
 }
 
+/**
+ * Toggles the column type of a widget between full column and half column. This is useful for adjusting the layout of widgets within a project without changing their content or functionality.
+ * @param widgetId
+ * @returns An object indicating success or failure, along with a message and the widget ID if successful.
+ */
 export async function switchWidgetColumnType(widgetId: string) {
 	try {
 		const session = await GetSession()
@@ -209,6 +248,11 @@ export async function switchWidgetColumnType(widgetId: string) {
 	}
 }
 
+/**
+ * Deletes a widget by its ID and removes it from the associated project's widget order. This action also triggers cache invalidation for the relevant project and widget tags to ensure that the UI reflects the deletion immediately.
+ * @param widgetId
+ * @returns An object indicating success or failure, along with a message.
+ */
 export async function deleteWidget(widgetId: string) {
 	try {
 		const session = await GetSession()
@@ -245,6 +289,12 @@ export async function deleteWidget(widgetId: string) {
 	}
 }
 
+/**
+ * Creates a new notes widget with the specified content and adds it to the given project. This function also updates the project's widget order to include the new widget and triggers cache invalidation for the relevant project and widget tags to ensure that the UI reflects the new widget immediately.
+ * @param projectId
+ * @param content
+ * @returns An object indicating success or failure, along with a message and the new widget ID if successful.
+ */
 export async function createNotesWidget(projectId: string, content: string) {
 	try {
 		const session = await GetSession()
@@ -287,6 +337,13 @@ export async function createNotesWidget(projectId: string, content: string) {
 	}
 }
 
+/**
+ * Updates the content of an existing notes widget. This function retrieves the current configuration of the widget, updates the content while preserving other configuration properties, and saves the updated configuration back to the database. It also triggers cache invalidation for the relevant project and widget tags to ensure that the UI reflects the updated content immediately.
+ * @param widgetId
+ * @param projectId
+ * @param content
+ * @returns An object indicating success or failure, along with a message.
+ */
 export async function updateNotesWidget(
 	widgetId: string,
 	projectId: string,

@@ -6,6 +6,15 @@ import { basename, join } from "path"
 
 const STORAGE_PATH_BASE = process.env.STORAGE_PATH_BASE!
 
+/**
+ * Handles the upload of a file associated with a job or requirement. The file is saved to a specific directory structure based on the job name and folder ID. The function also checks for the presence of required fields and returns appropriate success or error messages.
+ * @param file
+ * @param fileType
+ * @param userId
+ * @param jobName
+ * @param jobFolderId
+ * @returns An object indicating success or failure, along with a message and details about the uploaded file if successful.
+ */
 export async function uploadJobOrReqFile(
 	file: File,
 	fileType: string,
@@ -53,6 +62,12 @@ export async function uploadJobOrReqFile(
 	}
 }
 
+/**
+ * Saves a user's file to storage and creates a corresponding record in the database. The function first checks for the presence of required fields, then saves the file to a user-specific directory. If the file is saved successfully, it creates a new record in the database with details about the file. Finally, it triggers cache invalidation for the relevant tags to ensure that the UI reflects the new file immediately.
+ * @param file
+ * @param userId
+ * @returns An object indicating success or failure, along with a message and details about the uploaded file if successful.
+ */
 export async function saveAvatarFile(file: File, userId: string) {
 	if (!file || !userId) {
 		return { success: false, message: "Missing required fields" }
@@ -83,6 +98,12 @@ export async function saveAvatarFile(file: File, userId: string) {
 	}
 }
 
+/**
+ * Saves a user's file to storage and creates a corresponding record in the database. The function first checks for the presence of required fields, then saves the file to a user-specific directory. If the file is saved successfully, it creates a new record in the database with details about the file. Finally, it triggers cache invalidation for the relevant tags to ensure that the UI reflects the new file immediately.
+ * @param file
+ * @param userId
+ * @returns An object indicating success or failure, along with a message and details about the uploaded file if successful.
+ */
 export async function saveResultsFile(file: File, userId: string) {
 	if (!file || !userId) {
 		return { success: false, message: "Missing required fields" }

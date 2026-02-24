@@ -2,7 +2,7 @@ import { getUserJobById } from "@/data/jobData"
 import { prisma } from "@/lib/prisma"
 import { GetSession } from "@/lib/session"
 import crypto from "crypto"
-import { uploadJobOrReqFile } from "../uploadFile.action"
+import { uploadJobOrReqFile } from "../files/uploadFile.action"
 import { checkJobsActiveRuns } from "./run.actions"
 
 export async function createUserJob(

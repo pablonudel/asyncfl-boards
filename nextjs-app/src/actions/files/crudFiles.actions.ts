@@ -6,8 +6,14 @@ import { rm } from "fs/promises"
 import { revalidatePath, revalidateTag } from "next/cache"
 import { unlink } from "node:fs/promises"
 import { join } from "path"
-import { saveResultsFile } from "../uploadFile.action"
+import { saveResultsFile } from "./uploadFile.action"
 
+/**
+ * Gets a user's file by name.
+ * @param userId
+ * @param file
+ * @returns The file record if found, otherwise null.
+ */
 export async function getUserFile(userId: string, file: string) {
 	try {
 		const projectFile = await prisma.file.findFirst({
@@ -21,6 +27,12 @@ export async function getUserFile(userId: string, file: string) {
 	}
 }
 
+/**
+ * Updates the reference name of a user's file.
+ * @param fileId
+ * @param referenceName
+ * @returns An object indicating success or failure, and a message describing the result.
+ */
 export async function updateUserFileReferenceName(
 	fileId: string,
 	referenceName: string,
@@ -49,6 +61,11 @@ export async function updateUserFileReferenceName(
 	}
 }
 
+/**
+ * Uploads a file for the user, saving it to storage and updating the database record.
+ * @param file - The file to be uploaded.
+ * @returns An object indicating success or failure, and a message describing the result.
+ */
 export async function uploadUserFile(file: File) {
 	try {
 		const session = await GetSession()
@@ -110,6 +127,12 @@ export async function uploadUserFile(file: File) {
 	}
 }
 
+/**
+ * Removes a user's file by deleting it from storage and removing the database record.
+ * @param fileId
+ * @param fileName
+ * @returns An object indicating success or failure, and a message describing the result.
+ */
 export async function removeUserFile(fileId: string, fileName: string) {
 	try {
 		const session = await GetSession()
@@ -136,10 +159,6 @@ export async function removeUserFile(fileId: string, fileName: string) {
 		if (!result)
 			return { success: false, message: "Failed to delete file record" }
 
-		// revalidateTag(`project:${projectId}`, "max")
-		// revalidateTag(`project-widgets:${projectId}`, "max")
-		// revalidatePath(`/projects/${projectId}/settings`)
-		// revalidatePath(`/projects/${projectId}`)
 		revalidatePath("/files")
 
 		return { success: true, message: "File removed successfully" }
@@ -149,6 +168,10 @@ export async function removeUserFile(fileId: string, fileName: string) {
 	}
 }
 
+/**
+ *
+ * @returns An object indicating success or failure, and a message describing the result of the operation.
+ */
 export async function removeAllUserFiles() {
 	try {
 		const session = await GetSession()
@@ -159,7 +182,7 @@ export async function removeAllUserFiles() {
 
 		await rm(folderPath, {
 			recursive: true,
-			force: true, // No lanza error si la carpeta no existe
+			force: true,
 		})
 
 		return { success: true, message: "All files removed successfully" }

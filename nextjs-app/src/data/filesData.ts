@@ -2,6 +2,11 @@
 import { prisma } from "@/lib/prisma"
 import { cacheTag } from "next/cache"
 
+/**
+ * Fetches the files associated with a specific user from the database.
+ * @param userId
+ * @returns An object containing the success status and either the list of files or an error message.
+ */
 export async function getUserFiles(userId: string) {
 	"use cache: remote"
 	cacheTag(`files:${userId}`)
