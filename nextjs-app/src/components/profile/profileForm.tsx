@@ -18,7 +18,7 @@ export default function ProfileForm() {
 	const { data: session, refetch } = authClient.useSession()
 
 	const [user, setUser] = useState<z.infer<typeof updateProfileSchema> | null>(
-		null
+		null,
 	)
 
 	const form = useForm<z.infer<typeof updateProfileSchema>>({
@@ -30,7 +30,7 @@ export default function ProfileForm() {
 		},
 	})
 
-	const { isSubmitting } = form.formState
+	const { isSubmitting, isLoading } = form.formState
 
 	useEffect(() => {
 		if (session?.user) {
@@ -63,7 +63,7 @@ export default function ProfileForm() {
 				authClient.changeEmail({
 					newEmail: data.email,
 					callbackURL: "/profile",
-				})
+				}),
 			)
 		}
 		const results = await Promise.all(promises)
@@ -76,7 +76,7 @@ export default function ProfileForm() {
 		} else {
 			if (data.email !== user?.email) {
 				toast.success(
-					"Please verify your new email address to complete the change."
+					"Please verify your new email address to complete the change.",
 				)
 			} else {
 				toast.success("Profile updated successfully.")
@@ -84,6 +84,7 @@ export default function ProfileForm() {
 			router.refresh()
 		}
 	}
+
 	return (
 		<div className='flex flex-col h-full gap-4'>
 			<form

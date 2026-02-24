@@ -1,6 +1,7 @@
 import UserMenu from "@/components/auth/userMenu"
 import Link from "next/link"
 import { Suspense } from "react"
+import { Skeleton } from "../ui/skeleton"
 import { ModeToggle } from "./modeToggle"
 
 export default async function NavBar({
@@ -18,7 +19,7 @@ export default async function NavBar({
 			</Link>
 			<div className='flex items-center gap-2'>
 				{!isPublic && (
-					<Suspense fallback={<div>Loading user menu...</div>}>
+					<Suspense fallback={<Skeleton className='h-9 w-9 rounded-full' />}>
 						<UserMenu />
 					</Suspense>
 				)}

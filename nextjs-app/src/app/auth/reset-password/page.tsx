@@ -74,7 +74,7 @@ function ResetPasswordPage() {
 						router.push("/")
 					}, 1000)
 				},
-			}
+			},
 		)
 	}
 
@@ -152,7 +152,7 @@ function ResetPasswordPage() {
 function ResetPasswordFallback() {
 	return (
 		<div className='flex h-dvh justify-center items-center'>
-			<Spinner className='size-10' />
+			<Spinner className='size-8' />
 		</div>
 	)
 }

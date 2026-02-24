@@ -10,6 +10,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "../ui/empty"
+import { Spinner } from "../ui/spinner"
 import ProjectCard from "./projectCard"
 
 export default async function ProjectList() {
@@ -27,11 +28,11 @@ export default async function ProjectList() {
 		return (
 			<Empty>
 				<EmptyHeader>
-					<EmptyMedia>
-						<CircleX size={48} />
+					<EmptyMedia variant='icon'>
+						<CircleX />
 					</EmptyMedia>
 					<EmptyTitle>Error loading dashboards</EmptyTitle>
-					<EmptyDescription className='mb-4'>
+					<EmptyDescription>
 						An error occurred while fetching your dashboards. Please try again
 						later.
 					</EmptyDescription>
@@ -43,11 +44,11 @@ export default async function ProjectList() {
 		return (
 			<Empty>
 				<EmptyHeader>
-					<EmptyMedia>
-						<FolderSearch size={48} />
+					<EmptyMedia variant='icon'>
+						<FolderSearch />
 					</EmptyMedia>
 					<EmptyTitle>You haven&apos;t created any dashboards yet.</EmptyTitle>
-					<EmptyDescription className='mb-4'>
+					<EmptyDescription>
 						Get started by creating your first dashboard.
 					</EmptyDescription>
 				</EmptyHeader>
@@ -56,7 +57,12 @@ export default async function ProjectList() {
 	}
 
 	return (
-		<Suspense fallback={<div>Loading dashboards...</div>}>
+		<Suspense
+			fallback={
+				<div className='flex items-center justify-center'>
+					<Spinner className='size-8' />
+				</div>
+			}>
 			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
 				{projects.map((project) => (
 					<ProjectCard key={project.id} project={project} />

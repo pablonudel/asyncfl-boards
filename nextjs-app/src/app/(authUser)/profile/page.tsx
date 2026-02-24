@@ -15,6 +15,8 @@ import {
 	CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Spinner } from "@/components/ui/spinner"
 import { Prettify, Session } from "better-auth"
 import { CircleAlert, RotateCcwKey, ShieldUser, UserPen } from "lucide-react"
 import { Suspense } from "react"
@@ -26,7 +28,7 @@ export default async function Page() {
 			<div className='flex flex-col lg:flex-row gap-4 w-full items-start'>
 				<div className='w-full lg:max-w-1/4 space-y-4'>
 					<AvatarUploader />
-					<Suspense fallback={<div>Loading user info...</div>}>
+					<Suspense fallback={<Spinner className='size-4' />}>
 						<UserInfo />
 					</Suspense>
 				</div>
@@ -73,7 +75,7 @@ export default async function Page() {
 						<RotateCcwKey />
 						<h2 className='text-lg font-medium'>Sessions Management</h2>
 					</div>
-					<Suspense fallback={<div>Loading sessions...</div>}>
+					<Suspense fallback={<Skeleton className='h-34 w-full rounded-xl' />}>
 						<SessionManagement />
 					</Suspense>
 					<Separator className='my-4' />
