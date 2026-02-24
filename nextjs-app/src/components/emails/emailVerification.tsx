@@ -30,7 +30,11 @@ export default function EmailVerification({
 					<Text>
 						Please verify your email address by clicking the link below:
 					</Text>
-					<Button href={url}>Verify Email</Button>
+					<Button
+						href={url}
+						className='box-border rounded-[8px] bg-indigo-600 px-[12px] py-[12px] text-center font-semibold text-white'>
+						Verify Email
+					</Button>
 					<Text>
 						If you did not request this verification, please ignore this email.
 					</Text>

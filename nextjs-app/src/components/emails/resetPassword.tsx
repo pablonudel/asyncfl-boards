@@ -30,7 +30,7 @@ export default function ResetPassword({
 					<Text>Please reset your password by clicking the button below:</Text>
 					<Button
 						href={url}
-						className='bg-[#0bca0b] text-[#ffffff] p-2 rounded-md'>
+						className='box-border rounded-[8px] bg-indigo-600 px-[12px] py-[12px] text-center font-semibold text-white'>
 						Reset Password
 					</Button>
 					<Text>
