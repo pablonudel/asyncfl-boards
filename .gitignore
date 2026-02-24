@@ -1,5 +1,4 @@
 .env*
 .github
 storage/*
-motia-app/*
-old-steps/*
+ignore/*
