@@ -80,6 +80,11 @@ export async function updateScatterConfig(
 			data: { config: { fullColumn, dataConfig, layoutConfig } },
 		})
 
+		await prisma.project.update({
+			where: { id: res.widget.projectId },
+			data: { updatedAt: new Date() },
+		})
+
 		revalidateTag(`projects:${session.user.id}`, "max")
 		revalidateTag(`project:${res.widget.projectId}`, "max")
 		revalidateTag(`project-widgets:${res.widget.projectId}`, "max")
@@ -150,6 +155,11 @@ export async function swapWidgetsConfig(
 				data: { config: newConfigB },
 			}),
 		])
+
+		await prisma.project.update({
+			where: { id: projectId },
+			data: { updatedAt: new Date() },
+		})
 
 		revalidateTag(`projects:${session.user.id}`, "max")
 		revalidateTag(`project:${projectId}`, "max")
@@ -299,6 +309,11 @@ export async function updateNotesWidget(
 		await prisma.widget.update({
 			where: { id: widgetId },
 			data: { config: newConfig },
+		})
+
+		await prisma.project.update({
+			where: { id: projectId },
+			data: { updatedAt: new Date() },
 		})
 
 		revalidateTag(`projects:${session.user.id}`, "max")

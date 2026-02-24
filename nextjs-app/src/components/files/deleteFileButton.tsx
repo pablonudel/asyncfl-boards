@@ -12,7 +12,7 @@ export default function DeleteFileButton({ file }: { file: File }) {
 	async function handleDelete() {
 		toast.promise(removeUserFile(file.id, file.fileName), {
 			loading: `Deleting ${file.referenceName}...`,
-			success: `${file.referenceName} deleted successfully! Refreshing...`,
+			success: `${file.referenceName} deleted successfully!`,
 			error: `Error deleting ${file.referenceName}.`,
 		})
 		router.refresh()
