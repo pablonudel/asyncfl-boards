@@ -26,7 +26,7 @@ export default async function Page() {
 		<div className='space-y-4 mb-8'>
 			<h1 className='text-2xl font-bold'>Profile</h1>
 			<div className='flex flex-col lg:flex-row gap-4 w-full items-start'>
-				<div className='w-full lg:max-w-1/4 space-y-4'>
+				<div className='flex items-center justify-between text-right lg:text-left lg:flex-col lg:items-start w-full lg:max-w-1/4 gap-4'>
 					<AvatarUploader />
 					<Suspense fallback={<Spinner className='size-4' />}>
 						<UserInfo />
