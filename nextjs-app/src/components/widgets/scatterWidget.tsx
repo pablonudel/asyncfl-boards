@@ -8,6 +8,7 @@ import { FileX } from "lucide-react"
 import { useTheme } from "next-themes"
 import dynamic from "next/dynamic"
 import { memo, useEffect, useMemo, useRef, useState } from "react"
+import { Spinner } from "../ui/spinner"
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false })
 
@@ -325,14 +326,24 @@ function ScatterWidget({
 		font: { color: theme === "light" ? "#0a0a0a" : "#ffffff" },
 	}
 
-	if (isLoading) return <div>Loading chart...</div>
+	if (isLoading) {
+		return (
+			<div className='flex items-center justify-center w-full h-full p-8'>
+				<div className='text-center'>
+					<Spinner className='size-8' />
+				</div>
+			</div>
+		)
+	}
 
 	if (errorMsg) {
 		return (
-			<div className='flex flex-col items-center gap-4'>
+			<div className='flex flex-col items-center gap-4 p-8'>
 				<FileX className='text-destructive' />
-				<p className='text-destructive text-center'>{errorMsg}</p>
-				<p className='text-sm'>Please check the source file and try again.</p>
+				<div>
+					<p className='text-destructive text-center'>{errorMsg}</p>
+					<p className='text-sm'>Please check the source file and try again.</p>
+				</div>
 			</div>
 		)
 	}

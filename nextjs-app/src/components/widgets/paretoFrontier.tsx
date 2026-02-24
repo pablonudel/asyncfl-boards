@@ -11,6 +11,7 @@ import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { Progress } from "../ui/progress"
 import { Slider } from "../ui/slider"
+import { Spinner } from "../ui/spinner"
 import {
 	Table,
 	TableBody,
@@ -645,9 +646,9 @@ export default function ParetoFrontier({
 
 	if (isLoading) {
 		return (
-			<div className='flex items-center justify-center w-full h-full'>
+			<div className='flex items-center justify-center w-full h-full p-8'>
 				<div className='text-center'>
-					<p className='text-muted-foreground'>Loading data...</p>
+					<Spinner className='size-8' />
 				</div>
 			</div>
 		)
@@ -655,10 +656,11 @@ export default function ParetoFrontier({
 
 	if (errorMsg) {
 		return (
-			<div className='flex items-center justify-center w-full h-full'>
-				<div className='text-center space-y-2'>
-					<FileX className='w-12 h-12 mx-auto text-muted-foreground' />
-					<p className='text-sm text-muted-foreground'>{errorMsg}</p>
+			<div className='flex flex-col items-center gap-4 p-8'>
+				<FileX className='text-destructive' />
+				<div>
+					<p className='text-destructive text-center'>{errorMsg}</p>
+					<p className='text-sm'>Please check the source file and try again.</p>
 				</div>
 			</div>
 		)
