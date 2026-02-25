@@ -3,12 +3,6 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
-generator kysely {
-  provider = "prisma-kysely"
-  output   = "../types"
-  fileName = "db.d.ts"
-}
-
 datasource db {
   provider = "postgresql"
 }
@@ -25,7 +19,6 @@ model User {
   emailVerified Boolean   @default(false)
   image         String?
   projects      Project[]
-  // pfcCredentialsId pfcCredentials?
   role          String
   banned        Boolean   @default(false)
   banReason     String?
@@ -33,84 +26,8 @@ model User {
 
   sessions Session[]
   accounts Account[]
-  // jobs         Job[]
-  // runs         Run[]
-  // environments Environment[]
-  // datasets     Dataset[]
   files    File[]
 }
-
-// model Environment {
-//   id        String   @id @default(uuid())
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   hashedReqs          String
-//   requirementsContent String
-//   status              String @default("PENDING") // PENDING, BUILDING, READY, FAILED
-
-//   userId String
-//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   runs   Run[]
-//   jobs   Job[]
-// }
-
-// model Job {
-//   id        String   @id @default(uuid())
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   folderId      String       @default(nanoid(7))
-//   name          String
-//   description   String?
-//   status        String       @default("CREATED") // CREATED, READY, SYNCING
-//   sourceFiles   String[]
-//   environmentId String?
-//   environment   Environment? @relation(fields: [environmentId], references: [id])
-
-//   userId String
-//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   runs   Run[]
-// }
-
-// model Dataset {
-//   id        String   @id @default(uuid())
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   fileName      String  @unique
-//   readmeContent String?
-//   folderId      String  @unique
-
-//   userId String
-//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-// }
-
-// model Run {
-//   id         String    @id @default(uuid())
-//   createdAt  DateTime  @default(now())
-//   updatedAt  DateTime  @updatedAt
-//   startedAt  DateTime?
-//   finishedAt DateTime?
-
-//   runName       String
-//   runFolderId   String   @unique
-//   entryFile     String?
-//   pythonVersion String?
-//   paramsConfig  Json?
-//   sbatchConfig  Json?
-//   status        String   @default("NOT STARTED") // NOT STARTED, PREPARING, QUEUED, RUNNING, COMPLETED, FAILED
-//   slurmJobId    Int?
-//   datasetsFiles String[] @default([])
-//   runSnapshot   Json?
-
-//   environmentId String?
-//   environment   Environment? @relation(fields: [environmentId], references: [id])
-//   jobId         String
-//   job           Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
-//   userId        String
-//   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-// }
 
 model Project {
   id        String   @id @default(uuid())
@@ -152,18 +69,6 @@ model Widget {
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
-
-// model pfcCredentials {
-//   id        String   @id @default(uuid())
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   username String?
-//   password String?
-
-//   userId String @unique
-//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-// }
 
 // Auth sessions and accounts
 
