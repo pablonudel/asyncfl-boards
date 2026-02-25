@@ -80,6 +80,24 @@ export function UserRow({
 		)
 	}
 
+	function handleUserRole(userId: string, role: "admin" | "user") {
+		authClient.admin.setRole(
+			{
+				userId: userId,
+				role,
+			},
+			{
+				onError: (error: any) => {
+					toast.error(error.error.message || "Failed to update user role")
+				},
+				onSuccess: () => {
+					toast.success("User role updated")
+					router.refresh()
+				},
+			},
+		)
+	}
+
 	function handleRemoveUser(userId: string) {
 		authClient.admin.removeUser(
 			{ userId },
@@ -134,6 +152,18 @@ export function UserRow({
 								) : (
 									<DropdownMenuItem onClick={() => handleBanUser(user.id)}>
 										Ban User
+									</DropdownMenuItem>
+								)}
+								<DropdownMenuSeparator />
+								{user.role === "admin" ? (
+									<DropdownMenuItem
+										onClick={() => handleUserRole(user.id, "user")}>
+										Make User
+									</DropdownMenuItem>
+								) : (
+									<DropdownMenuItem
+										onClick={() => handleUserRole(user.id, "admin")}>
+										Make Admin
 									</DropdownMenuItem>
 								)}
 								<DropdownMenuSeparator />
