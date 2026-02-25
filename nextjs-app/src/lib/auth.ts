@@ -8,6 +8,7 @@ import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import { APIError, createAuthMiddleware } from "better-auth/api"
 import { nextCookies } from "better-auth/next-js"
+import { admin } from "better-auth/plugins/admin"
 import { customSession } from "better-auth/plugins/custom-session"
 import { GetSession } from "./session"
 
@@ -135,6 +136,9 @@ export const auth = betterAuth({
 			}
 		}),
 		nextCookies(),
+		admin({
+			defaultRole: "user",
+		}),
 	],
 })
 

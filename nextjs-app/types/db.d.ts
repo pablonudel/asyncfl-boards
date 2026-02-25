@@ -19,24 +19,6 @@ export type Account = {
     password: string | null;
     userId: string;
 };
-export type Dataset = {
-    id: string;
-    createdAt: Generated<Timestamp>;
-    updatedAt: Timestamp;
-    fileName: string;
-    readmeContent: string | null;
-    folderId: string;
-    userId: string;
-};
-export type Environment = {
-    id: string;
-    createdAt: Generated<Timestamp>;
-    updatedAt: Timestamp;
-    hashedReqs: string;
-    requirementsContent: string;
-    status: Generated<string>;
-    userId: string;
-};
 export type File = {
     id: string;
     createdAt: Generated<Timestamp>;
@@ -45,26 +27,6 @@ export type File = {
     referenceName: string;
     fileSize: number;
     fileShape: number[];
-    userId: string;
-};
-export type Job = {
-    id: string;
-    createdAt: Generated<Timestamp>;
-    updatedAt: Timestamp;
-    folderId: Generated<string>;
-    name: string;
-    description: string | null;
-    status: Generated<string>;
-    sourceFiles: string[];
-    environmentId: string | null;
-    userId: string;
-};
-export type pfcCredentials = {
-    id: string;
-    createdAt: Generated<Timestamp>;
-    updatedAt: Timestamp;
-    username: string | null;
-    password: string | null;
     userId: string;
 };
 export type Project = {
@@ -76,26 +38,6 @@ export type Project = {
     widgetsOrder: Generated<string[]>;
     isPublic: Generated<boolean>;
     idPublic: Generated<string | null>;
-    userId: string;
-};
-export type Run = {
-    id: string;
-    createdAt: Generated<Timestamp>;
-    updatedAt: Timestamp;
-    startedAt: Timestamp | null;
-    finishedAt: Timestamp | null;
-    runName: string;
-    runFolderId: string;
-    entryFile: string | null;
-    pythonVersion: string | null;
-    paramsConfig: unknown | null;
-    sbatchConfig: unknown | null;
-    status: Generated<string>;
-    slurmJobId: number | null;
-    datasetsFiles: Generated<string[]>;
-    runSnapshot: unknown | null;
-    environmentId: string | null;
-    jobId: string;
     userId: string;
 };
 export type Session = {
@@ -118,6 +60,10 @@ export type User = {
     email: string;
     emailVerified: Generated<boolean>;
     image: string | null;
+    role: string;
+    banned: Generated<boolean>;
+    banReason: string | null;
+    banExpires: Timestamp | null;
 };
 export type Verification = {
     id: string;
@@ -137,13 +83,8 @@ export type Widget = {
 };
 export type DB = {
     Account: Account;
-    Dataset: Dataset;
-    Environment: Environment;
     File: File;
-    Job: Job;
-    pfcCredentials: pfcCredentials;
     Project: Project;
-    Run: Run;
     Session: Session;
     User: User;
     Verification: Verification;

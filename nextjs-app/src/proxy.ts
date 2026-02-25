@@ -7,9 +7,11 @@ export async function proxy(req: NextRequest) {
 	const isProtectedRoute =
 		pathname.startsWith("/profile") ||
 		pathname.startsWith("/projects") ||
-		pathname.startsWith("/files")
+		pathname.startsWith("/files") ||
+		pathname.startsWith("/admin") ||
+		pathname.startsWith("/api/avatar")
 
-	const isProtectedApi = pathname.startsWith("/api/avatar")
+	// const isProtectedApi = pathname.startsWith("/api/avatar")
 
 	const session = await auth.api.getSession({
 		headers: await headers(),
@@ -31,7 +33,8 @@ export const config = {
 		"/profile/:path*",
 		"/projects/:path*",
 		"/files/:path*",
-		// "/api/avatar/:path*",
+		"/admin/:path*",
+		"/api/avatar/:path*",
 		// si querés sumar más, agregalos aquí
 	],
 }
