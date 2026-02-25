@@ -46,29 +46,34 @@ export default async function UserMenu() {
 							{user.email}
 						</p>
 					</DropdownMenuLabel>
-					<AdminButton />
-					<DropdownMenuSeparator />
-					<DropdownMenuGroup>
-						<DropdownMenuItem asChild>
-							<Link href='/projects'>
-								<LayoutGrid />
-								Projects
-							</Link>
-						</DropdownMenuItem>
-						<DropdownMenuItem asChild>
-							<Link href='/files'>
-								<Files />
-								Files
-							</Link>
-						</DropdownMenuItem>
-					</DropdownMenuGroup>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem asChild>
-						<Link href='/profile'>
-							<User />
-							Profile
-						</Link>
-					</DropdownMenuItem>
+					{user.email !== process.env.ADMIN_EMAIL && (
+						<>
+							<AdminButton />
+							<DropdownMenuSeparator />
+							<DropdownMenuGroup>
+								<DropdownMenuItem asChild>
+									<Link href='/projects'>
+										<LayoutGrid />
+										Projects
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link href='/files'>
+										<Files />
+										Files
+									</Link>
+								</DropdownMenuItem>
+							</DropdownMenuGroup>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem asChild>
+								<Link href='/profile'>
+									<User />
+									Profile
+								</Link>
+							</DropdownMenuItem>
+						</>
+					)}
+
 					<DropdownMenuSeparator />
 					<SignOutItem />
 				</DropdownMenuContent>

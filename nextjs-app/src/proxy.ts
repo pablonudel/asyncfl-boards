@@ -8,10 +8,10 @@ export async function proxy(req: NextRequest) {
 		pathname.startsWith("/profile") ||
 		pathname.startsWith("/projects") ||
 		pathname.startsWith("/files") ||
-		pathname.startsWith("/admin") ||
+		// pathname.startsWith("/admin") ||
 		pathname.startsWith("/api/avatar")
 
-	// const isProtectedApi = pathname.startsWith("/api/avatar")
+	const isAdminRoute = pathname.startsWith("/admin")
 
 	const session = await auth.api.getSession({
 		headers: await headers(),
@@ -19,6 +19,20 @@ export async function proxy(req: NextRequest) {
 
 	if (!session) {
 		const url = new URL("/", req.url)
+		if (isProtectedRoute) {
+			return NextResponse.redirect(url)
+		}
+	}
+
+	if (session?.user?.role !== "admin") {
+		const url = new URL("/", req.url)
+		if (isAdminRoute) {
+			return NextResponse.redirect(url)
+		}
+	}
+
+	if (session?.user?.email === process.env.ADMIN_EMAIL) {
+		const url = new URL("/admin", req.url)
 		if (isProtectedRoute) {
 			return NextResponse.redirect(url)
 		}
@@ -35,6 +49,5 @@ export const config = {
 		"/files/:path*",
 		"/admin/:path*",
 		"/api/avatar/:path*",
-		// si querés sumar más, agregalos aquí
 	],
 }

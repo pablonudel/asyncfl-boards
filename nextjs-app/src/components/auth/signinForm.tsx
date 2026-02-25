@@ -53,9 +53,8 @@ export default function SigninForm({
 				onSuccess() {
 					form.reset()
 					toast.success("Successfully signed in!")
-					router.push("/projects")
 				},
-			}
+			},
 		)
 	}
 
