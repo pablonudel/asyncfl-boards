@@ -32,7 +32,7 @@ export function UserRow({
 	user: UserWithRole
 	selfId: string
 }) {
-	const { refetch } = authClient.useSession()
+	const { data, refetch } = authClient.useSession()
 	const router = useRouter()
 	const isSelf = user.id === selfId
 

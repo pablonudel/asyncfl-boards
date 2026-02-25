@@ -47,6 +47,7 @@ async function AdminPage() {
 		headers: await headers(),
 		query: { limit: 10, sortBy: "createdAt", sortDirection: "desc" },
 	})
+
 	return (
 		<>
 			<h1 className='text-2xl font-bold mb-8'>Users Admin</h1>
@@ -54,10 +55,10 @@ async function AdminPage() {
 				<CardHeader>
 					<CardTitle className='flex items-center gap-2'>
 						<Users className='h-5 w-5' />
-						Users ({users.total})
+						Users ({users.total - 1})
 					</CardTitle>
 					<CardDescription>
-						Manage user accounts, roles, and permissions
+						Manage user sessions, roles, and permissions
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -72,13 +73,16 @@ async function AdminPage() {
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{users.users.map((user) => (
-									<UserRow
-										key={user.id}
-										user={user}
-										selfId={session.user!.id}
-									/>
-								))}
+								{users.users.map((user) => {
+									if (user.email !== process.env.ADMIN_EMAIL)
+										return (
+											<UserRow
+												key={user.id}
+												user={user}
+												selfId={session.user!.id}
+											/>
+										)
+								})}
 							</TableBody>
 						</Table>
 					</div>
