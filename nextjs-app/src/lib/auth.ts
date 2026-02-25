@@ -47,7 +47,8 @@ export const auth = betterAuth({
 			if (ctx.path === "/sign-up/email") {
 				if (
 					!ctx.body?.email.endsWith("@email.com") &&
-					!ctx.body?.email.endsWith("@laas.fr")
+					!ctx.body?.email.endsWith("@laas.fr") &&
+					!ctx.body?.email.endsWith("@asyncfl-boards.laas.fr")
 				) {
 					throw new APIError("BAD_REQUEST", {
 						message: "Email domain is not allowed",
