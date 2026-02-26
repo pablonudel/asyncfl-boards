@@ -130,41 +130,29 @@ export const auth = betterAuth({
 		}),
 		after: createAuthMiddleware(async (ctx) => {
 			// Auto-verify and promote admin after signup
-			if (ctx.path === "/sign-up/email" && ctx.returned?.user) {
-				const adminEmail = process.env.ADMIN_EMAIL
-				const userEmail = ctx.returned.user.email
-				const userId = ctx.returned.user.id
+			if (ctx.path === "/sign-up/email") {
+				const response = (ctx as any).returned
+				if (response?.user) {
+					const adminEmail = process.env.ADMIN_EMAIL
+					const userEmail = response.user.email
+					const userId = response.user.id
 
-				if (adminEmail && userEmail === adminEmail) {
-					console.log("✅ Auto-configuring admin user")
+					if (adminEmail && userEmail === adminEmail) {
+						console.log("✅ Auto-configuring admin user")
 
-					try {
-						// Use better-auth API to set role (compatible with admin plugin)
-						await auth.api.setRole({
-							body: {
-								userId: userId,
-								role: "admin",
-							},
-						})
-
-						// Verify email through Prisma (better-auth doesn't have API for this)
-						await prisma.user.update({
-							where: { id: userId },
-							data: { emailVerified: true },
-						})
-
-						console.log("✅ Admin configured: role=admin, emailVerified=true")
-					} catch (error) {
-						console.error("❌ Error configuring admin:", error)
-						// Fallback: direct Prisma update
-						await prisma.user.update({
-							where: { id: userId },
-							data: {
-								role: "admin",
-								emailVerified: true,
-							},
-						})
-						console.log("✅ Admin configured via fallback")
+						try {
+							// Use Prisma directly to avoid permission checks
+							await prisma.user.update({
+								where: { id: userId },
+								data: {
+									role: "admin",
+									emailVerified: true,
+								},
+							})
+							console.log("✅ Admin configured: role=admin, emailVerified=true")
+						} catch (error) {
+							console.error("❌ Error configuring admin:", error)
+						}
 					}
 				}
 			}
