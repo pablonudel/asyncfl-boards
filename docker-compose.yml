@@ -15,6 +15,11 @@ services:
       - "5432:5432"
     networks:
       - asyncfl-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app:
     build:
@@ -50,11 +55,23 @@ services:
       # Node
       - NODE_ENV=production
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./storage:/app/storage
     networks:
       - asyncfl-network
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        sleep 2 &&
+        echo 'Executing migrations...' &&
+        npx prisma migrate deploy &&
+        echo 'Executing seed...' &&
+        npm run db:seed || echo 'Seed omitted (admin exists or failed)' &&
+        echo 'Starting application...' &&
+        npm start
+      "
     healthcheck:
       test:
         [
