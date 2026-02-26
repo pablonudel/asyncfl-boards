@@ -26,7 +26,10 @@ RUN adduser --system --uid 1001 nextjs
 RUN mkdir -p ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+# La carpeta public puede no existir; la mantenemos creada vacía arriba
+# Si en el futuro agregas assets a public/, descomenta la siguiente línea
+# COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 EXPOSE 3000

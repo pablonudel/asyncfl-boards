@@ -32,6 +32,7 @@ services:
     expose:
       - "3000"
     environment:
+      - NODE_OPTIONS=--require dotenv/config
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?schema=public
       - STORAGE_PATH_BASE=/app/storage
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
@@ -45,7 +46,6 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - NODE_ENV=production
-      - NODE_OPTIONS=--require dotenv/config
     depends_on:
       db:
         condition: service_healthy
@@ -57,8 +57,8 @@ services:
       sh -c "
         echo 'Waiting for database to be ready...' &&
         sleep 2 &&
-        npx prisma migrate deploy &&
-        npx tsx prisma/seed.ts || echo 'Seed omitted' &&
+        npx --yes --prefer-offline prisma migrate deploy &&
+        npx --yes --prefer-offline tsx prisma/seed.ts || echo 'Seed omitted' &&
         node server.js
       "
     healthcheck:
