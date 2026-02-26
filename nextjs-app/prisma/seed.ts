@@ -30,7 +30,7 @@ async function createAdmin() {
 
 		console.log(`Creating admin user: ${email}`)
 
-		await auth.api.signUpEmail({
+		const result = await auth.api.signUpEmail({
 			body: {
 				email: email,
 				password: password,
@@ -40,13 +40,35 @@ async function createAdmin() {
 			},
 		})
 
+		if (!result || !result.user) {
+			throw new Error(
+				"Failed to create user - no user returned from signUpEmail",
+			)
+		}
+
+		const userId = result.user.id
+
+		try {
+			await auth.api.setRole({
+				body: {
+					userId: userId,
+					role: "admin",
+				},
+			})
+			console.log("   ✓ Role set to admin via API")
+		} catch (error) {
+			console.warn("   ⚠️  setRole API failed, using direct DB update")
+			await prisma.user.update({
+				where: { id: userId },
+				data: { role: "admin" },
+			})
+			console.log("   ✓ Role set to admin via Prisma")
+		}
 		await prisma.user.update({
-			where: { email },
-			data: {
-				role: "admin",
-				emailVerified: true,
-			},
+			where: { id: userId },
+			data: { emailVerified: true },
 		})
+		console.log("   ✓ Email verified")
 
 		console.log("Admin user created successfully:")
 		console.log(`   Email: ${email}`)

@@ -27,7 +27,20 @@ export const auth = betterAuth({
 		autoSignInAfterVerification: true,
 		sendOnSignUp: true,
 		sendVerificationEmail: async ({ user, url }) => {
-			await sendEmailVerificationMsg({ user, url })
+			const adminEmail = process.env.ADMIN_EMAIL
+			if (adminEmail && user.email === adminEmail) {
+				console.log("✅ Admin email detected - skipping verification email")
+				return // Return early, don't send email
+			}
+
+			// Send verification email for regular users
+			try {
+				await sendEmailVerificationMsg({ user, url })
+			} catch (error) {
+				console.error("❌ Failed to send verification email:", error)
+				// Don't throw - let the signup continue
+				// The user can request a new verification email later
+			}
 		},
 	},
 	user: {
@@ -112,6 +125,47 @@ export const auth = betterAuth({
 					throw new APIError("INTERNAL_SERVER_ERROR", {
 						message: "Failed to delete user account",
 					})
+				}
+			}
+		}),
+		after: createAuthMiddleware(async (ctx) => {
+			// Auto-verify and promote admin after signup
+			if (ctx.path === "/sign-up/email" && ctx.returned?.user) {
+				const adminEmail = process.env.ADMIN_EMAIL
+				const userEmail = ctx.returned.user.email
+				const userId = ctx.returned.user.id
+
+				if (adminEmail && userEmail === adminEmail) {
+					console.log("✅ Auto-configuring admin user")
+
+					try {
+						// Use better-auth API to set role (compatible with admin plugin)
+						await auth.api.setRole({
+							body: {
+								userId: userId,
+								role: "admin",
+							},
+						})
+
+						// Verify email through Prisma (better-auth doesn't have API for this)
+						await prisma.user.update({
+							where: { id: userId },
+							data: { emailVerified: true },
+						})
+
+						console.log("✅ Admin configured: role=admin, emailVerified=true")
+					} catch (error) {
+						console.error("❌ Error configuring admin:", error)
+						// Fallback: direct Prisma update
+						await prisma.user.update({
+							where: { id: userId },
+							data: {
+								role: "admin",
+								emailVerified: true,
+							},
+						})
+						console.log("✅ Admin configured via fallback")
+					}
 				}
 			}
 		}),
