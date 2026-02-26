@@ -59,9 +59,9 @@ services:
         echo 'Executing migrations...' &&
         npx prisma migrate deploy &&
         echo 'Executing seed...' &&
-        npm run db:seed || echo 'Seed omitted (admin exists or failed)' &&
+        npx tsx prisma/seed.ts || echo 'Seed omitted (admin exists or failed)' &&
         echo 'Starting application...' &&
-        npm start
+        node server.js
       "
     healthcheck:
       test:
