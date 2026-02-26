@@ -54,6 +54,7 @@ async function createAdmin() {
 					userId: userId,
 					role: "admin",
 				},
+				headers: { "content-type": "application/json" },
 			})
 			console.log("   ✓ Role set to admin via API")
 		} catch (error) {
