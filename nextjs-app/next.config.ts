@@ -4,6 +4,7 @@ const isProduction = process.env.NODE_ENV === "production"
 const prodHostname = process.env.NEXT_PUBLIC_PROD_HOSTNAME || "140.93.4.101"
 
 const nextConfig: NextConfig = {
+	output: "standalone",
 	cacheComponents: true,
 	experimental: {
 		globalNotFound: true,
