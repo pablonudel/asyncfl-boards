@@ -25,6 +25,8 @@ services:
     build:
       context: ./nextjs-app
       dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?schema=public
     container_name: asyncfl-nextjs
     restart: always
     expose:
