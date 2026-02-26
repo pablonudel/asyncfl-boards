@@ -45,6 +45,7 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - NODE_ENV=production
+      - NODE_OPTIONS=--require dotenv/config
     depends_on:
       db:
         condition: service_healthy
