@@ -539,7 +539,6 @@ export default function ParetoFrontier({
 			const parsed = JSON.parse(configJSON)
 			const fullCol = Boolean(parsed.fullColumn ?? false)
 			setIsFullColumn(fullCol)
-			console.log("Parsed fullColumn:", fullCol)
 		} catch {
 			setIsFullColumn(false)
 		}
