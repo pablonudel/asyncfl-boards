@@ -1,16 +1,23 @@
 import { prisma } from "@/lib/prisma"
 import { promises as fs } from "fs"
+import { cacheTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 import { join } from "node:path"
 import path from "path"
+
+export const cacheConfig = {
+	stale: 300, // 5 minutes
+	revalidate: 900, // 15 minutes
+}
 
 export async function GET(
 	req: NextRequest,
 	ctx: RouteContext<"/api/avatar/[userId]">,
 ) {
+	"use cache"
+	const { userId } = await ctx.params
+	cacheTag(`avatar-${userId}`)
 	try {
-		const { userId } = await ctx.params
-
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			select: { image: true },
@@ -42,7 +49,6 @@ export async function GET(
 			headers: {
 				"Content-Type": contentType,
 				"Content-Length": imageBuffer.length.toString(),
-				"Cache-Control": "public, max-age=3600, immutable",
 			},
 		})
 	} catch (error) {

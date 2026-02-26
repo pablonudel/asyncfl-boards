@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { GetSession } from "@/lib/session"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { unlink } from "node:fs/promises"
 import { join } from "path"
 import { saveAvatarFile } from "../files/uploadFile.action"
@@ -56,6 +56,7 @@ export async function uploadAvatarFile(file: File) {
 			},
 		})
 
+		revalidateTag(`avatar-${session.user.id}`, "profile")
 		revalidatePath("/profile")
 		return { success: success, message: message }
 	} catch (error) {
@@ -97,6 +98,7 @@ export async function deleteAvatarFile() {
 			},
 		})
 
+		revalidateTag(`avatar-${session.user.id}`, "profile")
 		revalidatePath("/profile")
 		return { success: true, message: "File deleted successfully" }
 	} catch (error) {

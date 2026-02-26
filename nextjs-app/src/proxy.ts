@@ -7,9 +7,8 @@ export async function proxy(req: NextRequest) {
 	const isProtectedRoute =
 		pathname.startsWith("/profile") ||
 		pathname.startsWith("/projects") ||
-		pathname.startsWith("/files") ||
-		// pathname.startsWith("/admin") ||
-		pathname.startsWith("/api/avatar")
+		pathname.startsWith("/files")
+	// pathname.startsWith("/admin")
 
 	const isAdminRoute = pathname.startsWith("/admin")
 
@@ -48,6 +47,5 @@ export const config = {
 		"/projects/:path*",
 		"/files/:path*",
 		"/admin/:path*",
-		"/api/avatar/:path*",
 	],
 }
