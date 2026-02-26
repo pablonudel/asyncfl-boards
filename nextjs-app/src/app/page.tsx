@@ -5,7 +5,7 @@ import ResendVerification from "@/components/auth/resendVerification"
 import SigninForm from "@/components/auth/signinForm"
 import SignupForm from "@/components/auth/signupForm"
 import { ModeToggle } from "@/components/general/modeToggle"
-import { Button } from "@/components/ui/button"
+import MoreAbout from "@/components/general/moreAbout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { authClient } from "@/lib/auth-client"
@@ -46,9 +46,10 @@ export default function Page() {
 					</p>
 				</div>
 				<div className='flex flex-col lg:flex-row items-center gap-4'>
-					<Button variant='secondary' className='border'>
+					{/* <Button variant='secondary' className='border'>
 						More about AsyncFL-Boards
-					</Button>
+					</Button> */}
+					<MoreAbout />
 					<ModeToggle />
 				</div>
 			</div>
