@@ -42,10 +42,7 @@ export async function GET(
 			headers: {
 				"Content-Type": contentType,
 				"Content-Length": imageBuffer.length.toString(),
-				"Cache-Control":
-					"no-store, no-cache, must-revalidate, proxy-revalidate",
-				Pragma: "no-cache",
-				Expires: "0",
+				"Cache-Control": "public, max-age=3600, immutable",
 			},
 		})
 	} catch (error) {
