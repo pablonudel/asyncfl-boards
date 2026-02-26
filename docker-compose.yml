@@ -56,11 +56,8 @@ services:
       sh -c "
         echo 'Waiting for database to be ready...' &&
         sleep 2 &&
-        echo 'Executing migrations...' &&
         npx prisma migrate deploy &&
-        echo 'Executing seed...' &&
-        npx tsx prisma/seed.ts || echo 'Seed omitted (admin exists or failed)' &&
-        echo 'Starting application...' &&
+        npx tsx prisma/seed.ts || echo 'Seed omitted' &&
         node server.js
       "
     healthcheck:
