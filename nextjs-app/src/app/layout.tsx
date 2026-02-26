@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
 	title: "AsyncFL-Boards",
 	description:
-		"Analytical Dashboards for Asynchronous Federated LearningSimulations",
+		"Analytical Dashboards for Asynchronous Federated Learning Simulations",
 }
 
 export default function RootLayout({
