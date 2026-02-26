@@ -2,3 +2,5 @@
 .github
 storage/*
 ignore/*
+ignore
+storage
