@@ -1,22 +1,14 @@
 import { prisma } from "@/lib/prisma"
 import { promises as fs } from "fs"
-import { cacheTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 import { join } from "node:path"
 import path from "path"
-
-export const cacheConfig = {
-	stale: 300, // 5 minutes
-	revalidate: 900, // 15 minutes
-}
 
 export async function GET(
 	req: NextRequest,
 	ctx: RouteContext<"/api/avatar/[userId]">,
 ) {
-	"use cache"
 	const { userId } = await ctx.params
-	cacheTag(`avatar-${userId}`)
 	try {
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
@@ -49,9 +41,12 @@ export async function GET(
 			headers: {
 				"Content-Type": contentType,
 				"Content-Length": imageBuffer.length.toString(),
+				"Cache-Control":
+					"public, immutable, no-transform, s-maxage=900, stale-while-revalidate=300",
 			},
 		})
 	} catch (error) {
+		console.error("[Avatar Route] Error:", error)
 		return new NextResponse("Internal Server Error", { status: 500 })
 	}
 }

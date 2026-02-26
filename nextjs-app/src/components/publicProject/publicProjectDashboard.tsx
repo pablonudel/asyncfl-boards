@@ -44,6 +44,7 @@ export default async function PublicProjectDashboard({
 	const widgets = resWidgets.success ? (resWidgets.widgets ?? []) : []
 
 	const userInitials = `${projectUser.firstName.charAt(0).toUpperCase()}${projectUser.lastName.charAt(0).toUpperCase()}`
+	const avatarTimestamp = projectUser.updatedAt.getTime()
 
 	return (
 		<div className='container mx-auto space-y-16 relative px-4'>
@@ -61,7 +62,7 @@ export default async function PublicProjectDashboard({
 							<Avatar className='h-12 w-12 cursor-default'>
 								{projectUser?.image ? (
 									<AvatarImage
-										src={`/api/avatar/${projectUser.id}?v=${projectUser.updatedAt.getTime()}`} // Cache busting
+										src={`/api/avatar/${projectUser.id}?v=${avatarTimestamp}`} // Cache busting
 										alt={projectUser.name}
 										className='object-cover'
 									/>
