@@ -41,8 +41,7 @@ export async function GET(
 			headers: {
 				"Content-Type": contentType,
 				"Content-Length": imageBuffer.length.toString(),
-				"Cache-Control":
-					"public, immutable, no-transform, s-maxage=900, stale-while-revalidate=300",
+				"Cache-Control": "public, max-age=900, stale-while-revalidate=300",
 			},
 		})
 	} catch (error) {

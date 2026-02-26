@@ -56,7 +56,7 @@ export async function uploadAvatarFile(file: File) {
 			},
 		})
 
-		revalidateTag(`avatar-${session.user.id}`, "profile")
+		revalidateTag(`avatar-${session.user.id}`, "max")
 		revalidatePath("/profile")
 		return { success: success, message: message }
 	} catch (error) {
@@ -98,7 +98,7 @@ export async function deleteAvatarFile() {
 			},
 		})
 
-		revalidateTag(`avatar-${session.user.id}`, "profile")
+		revalidateTag(`avatar-${session.user.id}`, "max")
 		revalidatePath("/profile")
 		return { success: true, message: "File deleted successfully" }
 	} catch (error) {

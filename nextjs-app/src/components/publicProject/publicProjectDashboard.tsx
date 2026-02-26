@@ -67,7 +67,7 @@ export default async function PublicProjectDashboard({
 										className='object-cover'
 									/>
 								) : (
-									<div className='flex items-center justify-center h-9 w-9 font-bold bg-foreground/10'>
+									<div className='flex justify-center items-center h-12 w-12 font-bold bg-foreground/10'>
 										{userInitials}
 									</div>
 								)}
