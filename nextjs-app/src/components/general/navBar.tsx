@@ -11,7 +11,7 @@ export default async function NavBar({
 }) {
 	return (
 		<>
-			<div className='flex justify-between items-center mt-4 p-2 border rounded-full backdrop-blur-2xl'>
+			<div className='flex justify-between items-center p-2 border rounded-full backdrop-blur-2xl'>
 				<Link href='/projects' className='ms-4'>
 					<p className='font-extrabold'>
 						AsyncFL<span className='font-light text-xl'>-</span>
