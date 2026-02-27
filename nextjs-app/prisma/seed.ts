@@ -1,4 +1,3 @@
-// prisma/seed.ts
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import "dotenv/config"

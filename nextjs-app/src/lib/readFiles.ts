@@ -7,6 +7,13 @@ import { reshape } from "npyjs/reshape"
 
 const STORAGE_PATH_BASE = process.env.STORAGE_PATH_BASE
 
+/**
+ * Reads a .npy file from the specified user directory and returns its contents as an array along with its shape.
+ * @param userId
+ * @param fileName
+ * @returns An object containing the array data and its shape.
+ * @throws Will throw an error if the file cannot be read or processed.
+ */
 export async function readNpyFile(userId: string, fileName: string) {
 	if (!STORAGE_PATH_BASE) throw new Error("STORAGE_PATH_BASE no configurado")
 	const absolutePath = join(STORAGE_PATH_BASE, userId, "files", fileName)
@@ -39,6 +46,13 @@ export async function readNpyFile(userId: string, fileName: string) {
 	}
 }
 
+/**
+ * Reads a JSON file from the specified user directory and returns its contents as a JavaScript object.
+ * @param userId
+ * @param fileName
+ * @returns The parsed JSON data as a JavaScript object.
+ * @throws Will throw an error if the file cannot be read or parsed.
+ */
 export async function readJsonFile(userId: string, fileName: string) {
 	if (!STORAGE_PATH_BASE) throw new Error("STORAGE_PATH_BASE no configurado")
 	const absolutePath = join(STORAGE_PATH_BASE, userId, "files", fileName)

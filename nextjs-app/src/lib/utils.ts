@@ -6,7 +6,12 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs))
 }
 
-// Apply rules to names: trim, remove extra spaces, remove non-alphabetic characters, capitalize first letter of each word
+/**
+ * Applies formatting rules to a name string, such as trimming, removing extra spaces, and capitalizing the first letter of each word.
+ * @param str
+ * @returns The formatted name string.
+ * @throws Will throw an error if the input is not a valid string.
+ */
 export function applyNameRules(str: string) {
 	return str
 		.trim()
@@ -17,7 +22,13 @@ export function applyNameRules(str: string) {
 		.join(" ")
 }
 
-// Normalize first and last names using the applyNameRules function
+/**
+ * Normalizes first and last names by applying formatting rules to each. This includes trimming, removing extra spaces, and capitalizing the first letter of each word.
+ * @param firstName
+ * @param lastName
+ * @returns An object containing the normalized first and last names.
+ * @throws Will throw an error if either input is not a valid string.
+ */
 export function normalizeNames(firstName: string, lastName: string) {
 	return {
 		firstName: applyNameRules(firstName),
@@ -25,7 +36,12 @@ export function normalizeNames(firstName: string, lastName: string) {
 	}
 }
 
-// Generate a slug URL from a name
+/**
+ * Generates a URL-friendly slug from a given name by converting it to lowercase, replacing non-alphanumeric characters with underscores, and appending a unique identifier.
+ * @param name
+ * @returns A slug string that can be used in URLs, consisting of a unique identifier followed by a formatted version of the input name.
+ * @throws Will throw an error if the input name is not a valid string.
+ */
 export function slugURL(name: string) {
 	const urlname = name
 		.toLowerCase()
@@ -34,13 +50,25 @@ export function slugURL(name: string) {
 	return `${nanoid(6)}-${urlname}`
 }
 
+/**
+ * Normalizes an array of numbers to a range between 0 and 1 by applying min-max normalization. Each value is transformed based on the minimum and maximum values in the array, resulting in a new array where the smallest value becomes 0 and the largest value becomes 1.
+ * @param array
+ * @returns A new array of numbers normalized to the range [0, 1].
+ * @throws Will throw an error if the input is not a valid array of numbers or if all values are the same (to avoid division by zero).
+ */
 export function normalizeData(array: number[]) {
 	const min = Math.min(...array)
 	const max = Math.max(...array)
 	return array.map((value) => (value - min) / (max - min))
 }
 
-// ===== 3D Functions (cálculo cruzado por columna) =====
+/**
+ * Calculates the average, maximum, minimum, or sum of values across multiple simulations for a specific column index in a 3D array. The function iterates through each round and simulation to compute the desired aggregation based on the provided method.
+ * @param data
+ * @param columnIndex
+ * @returns An array of aggregated values for each round, based on the specified aggregation method (average, max, min, or sum).
+ * @throws Will throw an error if the input data is not a valid 3D array or if an unknown aggregation method is specified.
+ */
 export function calculateAvg3D(
 	data: number[][][],
 	columnIndex: number,
@@ -59,6 +87,13 @@ export function calculateAvg3D(
 	return result
 }
 
+/**
+ * Calculates the maximum value across multiple simulations for a specific column index in a 3D array. The function iterates through each round and simulation to find the maximum value based on the provided column index.
+ * @param data
+ * @param columnIndex
+ * @returns An array of maximum values for each round, based on the specified column index across all simulations.
+ * @throws Will throw an error if the input data is not a valid 3D array or if the column index is out of bounds.
+ */
 export function calculateMax3D(
 	data: number[][][],
 	columnIndex: number,
@@ -74,6 +109,13 @@ export function calculateMax3D(
 	return result
 }
 
+/**
+ * Calculates the minimum value across multiple simulations for a specific column index in a 3D array. The function iterates through each round and simulation to find the minimum value based on the provided column index.
+ * @param data
+ * @param columnIndex
+ * @returns An array of minimum values for each round, based on the specified column index across all simulations.
+ * @throws Will throw an error if the input data is not a valid 3D array or if the column index is out of bounds.
+ */
 export function calculateMin3D(
 	data: number[][][],
 	columnIndex: number,
@@ -89,6 +131,13 @@ export function calculateMin3D(
 	return result
 }
 
+/**
+ * Calculates the sum of values across multiple simulations for a specific column index in a 3D array. The function iterates through each round and simulation to compute the total sum based on the provided column index.
+ * @param data
+ * @param columnIndex
+ * @returns An array of summed values for each round, based on the specified column index across all simulations.
+ * @throws Will throw an error if the input data is not a valid 3D array or if the column index is out of bounds.
+ */
 export function calculateSum3D(
 	data: number[][][],
 	columnIndex: number,
@@ -107,7 +156,12 @@ export function calculateSum3D(
 	return result
 }
 
-// ===== 2D Functions (cálculo cruzado por simulación) =====
+/**
+ * Calculates the average, maximum, minimum, or sum of values across multiple simulations for a specific column index in a 2D array. The function iterates through each simulation to compute the desired aggregation based on the provided method.
+ * @param data
+ * @returns An array of aggregated values for each column, based on the specified aggregation method (average, max, min, or sum).
+ * @throws Will throw an error if the input data is not a valid 2D array or if an unknown aggregation method is specified.
+ */
 export function calculateAvg2D(data: number[][]): number[] {
 	if (data.length === 0 || data[0].length === 0) return []
 
@@ -125,6 +179,12 @@ export function calculateAvg2D(data: number[][]): number[] {
 	return result
 }
 
+/**
+ * Calculates the maximum value across multiple simulations for a specific column index in a 2D array. The function iterates through each simulation to find the maximum value based on the provided column index.
+ * @param data
+ * @returns An array of maximum values for each column, based on the specified column index across all simulations.
+ * @throws Will throw an error if the input data is not a valid 2D array or if the column index is out of bounds.
+ */
 export function calculateMax2D(data: number[][]): number[] {
 	if (data.length === 0 || data[0].length === 0) return []
 
@@ -139,6 +199,12 @@ export function calculateMax2D(data: number[][]): number[] {
 	return result
 }
 
+/**
+ * Calculates the minimum value across multiple simulations for a specific column index in a 2D array. The function iterates through each simulation to find the minimum value based on the provided column index.
+ * @param data
+ * @returns An array of minimum values for each column, based on the specified column index across all simulations.
+ * @throws Will throw an error if the input data is not a valid 2D array or if the column index is out of bounds.
+ */
 export function calculateMin2D(data: number[][]): number[] {
 	if (data.length === 0 || data[0].length === 0) return []
 
@@ -153,6 +219,12 @@ export function calculateMin2D(data: number[][]): number[] {
 	return result
 }
 
+/**
+ * Calculates the sum of values across multiple simulations for a specific column index in a 2D array. The function iterates through each simulation to compute the total sum based on the provided column index.
+ * @param data
+ * @returns An array of summed values for each column, based on the specified column index across all simulations.
+ * @throws Will throw an error if the input data is not a valid 2D array or if the column index is out of bounds.
+ */
 export function calculateSum2D(data: number[][]): number[] {
 	if (data.length === 0 || data[0].length === 0) return []
 
@@ -170,6 +242,13 @@ export function calculateSum2D(data: number[][]): number[] {
 	return result
 }
 
+/**
+ * Reduces an array of numbers to a specified length by uniformly sampling values from the original array. The function calculates a factor based on the ratio of the original array length to the desired length and selects values at regular intervals to create a new array of the specified length.
+ * @param array
+ * @param length
+ * @returns A new array of numbers with the specified length, containing uniformly sampled values from the original array.
+ * @throws Will throw an error if the input array is not a valid array of numbers or if the desired length is not a positive integer.
+ */
 export function uniformData(array: number[], length: number): number[] {
 	console.log(array)
 
@@ -183,6 +262,17 @@ export function uniformData(array: number[], length: number): number[] {
 	return result
 }
 
+/**
+ * Shapes data from a 2D or 3D array based on the specified aggregation method (average, max, min, or sum) and normalization option. The function determines the appropriate aggregation method to apply based on the dimensions of the input data and processes it accordingly, returning a new array of values that have been aggregated and optionally normalized.
+ * @param shape
+ * @param agregation
+ * @param data
+ * @param columnIndex
+ * @param normalize
+ * @param numRounds
+ * @returns An array of numbers that have been aggregated and optionally normalized based on the specified parameters.
+ * @throws Will throw an error if the input data is not a valid 2D or 3D array, if an unknown aggregation method is specified, or if the column index is out of bounds.
+ */
 export function shapeData(
 	shape: number[],
 	agregation: string,
