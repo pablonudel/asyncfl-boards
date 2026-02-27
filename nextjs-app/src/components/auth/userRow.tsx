@@ -1,5 +1,6 @@
 "use client"
 
+import { removeAllUserFilesAsAdmin } from "@/actions/files/crudFiles.actions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { TableCell, TableRow } from "@/components/ui/table"
@@ -98,14 +99,15 @@ export function UserRow({
 		)
 	}
 
-	function handleRemoveUser(userId: string) {
+	async function handleRemoveUser(userId: string) {
 		authClient.admin.removeUser(
 			{ userId },
 			{
 				onError: (error: any) => {
 					toast.error(error.error.message || "Failed to delete user")
 				},
-				onSuccess: () => {
+				onSuccess: async () => {
+					await removeAllUserFilesAsAdmin(userId)
 					toast.success("User deleted")
 					router.refresh()
 				},

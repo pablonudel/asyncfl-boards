@@ -191,3 +191,32 @@ export async function removeAllUserFiles() {
 		return { success: false, message: "Failed to remove all files" }
 	}
 }
+
+/**
+ * Removes all files for a specific user as an admin.
+ * @param userId
+ * @returns An object indicating success or failure, and a message describing the result of the operation.
+ */
+export async function removeAllUserFilesAsAdmin(userId: string) {
+	try {
+		const session = await GetSession()
+		if (!session || !session.user)
+			return { success: false, message: "Unauthorized" }
+
+		const isAdmin = session.user.role === "admin"
+
+		if (!isAdmin) return { success: false, message: "Forbidden" }
+
+		const folderPath = join(`${process.env.STORAGE_PATH_BASE}`, userId)
+
+		await rm(folderPath, {
+			recursive: true,
+			force: true,
+		})
+
+		return { success: true, message: "All files removed successfully" }
+	} catch (error) {
+		console.error("Error removing all files:", error)
+		return { success: false, message: "Failed to remove all files" }
+	}
+}
