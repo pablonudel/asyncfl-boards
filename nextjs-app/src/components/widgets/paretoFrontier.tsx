@@ -2,6 +2,12 @@
 
 import { Widget } from "@/generated/prisma/client"
 import { authClient } from "@/lib/auth-client"
+import {
+	buildFullRouting,
+	calculateProportions,
+	evaluateEnergy,
+	evaluateMetrics,
+} from "@/lib/paretoCalculs"
 import { readJsonFile } from "@/lib/readFiles"
 import { FileX, Info, RotateCcw, SlidersHorizontal, X } from "lucide-react"
 import { useTheme } from "next-themes"
@@ -34,205 +40,6 @@ function getSliderValue(
 
 	return value[0] ?? fallback
 }
-
-// ══════════════════════════════════════════════════════════════════════
-// FUNCIONES DE CÁLCULO DE BUZEN Y MÉTRICAS
-// ══════════════════════════════════════════════════════════════════════
-
-/**
- * Algoritmo de Buzen para calcular la constante de normalización
- * de una red de colas cerrada con estaciones M/M/1 y M/M/∞
- */
-function buzenAlgo(
-	numClients: number,
-	numTasks: number,
-	routing: number[],
-	compSpeeds: number[],
-	uplinkSpeeds: number[],
-	downlinkSpeeds: number[],
-): Float64Array {
-	const Z = new Float64Array(numTasks + 1)
-	Z[0] = 1.0
-
-	// Estaciones M/M/1 (computación)
-	for (let i = 0; i < numClients; i++) {
-		const rho = routing[i] / compSpeeds[i]
-		for (let m = 1; m <= numTasks; m++) {
-			Z[m] += rho * Z[m - 1]
-		}
-	}
-
-	// Estaciones M/M/∞ (uplink + downlink)
-	const rhoInf = [
-		...uplinkSpeeds.map((s, i) => routing[i] / s),
-		...downlinkSpeeds.map((s, i) => routing[i] / s),
-	]
-
-	for (const rho of rhoInf) {
-		const y = new Float64Array(numTasks + 1)
-		y[0] = 1.0
-		for (let k = 1; k <= numTasks; k++) {
-			y[k] = (y[k - 1] * rho) / k
-		}
-
-		const Zprev = Z.slice()
-		for (let k = 1; k <= numTasks; k++) {
-			for (let m = numTasks; m >= k; m--) {
-				Z[m] += y[k] * Zprev[m - k]
-			}
-		}
-	}
-
-	return Z
-}
-
-/**
- * Calcula el vector ED (Expected Delay) para cada cliente
- */
-function edVector(
-	routing: number[],
-	numTasks: number,
-	Z: Float64Array,
-	compSpeeds: number[],
-	uplinkSpeeds: number[],
-	downlinkSpeeds: number[],
-): Float64Array {
-	const n = routing.length
-	const ED = new Float64Array(n)
-	const denom = Z[numTasks - 1]
-
-	for (let i = 0; i < n; i++) {
-		const r = routing[i] / compSpeeds[i]
-		let val = 0
-		for (let k = 0; k < numTasks - 1; k++) {
-			val += Math.pow(r, k) * Z[numTasks - 2 - k]
-		}
-		const infTerm =
-			Z[numTasks - 2] *
-			routing[i] *
-			(1 / uplinkSpeeds[i] + 1 / downlinkSpeeds[i])
-		ED[i] = (r * val + infTerm) / denom
-	}
-
-	return ED
-}
-
-/**
- * Calcula el tiempo de convergencia τ y otras métricas
- */
-function evaluateMetrics(
-	routing: number[],
-	m: number,
-	networkConfig: any,
-	flParams: any,
-) {
-	const { computation_speeds, uplink_speeds, downlink_speeds } = networkConfig
-	const { L, A, epsilon, sigma, G, M: Mparam } = flParams
-	const n = routing.length
-
-	const B = 2 * Mparam * Mparam + sigma * sigma
-	const C = G * G + sigma * sigma
-
-	const Z = buzenAlgo(
-		n,
-		m,
-		routing,
-		computation_speeds,
-		uplink_speeds,
-		downlink_speeds,
-	)
-	const ED = edVector(
-		routing,
-		m,
-		Z,
-		computation_speeds,
-		uplink_speeds,
-		downlink_speeds,
-	)
-
-	let sumInvR = 0
-	let sumEDinvR2 = 0
-	for (let i = 0; i < n; i++) {
-		const invR = 1 / routing[i]
-		sumInvR += invR
-		sumEDinvR2 += ED[i] * invR * invR
-	}
-
-	const T2 = ((4 + (6 * B) / epsilon) * sumInvR) / n
-	const T3 = Math.sqrt((3 * C * (m - 1) * sumEDinvR2) / epsilon)
-	const totalTime = ((T2 + T3) * 24 * L * A) / (n * epsilon)
-	const throughput = Z[m - 1] / Z[m]
-
-	return {
-		tau: totalTime / throughput,
-		totalTime,
-		T2,
-		T3,
-		throughput,
-	}
-}
-
-/**
- * Calcula la energía consumida
- */
-function evaluateEnergy(
-	routing: number[],
-	m: number,
-	networkConfig: any,
-	flParams: any,
-): number {
-	const {
-		computation_speeds,
-		uplink_speeds,
-		downlink_speeds,
-		computation_energy,
-		uplink_energy,
-		downlink_energy,
-	} = networkConfig
-
-	const { totalTime } = evaluateMetrics(routing, m, networkConfig, flParams)
-
-	let energyPerRound = 0
-	for (let i = 0; i < routing.length; i++) {
-		energyPerRound +=
-			routing[i] *
-			(uplink_energy[i] / uplink_speeds[i] +
-				downlink_energy[i] / downlink_speeds[i] +
-				computation_energy[i] / computation_speeds[i])
-	}
-
-	return totalTime * energyPerRound
-}
-
-/**
- * Calcula las proporciones de trabajo por tipo de dispositivo
- */
-function calculateProportions(weights: number[], counts: number[]): number[] {
-	const totalWeighted = weights.reduce((sum, w, i) => sum + w * counts[i], 0)
-	return weights.map((w, i) => (w * counts[i]) / totalWeighted)
-}
-
-/**
- * Construye el routing completo (100 valores) a partir de proporciones por tipo
- */
-function buildFullRouting(proportions: number[], devices: any[]): number[] {
-	const routing: number[] = []
-
-	devices.forEach((device, i) => {
-		const proportion = proportions[i]
-		const perClient = proportion / device.count
-
-		for (let j = 0; j < device.count; j++) {
-			routing.push(perClient)
-		}
-	})
-
-	return routing
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// COMPONENTE PRINCIPAL
-// ══════════════════════════════════════════════════════════════════════
 
 export default function ParetoFrontier({
 	widget,
@@ -308,19 +115,19 @@ export default function ParetoFrontier({
 		[widget.config],
 	)
 
-	// ── Calcular proporciones de routing del usuario (MEMOIZADO) ───────
+	// Calculates user routing proportions based on weights and device counts (MEMOIZED)
 	const userRoutingProportions = useMemo(() => {
 		if (!userWeights.length || !devicesCount.length) return []
 		return calculateProportions(userWeights, devicesCount)
 	}, [userWeights, devicesCount])
 
-	// ── Construir routing completo del usuario (100 valores) (MEMOIZADO) ──
+	// Builds the full routing vector for the queuing network based on user proportions and network configuration (MEMOIZED)
 	const fullUserRouting = useMemo(() => {
 		if (!userRoutingProportions.length || !networkConfig?.devices) return []
 		return buildFullRouting(userRoutingProportions, networkConfig.devices)
 	}, [userRoutingProportions, networkConfig])
 
-	// ── Calcular métricas del usuario (MEMOIZADO) ─────────────────────────
+	// Calculates user metrics (time, energy, throughput) based on the full routing and current parameters (MEMOIZED)
 	const userMetrics = useMemo(() => {
 		if (
 			!fullUserRouting.length ||
@@ -357,7 +164,7 @@ export default function ParetoFrontier({
 		}
 	}, [fullUserRouting, concurrenceValue, networkConfig, defaultParams])
 
-	// ── Handler optimizado para cambio de pesos ────────────────────────────
+	// Optimized handler for weight changes, updates the specific index in the userWeights array without affecting others
 	const handleUpdateWeights = useCallback((index: number, newValue: number) => {
 		setUserWeights((prev) => {
 			const updated = [...prev]
@@ -366,7 +173,7 @@ export default function ParetoFrontier({
 		})
 	}, [])
 
-	// ── Handler optimizado para cambio de parámetros FL ────────────────────
+	// Optimized handler for FL parameter changes, updates the specific key in the defaultParams object without affecting others
 	const handleUpdateParams = useCallback((key: string, newValue: number) => {
 		setDefaultParams((prev: any) => ({
 			...prev,
@@ -453,7 +260,7 @@ export default function ParetoFrontier({
 		}
 	}, [configJSON])
 
-	// Re-renderizar plot cuando cambia el ancho (pero NO recargar datos)
+	// Re-render plot when fullColumn changes to trigger resize and adjust to new layout
 	useEffect(() => {
 		setPlotKey((prev) => prev + 1)
 	}, [fullColumn])
@@ -544,13 +351,13 @@ export default function ParetoFrontier({
 		}
 	}, [widget.config])
 
-	// ── CONSTRUIR TRACES COMPLETOS PARA PLOTLY ─────────────────────────────
+	// Building the plot data with additional traces for optimal point and user point (MEMOIZED)
 	const plotData = useMemo(() => {
 		if (!dataConfig || !selectedRho || !userMetrics) return dataConfig
 
 		const traces = [...dataConfig]
 
-		// Trace 2: Punto óptimo de referencia (estrella naranja)
+		// Trace 2: optimal point from data
 		traces.push({
 			x: [selectedRho.tau],
 			y: [selectedRho.energy],
@@ -561,12 +368,11 @@ export default function ParetoFrontier({
 				size: 12,
 				color: "#ff8904",
 				symbol: "circle",
-				// line: { color: theme === "dark" ? "#0d1117" : "#ffffff", width: 2 },
 			},
 			hovertemplate: `<span style="color: #ffffff"><b>Optimal</b><br>ρ=${selectedRho.rho}<br>m: ${selectedRho.m}<br>Energy: ${selectedRho.energy.toFixed(0)}<br>Time: ${selectedRho.tau.toFixed(2)}</span><extra></extra>`,
 		})
 
-		// Trace 3: Punto del usuario (diamante rojo)
+		// Trace 3: User's interactive point
 		traces.push({
 			x: [userMetrics.tau],
 			y: [userMetrics.energy],
@@ -581,7 +387,7 @@ export default function ParetoFrontier({
 			hovertemplate: `<b>User</b><br>m: ${userMetrics.m}<br>Energy: ${userMetrics.energy.toFixed(0)}<br>Time: ${userMetrics.tau.toFixed(2)}<extra></extra>`,
 		})
 
-		// Trace 4: Línea conectora (línea punteada)
+		// Trace 4: Connection line between optimal and user point
 		traces.push({
 			x: [userMetrics.tau, selectedRho.tau],
 			y: [userMetrics.energy, selectedRho.energy],
@@ -611,6 +417,7 @@ export default function ParetoFrontier({
 			ticksuffix: widgetLayoutConfig.xaxis?.ticksuffix,
 			zeroline: widgetLayoutConfig.xaxis?.zeroline,
 			gridcolor: theme === "light" ? "#d4d4d4" : "#444444",
+			visible: widgetLayoutConfig.xaxis?.visible,
 		},
 		yaxis: {
 			title: { text: widgetLayoutConfig.yaxis?.title },
@@ -622,6 +429,7 @@ export default function ParetoFrontier({
 			ticksuffix: widgetLayoutConfig.yaxis?.ticksuffix,
 			zeroline: widgetLayoutConfig.yaxis?.zeroline,
 			gridcolor: theme === "light" ? "#d4d4d4" : "#444444",
+			visible: widgetLayoutConfig.yaxis?.visible,
 		},
 		margin: {
 			l: 50,
@@ -700,7 +508,7 @@ export default function ParetoFrontier({
 					</Button>
 				</div>
 				<div>
-					{/* Sección de selección de punto óptimo */}
+					{/* Optimal point picking section */}
 					<div className='space-y-2 border-b px-4 py-8'>
 						<p className='font-bold'>Reference • ρ</p>
 						{optimalData.map((item: any, index: number) => {
@@ -716,7 +524,7 @@ export default function ParetoFrontier({
 							)
 						})}
 					</div>
-					{/* Sección de ajuste de concurrencia */}
+					{/* Concurrence config section */}
 					<div className='space-y-2 border-b px-4 py-8'>
 						<p className='font-bold'>Concurrence · m</p>
 						<div className='flex items-center justify-between gap-2 mb-4'>
@@ -739,7 +547,7 @@ export default function ParetoFrontier({
 							<p>{mMinMax.max}</p>
 						</div>
 					</div>
-					{/* Sección de ajuste de pesos */}
+					{/* Weights config section */}
 					<div className='space-y-2 border-b px-4 py-8'>
 						<p className='font-bold'>
 							Routing · P <Badge variant='outline'>Relative Weights</Badge>
