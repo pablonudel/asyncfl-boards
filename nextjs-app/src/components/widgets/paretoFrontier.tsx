@@ -166,7 +166,7 @@ export default function ParetoFrontier({
 
 	// Optimized handler for weight changes, updates the specific index in the userWeights array without affecting others
 	const handleUpdateWeights = useCallback((index: number, newValue: number) => {
-		setUserWeights((prev) => {
+		setUserWeights((prev: number[]) => {
 			const updated = [...prev]
 			updated[index] = newValue
 			return updated
@@ -262,7 +262,7 @@ export default function ParetoFrontier({
 
 	// Re-render plot when fullColumn changes to trigger resize and adjust to new layout
 	useEffect(() => {
-		setPlotKey((prev) => prev + 1)
+		setPlotKey((prev: number) => prev + 1)
 	}, [fullColumn])
 
 	async function getDataFromSource(userId: string, fileName: string) {
