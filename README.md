@@ -1,4 +1,4 @@
-# AsyncFL Board
+# AsyncFL Boards
 
 A modern **Federated Learning** visualization platform with interactive dashboards for analyzing and managing distributed learning experiments. Built with Next.js 16, Prisma ORM, and better-auth authentication.
 
@@ -270,7 +270,7 @@ npm run db:seed  # Recreates admin user
 
 ## ✨ Authors
 
-- LAAS Team
+- Pablo Nudel
 
 **Last Updated:** February 2026
 **Version:** 0.1.0
